@@ -1,0 +1,227 @@
+{
+  "lesson_id": "C7.4",
+  "ticket": "FQ-218",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-218 — Ravi Krishnan (Head of Engineering)\n\nFQ-142 started with an unexplained access key. Six sessions later, FoodQuick has a real architecture. Before we close this ticket — and Building Basics — I need three things from you: a dashboard that actually covers the whole stack, budget alerts that catch cost surprises early, and a portfolio narrative you could defend in an interview. Not 'I built a 3-tier app.' The WHY behind the decisions.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-218 closed:\n\nDashboard covers ALB, ASG, and RDS in one view. Budget alerts land on the same SNS channel as on-call. Docs live in S3 with a clean key structure. And your narrative connects decisions back to real FoodQuick mistakes — that's the proof, not a certificate.\n\nFQ-142 is done. Building Basics is done. Working Level is next — on-call starts for real.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C7.4-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C7.4",
+      "scenario": "You open the existing foodquick-app-health CloudWatch dashboard. It only shows ALB RequestCount. ASG and RDS widgets are missing.",
+      "question": "Is an ALB-only dashboard complete monitoring for FoodQuick's 3-tier architecture?",
+      "options": [
+        "A) Yes — the load balancer is the only layer that matters for customer experience",
+        "B) No — a complete view needs key metrics across presentation (ALB), application (ASG), and data (RDS) tiers on one page, or you can miss app/DB failures while ALB still looks fine",
+        "C) Yes — CloudWatch only allows one metric per dashboard",
+        "D) No — you should delete the ALB widgets and only watch RDS"
+      ],
+      "correct_index": 1,
+      "explanation": "Dashboard's value multiple layers-ai ore in page kaatrathula is there. ALB only paathaa, app tier or RDS issue miss can happen — in C6.1 kathukkitta same principle.",
+      "ren_correct": "Correct — one dashboard, all three tiers. ALB alone is not the whole story.",
+      "ren_wrong": "A bit think again — ALB healthy even if ASG/RDS break can happen. Full stack widgets is needed."
+    },
+    {
+      "id": "C7.4-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.4",
+      "question": "Which widget set best completes foodquick-app-health for this architecture?",
+      "options": [
+        "A) Only EC2 CPU from a single instance",
+        "B) ALB RequestCount + TargetResponseTime, ASG CPUUtilization + InstanceCount, RDS CPUUtilization + DatabaseConnections",
+        "C) Only S3 BucketSizeBytes",
+        "D) Only IAM Access Analyzer findings"
+      ],
+      "correct_index": 1,
+      "explanation": "Presentation, application, data — moonu tier also cover aaganum. This C7.4 live build's exact widget set.",
+      "ren_correct": "Correct — ALB + ASG + RDS is the cohesive monitoring picture.",
+      "ren_wrong": "A bit incomplete. Three tiers, three metric families — ALB/ASG/RDS."
+    },
+    {
+      "id": "C7.4-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.4",
+      "question": "What is the real purpose of an AWS Budget alert in this closing lesson?",
+      "options": [
+        "A) It automatically deletes expensive resources when spend rises",
+        "B) It proactively notifies the team when spend approaches or crosses a threshold — catching silent cost growth early (the C5 unmanaged growth pattern)",
+        "C) It replaces Cost Explorer entirely",
+        "D) It only works for Reserved Instances"
+      ],
+      "correct_index": 1,
+      "explanation": "Budget alerts automatic cost cut do not do — notify does. in C5 we saw silent S3/EFS growth like mistakes early catch to do helpful.",
+      "ren_correct": "Correct — notify early, don't pretend the budget deletes resources for you.",
+      "ren_wrong": "Budget alert delete do not do / auto-optimize do not do — proactive notify job."
+    },
+    {
+      "id": "C7.4-T4",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.4",
+      "scenario": "You create a monthly cost budget based on the C7.1 estimate. Ravi asks where the alerts should go.",
+      "question": "Where should budget alerts route for FoodQuick right now?",
+      "options": [
+        "A) A brand-new email list nobody monitors",
+        "B) The existing foodquick-oncall-alerts SNS topic from C6.2 — cost anomalies land on the same trusted channel as operational alerts",
+        "C) Only printed PDFs once a quarter",
+        "D) Direct SMS to every employee in the company"
+      ],
+      "correct_index": 1,
+      "explanation": "Ore trusted channel — on-call SNS. Puthiya ignored inbox create to do vendaam. in C6.2 set to do topic reuse doing synthesis.",
+      "ren_correct": "Correct — reuse the on-call SNS path. Cost and ops share one attention channel.",
+      "ren_wrong": "A bit think again — already trusted SNS is there. That reuse do."
+    },
+    {
+      "id": "C7.4-T5",
+      "type": "order_task",
+      "difficulty": "medium",
+      "environment": "sequence_card",
+      "source_lesson": "C7.4",
+      "question": "Order the closing observability + docs steps for FQ-218.",
+      "items": [
+        "Expand foodquick-app-health with ALB, ASG, and RDS widgets",
+        "Create the monthly budget with 80% and 100% alert thresholds",
+        "Attach budget notifications to foodquick-oncall-alerts SNS",
+        "Upload architecture diagram + README to foodquick-project-docs with clear S3 keys",
+        "Draft the portfolio narrative that explains WHY decisions were made"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Monitor first, budget next, wire notifications, store docs, then narrative. Synthesis order — earlier lessons's practices reuse.",
+      "ren_correct": "Nice sequencing — dashboards → budget → SNS → S3 docs → narrative.",
+      "ren_wrong": "Order again paaru — monitoring/budget wiring first, portfolio story last."
+    },
+    {
+      "id": "C7.4-T6",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.4",
+      "scenario": "You audit the closing monitoring + docs setup before telling Ravi FQ-218 is ready.",
+      "broken_config": "Dashboard foodquick-app-health:\n└── Widget: ALB RequestCount only\n\nAWS Budgets:\n└── None configured\n\nSNS:\n└── foodquick-oncall-alerts exists (from C6.2) but unused for cost\n\nS3 foodquick-project-docs:\n└── Empty — no portfolio/ keys",
+      "what_to_find": [
+        "Dashboard is incomplete — missing ASG and RDS widgets",
+        "No budget means silent cost growth can return unnoticed",
+        "On-call SNS exists but cost alerts are not wired to it",
+        "No versioned project docs in S3 under a clear key prefix"
+      ],
+      "correct_fix": "Add ALB/ASG/RDS widgets; create monthly budget at 80%/100% of C7.1 estimate; notify via foodquick-oncall-alerts; upload portfolio/foodquick-architecture-v1/README.md and diagram.png.",
+      "explanation": "This C7.4 live build checklist — incomplete dashboard + no budget + empty docs = ticket close to do mudiyaathu."
+    },
+    {
+      "id": "C7.4-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.4",
+      "scenario": "priya-dev prepares for an interview by memorizing the component list (ALB, ASG, RDS, S3) but not the reasoning behind security-group-per-tier or health-check path choices.",
+      "question": "What is the real interview risk, and what should she prepare instead?",
+      "options": [
+        "A) No risk — listing AWS services is enough for cloud roles",
+        "B) Interviewers evaluate judgment: she should practice a structured WHY narrative tying each decision to a specific FoodQuick mistake (e.g. default SG exposure), not only WHAT was built",
+        "C) She should hide that FoodQuick ever had mistakes",
+        "D) She should only talk about pricing calculators"
+      ],
+      "correct_index": 1,
+      "explanation": "WHAT memorized, WHY articulate to do practice or, in interview shallow theriyum. Lesson's core: portfolio = reasoned decisions.",
+      "ren_correct": "Correct — WHY tied to real mistakes beats a service name list.",
+      "ren_wrong": "Component recall podathu. Judgment = why this design, which mistake it prevents."
+    },
+    {
+      "id": "C7.4-T8",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C7.4",
+      "scenario": "Ravi asks you to pick the strongest opening line for a portfolio / interview narrative about FoodQuick.",
+      "options": [
+        "A) 'I built a 3-tier architecture on AWS with ALB, ASG, and RDS.'",
+        "B) 'I redesigned FoodQuick after audit-driven failures — for example scoped security groups per tier after a default-SG path exposed the database — then verified the stack with dashboards, budgets, and a failure test, not just one successful HTTP 200.'",
+        "C) 'AWS is scalable and secure by default so design barely matters.'",
+        "D) 'I followed a YouTube tutorial exactly.'"
+      ],
+      "correct_index": 1,
+      "explanation": "Strong narrative = context + specific decision + verification depth. Weak narrative = service shopping list.",
+      "ren_correct": "Correct — specific mistake → specific design → how you verified.",
+      "ren_wrong": "Shopping-list intros soft will be. Tie decisions to FoodQuick lessons."
+    },
+    {
+      "id": "C7.4-T9",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.4",
+      "scenario": "Looking back across CS2–CS7, the same failure mode shows up in IAM offboarding, public-subnet databases, default security groups, open S3, and rushed route tables.",
+      "question": "What single pattern ties those mistakes together?",
+      "options": [
+        "A) AWS billing bugs",
+        "B) 'Convenience now, restrict/fix later' — temporary launch-day shortcuts that became permanent production risk",
+        "C) Only multi-region complexity",
+        "D) Only Tanglish documentation gaps"
+      ],
+      "correct_index": 1,
+      "explanation": "Course's recurring theme — convenience-first decisions. Recognizing one pattern across layers is mature judgment.",
+      "ren_correct": "Correct — one failure mode, many layers. That's the Building Basics insight.",
+      "ren_wrong": "Unrelated incidents not — ore 'fix later' habit across IAM/network/storage."
+    },
+    {
+      "id": "C7.4-T10",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C7.4",
+      "scenario": "Budget is created and SNS is attached, but the on-call channel never gets a test notification. Threshold is 100% of a budget set far above current spend.",
+      "error_shown": "Budgets console: 'OK'. SNS topic: no recent publishes. Team: 'We never got a cost alert in staging.'",
+      "diagnosis": "Alert only fires at 100% of an inflated budget, so day-to-day overruns never notify. Also no test publish was sent to confirm SNS subscription health.",
+      "fix": "Add an 80% threshold (and optionally a forecasted spend alert), keep 100% as hard stop, send a test notification to foodquick-oncall-alerts, confirm subscribers confirmed the email/Slack endpoint.",
+      "explanation": "Budget 'exists' != 'will warn early'. 80% + test publish = real closing check."
+    },
+    {
+      "id": "C7.4-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C7.4",
+      "scenario": "Meera asks whether documentation and dashboards are 'extra cost' that can be skipped now that the architecture works.",
+      "question": "What's the right cost/judgment call?",
+      "solution": "Observability and docs are cheap compared to the retrofit cost FoodQuick already paid across CS2–CS6. Skipping them recreates the 'works until it doesn't / can't explain why' failure mode. Budget alerts specifically exist to prevent another silent growth incident; dashboards prevent Twitter-as-monitoring. Keep both.",
+      "explanation": "Working system + no proof/observability = incomplete portfolio and incomplete operations."
+    },
+    {
+      "id": "C7.4-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.4",
+      "scenario": "Time to send Ravi the FQ-218 closing report and formally end the Building Basics FoodQuick arc that started at FQ-142.",
+      "question": "Which closing report should you send?",
+      "options": [
+        "A) 'Everything works. Done.'",
+        "B) 'Expanded foodquick-app-health to ALB/ASG/RDS. Monthly budget with 80%/100% alerts on foodquick-oncall-alerts. Docs at portfolio/foodquick-architecture-v1/ in S3. Narrative prepared with two decision-WHYs tied to earlier mistakes plus verification beyond a single 200. Ready to close FQ-218 / FQ-142.'",
+        "C) 'Deleted all monitoring to save money.'",
+        "D) 'Skipped documentation because interviews don't care.'"
+      ],
+      "correct_index": 1,
+      "explanation": "Closing report specific must be — dashboard, budget, docs, narrative. Vague 'done' overclaim / skip docs = wrong close.",
+      "ren_correct": "This correct close — evidence across monitoring, cost, docs, and interview-ready WHY.",
+      "ren_wrong": "Vague or anti-docs closes FQ-218-ai wrongly mudikkum."
+    }
+  ],
+  "act_number": 4,
+  "act_title": "Monitor, Document, Close FQ-218",
+  "builds_layer": "Proof & Portfolio Layer"
+}

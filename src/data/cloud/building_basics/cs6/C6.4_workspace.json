@@ -1,0 +1,228 @@
+{
+  "lesson_id": "C6.4",
+  "ticket": "FQ-203",
+  "sender": "Deepak Menon (DevOps Lead)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-203 — Deepak Menon (DevOps Lead)\n\nLast thing for this ticket. Alarms and audit trail are solid now — but I want a single pane of glass where I can look at order-service's health at a glance without digging through individual metric graphs. And I've heard X-Ray mentioned as a way to trace slow requests — if that's what it is, I want to understand whether it actually adds anything we don't already have.\n\nOh, and before you build anything new — there's apparently already a CloudWatch dashboard for order-service that someone put together. Check what it's actually showing before we decide what to add.\n\n— Deepak\n\nPull Trusted Advisor, Config, encryption, EBS, and S3 findings into one readiness pass.",
+  "arc_outro": "Deepak Menon (DevOps Lead)\n\nThat's exactly the kind of thing that gives people false confidence — a dashboard with a line going up and to the right that turns out to be measuring the number of data collection points, not actual requests. Easy mistake to make, genuinely hard to spot if you don't know what to look for.\n\nDashboard is correct now, X-Ray is showing us where the time actually goes in a real request. That's FQ-203 done. We went from finding out about outages from Twitter to having correct metrics, working alarms with proper notification paths, a full audit trail, and actual request tracing. Not bad for one ticket.\n\nNext one's yours, Ravi.\n\n— Deepak",
+  "tasks": [
+    {
+      "id": "C6.4-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C6.4",
+      "scenario": "Before building anything, Deepak tells you there's already an existing order-service CloudWatch dashboard. You open it and see a graph titled 'Request Volume' showing a steady, slowly-growing line over the past 6 months.",
+      "question": "Before trusting this graph as accurate, what should you check first?",
+      "options": [
+        "A) Nothing — a rising line for request volume over 6 months is clearly correct since FoodQuick has been growing",
+        "B) Which specific metric STATISTIC the graph is using — the same underlying metric can look completely different depending on whether you're plotting Sum, Average, SampleCount, or a percentile, and a rising line does not by itself confirm the graph is measuring what its title claims",
+        "C) Whether the dashboard was built by a senior engineer, since seniority determines whether the graph is trustworthy",
+        "D) Whether the graph is using a line chart or a bar chart, since that determines the accuracy of the underlying data"
+      ],
+      "correct_index": 1,
+      "explanation": "Rising line real-a is there — confirm what was done — same underlying metric, different different statistic use did, completely different shapes show will happen. SampleCount-a irundha, data collection frequency kaatum, actual request count not. Statistic first check must do.",
+      "ren_correct": "Correct — rising line trustworthy — assume do not, which statistic use does — first check must do.",
+      "ren_wrong": "A bit think again — FoodQuick growing — for saying this correct graph — guarantee what was done. Statistic check must do first."
+    },
+    {
+      "id": "C6.4-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.4",
+      "question": "For a metric like 'number of HTTP requests processed by order-service,' what's the difference between the SUM and SAMPLECOUNT statistics in CloudWatch?",
+      "options": [
+        "A) They're identical — SUM and SAMPLECOUNT produce the same value for any metric",
+        "B) SUM adds up the actual metric VALUES in a period (for a request count metric, this gives you the total number of requests). SAMPLECOUNT counts how many DATA POINTS were reported to CloudWatch in that period — which is the number of metric observations, not the count of requests. If CloudWatch receives 3 data points reporting 120, 145, and 98 requests respectively, SUM = 363 (total requests), SAMPLECOUNT = 3 (three data points were reported)",
+        "C) SAMPLECOUNT always gives a larger number than SUM, making it better for dashboards that should look impressive",
+        "D) SUM is only available for billing metrics, not for application or infrastructure metrics"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact distinction — SUM metric VALUES add does (real request count), SAMPLECOUNT data points's count (how many times CloudWatch received a measurement). Request volume for dashboard SUM is needed, SAMPLECOUNT-a kept, reporting frequency kaatudhu, actual traffic not.",
+      "ren_correct": "Correct — SUM actual values, SAMPLECOUNT measurement count. Request for volume SUM.",
+      "ren_wrong": "A bit think again — SUM um SAMPLECOUNT um different different topic. SUM values add does, SAMPLECOUNT observations count does."
+    },
+    {
+      "id": "C6.4-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.4",
+      "question": "What does AWS X-Ray specifically add that CloudWatch metrics alone cannot provide?",
+      "options": [
+        "A) X-Ray is simply a more expensive, redundant version of CloudWatch with no unique capability",
+        "B) X-Ray traces individual requests end-to-end THROUGH your application, showing exactly where time is spent at each step — which service call, which database query, which downstream API — as a connected trace. CloudWatch metrics tell you THAT latency is high at an aggregate level; X-Ray shows you exactly WHERE in the request that time is being spent and WHY",
+        "C) X-Ray provides real-time alerts, while CloudWatch only provides delayed metrics",
+        "D) X-Ray only works for Lambda functions, never for EC2 or containerized applications"
+      ],
+      "correct_index": 1,
+      "explanation": "X-Ray oda real value: individual request trace, end-to-end, each in step time breakdown. CloudWatch aggregate-a 'latency is high' kaatudhu, X-Ray specific-a 'this DB query took 800ms, this downstream API took 300ms' kaatudhu. Different different for questions answers, complementary tools.",
+      "ren_correct": "Correct — CloudWatch THAT something is slow, X-Ray WHERE and WHY, complementary not redundant.",
+      "ren_wrong": "A bit think again — X-Ray CloudWatch redundant not. CloudWatch aggregate metrics, X-Ray individual request traces. Different different questions."
+    },
+    {
+      "id": "C6.4-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.4",
+      "scenario": "You inspect the existing order-service dashboard configuration.",
+      "broken_config": "Dashboard: order-service-overview (created 5 months ago)\n\nWidget 1: 'Request Volume'\n├── Metric: AWS/ApplicationELB HTTPCode_Target_2XX_Count\n├── Statistic: SAMPLECOUNT\n├── Period: 5 minutes\n└── Result: shows a slowly, steadily growing line — looks like healthy traffic growth\n\nWidget 2: 'Average Latency'\n├── Metric: AWS/ApplicationELB TargetResponseTime\n├── Statistic: AVERAGE\n├── Period: 5 minutes\n└── Result: looks correct for an average latency trend\n\nWidget 3: 'Error Rate'\n├── Metric: AWS/ApplicationELB HTTPCode_Target_5XX_Count\n├── Statistic: SUM\n├── Period: 5 minutes\n└── Result: looks correct for counting errors\n\nNote: the ALB emits this metric once per 1-minute evaluation interval regardless of actual request volume — SAMPLECOUNT would simply count the number of 1-minute evaluation intervals, not actual request counts",
+      "what_to_find": [
+        "Widget 1's SAMPLECOUNT statistic is measuring the number of metric data points CloudWatch received, not the actual number of HTTP 2xx responses — since the ALB emits this metric at regular intervals regardless of traffic, SAMPLECOUNT will show a flat or slowly growing line reflecting reporting frequency, completely unrelated to actual request volume",
+        "This is why the graph shows a smooth, slowly growing line rather than the spiky, variable pattern real traffic would show",
+        "Widgets 2 and 3 are using appropriate statistics (AVERAGE for latency, SUM for error counts) — the mistake is specifically on Widget 1",
+        "A dashboard with one widget correctly showing 'request volume growing steadily' while actually measuring 'number of evaluation intervals per day' gives false confidence — exactly the 'flying blind with a dashboard' conclusion to FQ-203's theme"
+      ],
+      "correct_fix": "Change Widget 1's statistic from SAMPLECOUNT to SUM, which will sum the actual HTTPCode_Target_2XX_Count values and correctly reflect real request volume, including its natural variability across time of day and week.",
+      "explanation": "This exact spec mistake — SampleCount-a use did, reporting frequency kaatudhu, actual traffic not. Smooth growing line real traffic's spiky, variable pattern-a hide does. SAMPLECOUNT correctness-a look does but wrong answer gives."
+    },
+    {
+      "id": "C6.4-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C6.4",
+      "question": "Arrange the correct steps to fix Widget 1 and verify the dashboard is now accurate.",
+      "items": [
+        "Change Widget 1's statistic from SAMPLECOUNT to SUM",
+        "Check what the corrected graph actually shows — it should now display variable, spiky traffic patterns matching known peak hours (lunch, dinner) rather than a smooth, steady line",
+        "Cross-check the corrected Widget 1 against access logs or ALB request count metrics from the same time period to confirm the shape makes sense",
+        "Compare the old SAMPLECOUNT graph shape against the new SUM shape — document the difference to show Deepak what was previously being measured"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "First statistic change must do, then corrected graph's actual shape check must do (variable spiky traffic expected, not smooth line), then cross-reference must do verify for doing, LAST-a difference document must do for Deepak show for doing.",
+      "ren_correct": "Nice sequencing — fix, verify against expected pattern, cross-reference, document the before/after difference.",
+      "ren_wrong": "Order again paaru — fix after doing expected shape verify must do, then cross-reference must do. Document last, not first."
+    },
+    {
+      "id": "C6.4-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.4",
+      "scenario": "karthik-dev is adding a new widget showing 'Average Order Checkout Time' to the dashboard. He asks whether he should use SUM or AVERAGE for this metric.",
+      "question": "Which statistic is correct for showing a typical checkout experience duration?",
+      "options": [
+        "A) SUM — adding all checkout durations together gives the total time spent across all checkouts",
+        "B) AVERAGE — since the goal is to understand a typical user's experience, averaging the duration across all checkouts in a period gives a meaningful single number representing a representative checkout time; SUM would give a nonsensical 'total seconds spent checking out' figure that grows with traffic volume regardless of whether checkout speed actually changed",
+        "C) SAMPLECOUNT — counting the number of checkout events tells you the typical duration",
+        "D) SUM and AVERAGE are identical for duration metrics, so either works"
+      ],
+      "correct_index": 1,
+      "explanation": "for Duration AVERAGE correct — 'typical user experience' represent does. SUM for duration use did, traffic high but SUM increase will happen duration actually faster-a even if, misleading-a will be. This T2's SUM-vs-SAMPLECOUNT lesson's complement — correct statistic, correct metric for type.",
+      "ren_correct": "Correct — duration for metrics AVERAGE, count for metrics SUM. Statistic metric for type match aaganum.",
+      "ren_wrong": "A bit think again — SUM for duration wrong. SUM-a use did, more traffic = higher SUM, checkout actually faster-a even if wrong impression gives."
+    },
+    {
+      "id": "C6.4-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.4",
+      "scenario": "ananya-analyst reports that the CloudWatch average latency dashboard metric has been around 320ms for the past week, which seems acceptable. But some customers are still occasionally complaining about slow checkout. Deepak asks: 'What's a better metric to find the slow tail of requests, rather than the average?'",
+      "question": "What statistic would reveal slow requests that the average hides?",
+      "options": [
+        "A) SUM — adding all latency values would reveal the slow requests",
+        "B) A high-percentile statistic like p99 or p95 — these show the latency at which 99% or 95% of requests complete, exposing the slow tail that average hides. If average is 320ms but p99 is 4,200ms, it means 1% of requests take over 4 seconds — painful for those customers, completely invisible in the average",
+        "C) SAMPLECOUNT — counting the number of latency measurements reveals which ones are slow",
+        "D) MIN — finding the fastest request reveals what slow requests are being compared against"
+      ],
+      "correct_index": 1,
+      "explanation": "p99/p95 tail latency kaatum — average fast-a even if, tail slow-a is not theream. 320ms average + 4200ms p99 — , 1% users experience 13x slower checkout. Real user experience understand for doing percentile statistics essential, average misleading-a will be.",
+      "ren_correct": "Correct — percentile statistics tail latency reveal does, average hide doing also. This real user experience monitoring.",
+      "ren_wrong": "A bit think again — p99/p95 percentile tail kaatudhu, that slow requests find for doing. Average hide does, SUM/SAMPLECOUNT/MIN that kaataaathu."
+    },
+    {
+      "id": "C6.4-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C6.4",
+      "scenario": "X-Ray is enabled on order-service. A customer reports their checkout took 8 seconds. The CloudWatch average latency metric shows nothing unusual (still around 320ms average). You pull the X-Ray trace for the specific slow request.",
+      "error_shown": "X-Ray Trace: Request ID fa3b2c1d-e9f8-4a7b-8c6d-5e4f3a2b1c0d\nTotal duration: 8,241ms\n├── order-service handler: 142ms\n├── → RDS query (get_user_cart): 7,803ms ← anomaly\n├── → Razorpay API call (initiate_payment): 187ms\n└── → order-service response: 109ms\n\n(RDS slow query log for the same time window shows a full table scan on the carts table — no index on user_id column)",
+      "diagnosis": "The 8-second checkout wasn't a network issue, an application logic issue, or an external API issue — it was one specific database query doing a full table scan because the user_id column on the carts table had no index. CloudWatch metrics correctly showed average latency was fine (most queries are fast) but couldn't identify WHICH step in WHICH request was slow. X-Ray's trace pinpointed the exact span, making a 5-line analysis possible that would have taken hours of log-digging with metrics alone.",
+      "fix": "Add an index on carts.user_id in the database. This is a database optimization task, not a monitoring task — but X-Ray is what made it findable in minutes rather than hours. Also add a CloudWatch alarm on p99 latency in addition to average, so future tail-latency degradations are caught proactively rather than only when a customer complains.",
+      "explanation": "This X-Ray's real payoff — CloudWatch 'latency is fine on average' kaatudhu, X-Ray 'specifically this DB query in this request took 7.8 seconds because of a missing index' kaatudhu. This exact difference: aggregate vs individual request trace."
+    },
+    {
+      "id": "C6.4-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.4",
+      "scenario": "Dashboard and X-Ray fully configured. Final audit before closing out FQ-203.",
+      "broken_config": "order-service-overview dashboard — post-fix:\n├── Widget 1 'Request Volume': HTTPCode_Target_2XX_Count, SUM ✓ (shows variable traffic with clear lunch/dinner peaks)\n├── Widget 2 'Average Latency': TargetResponseTime, AVERAGE ✓ (unchanged, was correct)\n├── Widget 3 'Error Rate': HTTPCode_Target_5XX_Count, SUM ✓ (unchanged, was correct)\n├── Widget 4 'p99 Latency' (NEW): TargetResponseTime, p99 ✓ (added this lesson — tail latency now visible)\n└── Widget 5 'Active Alarms' (NEW): CloudWatch alarm status panel showing OrderService-HighCPU and HighErrorRate-order-service current states ✓\n\nX-Ray tracing:\n├── Enabled on order-service EC2 instances ✓\n├── Trace sampling: 5% of requests (appropriate for production volume — 100% would add cost and overhead) ✓\n└── Slow carts.user_id query identified and indexed; p99 latency dropped from ~4,200ms to ~380ms ✓",
+      "what_to_find": [
+        "Widget 1 now correctly shows SUM — the graph shape changed from a smooth, steadily-growing line to the variable, peak-hour-spiking pattern that actual order traffic shows",
+        "The new p99 widget confirms the X-Ray finding was real: before the index fix, p99 was ~4,200ms; after, it's ~380ms — a visible, measurable improvement on the dashboard itself",
+        "Adding the active alarms panel means the dashboard now shows both metric trends AND current alarm state — a single pane that combines the reactive (alarm status) and the analytical (metric trends)",
+        "X-Ray sampling at 5% is a deliberate cost/coverage trade-off — 100% sampling would add overhead and cost at production volumes, while 5% provides statistically useful traces for investigation without continuous full-trace cost"
+      ],
+      "correct_fix": "No further changes needed — this is a complete, correctly-configured observability setup, verified with real data (p99 improvement visible on the dashboard, X-Ray correctly traced the slow request that led to the index fix).",
+      "explanation": "This 'recognize this is already correct' verify task — we wrong statistic fix we have done, tail latency now visible-a is there, X-Ray real payoff show aaiduchu (index fix, p99 improvement measurable). FQ-203 close aagudhu."
+    },
+    {
+      "id": "C6.4-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C6.4",
+      "cases": {
+        "case_1": "Understanding the overall error rate trend for order-service over the past 30 days",
+        "case_2": "Identifying which specific microservice call is causing a particular slow request that a customer complained about",
+        "case_3": "Detecting whether CPU utilization on the ASG has been trending up over time as a warning sign",
+        "case_4": "Proving to Meera that checkout performance improved after a database fix, with before/after numbers"
+      },
+      "correct_answers": {
+        "case_1": "CloudWatch metrics (SUM statistic for error count over time) — aggregate trends over days/weeks are exactly what CloudWatch metrics are designed for",
+        "case_2": "X-Ray trace for that specific request — only X-Ray can show where time was spent in an individual request, making it the right tool for isolating a specific slow path",
+        "case_3": "CloudWatch metrics (average or maximum CPU over time) — a time-series trend of a resource metric is a CloudWatch-native use case",
+        "case_4": "CloudWatch dashboard with a p99 latency metric before and after the fix — a metric dashboard is the right way to present measurable, comparable performance evidence to a non-technical stakeholder"
+      },
+      "scenario": "Deepak asks for the standing framework: which observability question calls for CloudWatch metrics/dashboards, and which calls for X-Ray traces?",
+      "explanation": "Naanku different different question type — aggregate trends (CloudWatch), specific-request diagnosis (X-Ray), resource time-series (CloudWatch), before/after performance proof (CloudWatch dashboard). This real judgment — X-Ray always using doing also, CloudWatch only using doing also, both oversimplification.",
+      "ren_correct": "Correct — each case-kum actual question type base after doing right tool match did you do.",
+      "ren_wrong": "A bit think again — X-Ray and CloudWatch different different question for types design has been done. Aggregate for trends CloudWatch, specific request for diagnosis X-Ray."
+    },
+    {
+      "id": "C6.4-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C6.4",
+      "scenario": "Deepak wants the cost breakdown for the full observability stack now in place: CloudWatch dashboards cost ₹24/dashboard/month; X-Ray charges roughly ₹0.40 per 1 million traces recorded and ₹0.32 per 1 million traces retrieved for analysis. At 5% sampling of order-service's ~500,000 requests/day, roughly 25,000 traces are recorded daily.",
+      "question": "What's the real monthly cost of the full observability stack, and how does it compare to the cost of NOT having it?",
+      "solution": "CloudWatch dashboards: ~₹24/month (one dashboard). X-Ray recording: 25,000 traces/day × 30 days = 750,000 traces/month ÷ 1M × ₹0.40 ≈ ₹0.30/month. X-Ray retrieval (assuming 10% of traces are actually analyzed): 75,000 × ₹0.32/1M ≈ negligible. Total full observability stack: roughly ₹24.30/month. Compared against: the Week 14 real incidents had zero response; the missing-index slow checkout was hurting ~1% of users for an unknown duration before being found. The ₹24.30/month buys the ability to find problems in minutes instead of days, or not at all. This is not a cost trade-off worth debating.",
+      "explanation": "Full observability stack very cheap-a is there — ₹24/month dashboard + negligible X-Ray cost. This cost ennanu debate without doingl clear — not having it's real cost (missed incidents, slow queries hurting users for unknown duration) very adhigam."
+    },
+    {
+      "id": "C6.4-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.4",
+      "scenario": "Time for the final report closing out FQ-203 entirely.",
+      "question": "Which report should you send to Deepak?",
+      "options": [
+        "A) \"Fixed the dashboard and set up X-Ray. Monitoring is done now.\"",
+        "B) \"Found the existing 'Request Volume' widget was using SAMPLECOUNT instead of SUM — it was showing number of CloudWatch evaluation intervals, not actual requests, producing a smooth meaningless line instead of real traffic patterns. Fixed to SUM; the corrected graph now shows expected lunch/dinner peak patterns. Added a p99 latency widget (which, combined with X-Ray tracing, led to finding a missing index on carts.user_id — p99 dropped from ~4,200ms to ~380ms after the fix). Full observability stack in place: correct metrics, working alarms with distribution-list subscribers, multi-region CloudTrail, dashboard showing real data, X-Ray tracing at 5% sampling. Total ongoing cost: ~₹24.30/month.\"",
+        "C) \"Dashboard looks good now. Didn't check the existing widgets in detail.\"",
+        "D) \"X-Ray is too expensive to run continuously so we skipped it.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific wrong statistic explanation (SAMPLECOUNT vs SUM), what the correction actually revealed (real traffic patterns), AND the X-Ray payoff (missing index, p99 improvement measurable), AND the full FQ-203 summary in one place. This closes the whole ticket properly.",
+      "ren_correct": "This correct report — specific technical finding, real measurable improvement, complete ticket summary. FQ-203 properly closed.",
+      "ren_wrong": "This report either vague-a is there or skipped real work (D) — SAMPLECOUNT vs SUM exact mistake call out must do, improvement measurable-a is there."
+    }
+  ],
+  "act_number": 4,
+  "act_title": "Config and Trusted Advisor Readiness",
+  "builds_layer": "Compliance Signal Layer"
+}

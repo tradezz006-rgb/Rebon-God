@@ -1,0 +1,317 @@
+{
+  "lesson_id": "C2.2",
+  "lesson_title": "Writing IAM Policies — Precision Permissions with Conditions",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C2.1b — IAM Policies and Roles",
+  "student_will_learn": [
+    "How to write multi-statement IAM policies from scratch",
+    "The exact difference between bucket-level and object-level S3 ARNs",
+    "How to use Condition keys to restrict access by IP, time, or tags",
+    "How to design a policy that grants broad read but narrow write access",
+    "How to identify and fix the most common IAM policy mistakes"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "கடைசி 2 lessons-ல policy structure தெரிஞ்சுக்கிட்டீங்க, role attach பண்ணீங்க. இன்னைக்கு அடுத்த level-க்கு போவோம் — complex real-world policies எழுதப் போறோம். Multiple statements, conditions, precise resource scoping. இது தான் senior cloud engineer-ங்க daily work பண்ற level.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.2",
+        "Writing IAM Policies",
+        "Precision Permissions with Conditions"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Resource ARNs — Bucket vs Object Level",
+      "ava_speaks": "S3-ல ரெண்டு மாதிரி ARN இருக்கு, இது தான் ரொம்ப பேரு confuse ஆகுற இடம். arn:aws:s3:::my-bucket — இது bucket itself. arn:aws:s3:::my-bucket/* — இது bucket-க்குள்ள இருக்க objects. Bucket-level operations — s3:ListBucket மாதிரி — bucket ARN வேணும், /* இல்லாம. Object-level operations — s3:GetObject, s3:PutObject மாதிரி — object ARN வேணும், /*-உடன். இது ரெண்டையும் confuse பண்ணா, ஒரு classic bug வரும் — ListBucket permission கொடுத்தாலும், 'Access Denied' வரும், ஏன்னா wrong ARN format use பண்ணி இருப்பீங்க. இப்போ Condition keys பாப்போம். Condition-ன்னா, policy-க்கு ஒரு extra rule add பண்றது. 'இந்த access-ஐ, இந்த IP range-ல இருந்து வந்தா மட்டும் allow பண்ணு' மாதிரி. aws:SourceIp, aws:RequestedRegion, s3:x-amz-server-side-encryption — இதெல்லாம் common condition keys.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "S3 ARN — Two Levels, Two Different Rules"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Operation Type",
+            "Example Action",
+            "Correct ARN Format"
+          ],
+          "rows": [
+            [
+              "Bucket-level",
+              "s3:ListBucket",
+              "arn:aws:s3:::my-bucket"
+            ],
+            [
+              "Object-level",
+              "s3:GetObject, s3:PutObject",
+              "arn:aws:s3:::my-bucket/*"
+            ],
+            [
+              "Both needed together",
+              "List AND read files",
+              "Requires BOTH ARN formats in the policy"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Classic mistake: giving ListBucket permission on the object ARN (with /*) instead of the bucket ARN. Result: 'Access Denied' even though the permission looks correct."
+        },
+        {
+          "type": "write_definition_box",
+          "text": "Condition: An optional extra rule in a policy statement that must ALSO be true for the Allow/Deny to apply. Example: only allow if aws:SourceIp is within the office IP range. Conditions can also check TIME — DateGreaterThan / DateLessThan on aws:CurrentTime restricts an action to a window (e.g. business hours only), and tag checks like ec2:ResourceTag/Owner restrict by ownership."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "What does 'arn:aws:s3:::photos-bucket/*' in a Resource field specifically cover?",
+          "options": [
+            "A) The photos-bucket bucket and all objects inside it",
+            "B) Only the objects inside photos-bucket, not the bucket itself",
+            "C) All S3 buckets that start with 'photos'",
+            "D) The bucket, its objects, and any sub-buckets"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! /* means objects INSIDE the bucket only. Bucket itself-க்கு ஆனா separate ARN வேணும், without the /*.",
+          "ava_wrong": "இல்ல. photos-bucket/* — இந்த /* object-level-ஐ மட்டும் refer பண்ணும். Bucket itself list பண்ண வேணும்னா, /* இல்லாம வேற ARN வேணும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "A user has Policy A (Allow s3:DeleteObject on *) and Policy B (Deny s3:DeleteObject on arn:aws:s3:::production-bucket/*). The user tries to delete a file in 'production-bucket'. What happens?",
+          "options": [
+            "A) Allow wins — Policy A was attached first",
+            "B) Deny wins — explicit Deny in Policy B overrides Allow in Policy A",
+            "C) Delete succeeds because Policy A explicitly allows it",
+            "D) AWS asks the user to confirm which policy applies"
+          ],
+          "correct_index": 1,
+          "ava_correct": "சரி! Deny always wins. Production bucket-ல delete = denied. Test bucket-ல delete = allowed (no Deny அங்க). இது production protection pattern.",
+          "ava_wrong": "இல்ல, remember — Deny explicit-ஆ இருந்தா, அது எப்போவுமே win பண்ணும். Policy A-ல Allow இருந்தாலும், Policy B-ன் Deny அதை override பண்ணும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Razorpay's Payment Receipt Lockdown",
+      "ava_speaks": "Razorpay-ல payment receipts S3-ல store ஆகும். இது ரொம்ப sensitive data. அவங்க bucket policy எப்படி design பண்ணி இருக்காங்கன்னா — ஒரே ஒரு specific Lambda function ARN மட்டும் அந்த bucket-ஐ read பண்ண முடியும். Senior developers கூட directly access பண்ண முடியாது. Condition key use பண்ணி, Principal-ஐ அந்த specific Lambda ARN-க்கு மட்டும் restrict பண்ணி இருக்காங்க. இது compliance requirement-க்காக — payment data யாரு access பண்றாங்கன்னு exact-ஆ control பண்ணணும். இது தான் precision permission design.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Razorpay: Bucket Policy Restricting to One Lambda ARN"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Approach",
+            "Who Can Access",
+            "Risk Level"
+          ],
+          "rows": [
+            [
+              "No restriction",
+              "Any IAM user with S3 permissions",
+              "High — broad exposure"
+            ],
+            [
+              "IAM policy on users",
+              "Only users with attached policy",
+              "Medium — still many people"
+            ],
+            [
+              "Bucket policy + specific Principal ARN",
+              "Only the exact Lambda function",
+              "Lowest — compliance-grade"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Writing a Multi-Statement Policy",
+      "ava_speaks": "இப்போ real policy எழுதப் போறோம் — FoodQuick-ன் data team-க்காக. Read all buckets, write ஒரே ஒரு specific bucket-க்கு மட்டும்.",
+      "board_component": "monaco_code_editor",
+      "editor_session": {
+        "environment": "monaco_code_editor",
+        "language": "json",
+        "filename": "foodquick-data-team-policy.json",
+        "steps": [
+          {
+            "ava_narration": "முதல் statement — read access, all buckets-க்கும். Action list பண்றோம், Resource-க்கு * கொடுக்கறோம்.",
+            "code": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"ReadAllBuckets\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\"s3:GetObject\", \"s3:ListBucket\"],\n      \"Resource\": \"*\"\n    }",
+            "highlight_lines": [
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "ava_narration": "இரண்டாவது statement — write access, ஒரே ஒரு bucket-க்கு மட்டும் — foodquick-analytics.",
+            "code": ",\n    {\n      \"Sid\": \"WriteAnalyticsOnly\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\"s3:PutObject\"],\n      \"Resource\": \"arn:aws:s3:::foodquick-analytics/*\"\n    }",
+            "highlight_lines": [
+              9,
+              10,
+              11,
+              12
+            ]
+          },
+          {
+            "ava_narration": "கடைசியா, ஒரு Condition add பண்றோம் — office IP range-லிருந்து மட்டும் இந்த write access வேலை செய்யும்.",
+            "code": ",\n      \"Condition\": {\n        \"IpAddress\": {\n          \"aws:SourceIp\": \"203.197.55.0/24\"\n        }\n      }\n    }\n  ]\n}",
+            "highlight_lines": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "expected_outcome": {
+          "description": "A complete 2-statement policy: broad read access everywhere, narrow write access to one bucket, restricted further by office IP condition",
+          "what_to_notice": "Two separate statements handle two separate permission levels. This is cleaner than trying to combine read and write logic into one statement."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How This Policy Evaluates",
+      "ava_speaks": "இந்த policy-ஐ, ஒரு data analyst use பண்ணும்போது என்ன நடக்கும்-ன்னு பாருங்க.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Request: GetObject on 'foodquick-orders' bucket",
+            "  → Matches Statement 1 (ReadAllBuckets) → ALLOWED",
+            "",
+            "Request: PutObject on 'foodquick-analytics' from office IP",
+            "  → Matches Statement 2 + Condition satisfied → ALLOWED",
+            "",
+            "Request: PutObject on 'foodquick-analytics' from home WiFi",
+            "  → Matches Statement 2 BUT Condition fails → DENIED"
+          ]
+        },
+        "ava_narration": "Same person, same bucket, ஆனா location மாறினா result மாறும். Condition key-ன் power இது தான்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Write the ML Team Policy",
+      "instruction": "FoodQuick's ML team needs a precisely scoped policy. Write the complete JSON.",
+      "scenario": "The ML team needs: read access to ALL S3 buckets (they analyze data from many sources), write access ONLY to 'foodquick-ml-training-data' bucket, and the ability to create/terminate ONLY their own EC2 instances (identified by an 'Owner' tag matching their username) — never touching instances owned by other teams.",
+      "board_component": "monaco_code_editor",
+      "starter_code": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    // Statement 1: S3 read access — write here\n    \n    // Statement 2: S3 write to ml-training-data only — write here\n    \n    // Statement 3: EC2 actions restricted to own instances — write here\n  ]\n}",
+      "requirements": [
+        "Statement 1: Allow s3:GetObject and s3:ListBucket on Resource *",
+        "Statement 2: Allow s3:PutObject only on arn:aws:s3:::foodquick-ml-training-data/*",
+        "Statement 3: Allow ec2:TerminateInstances and ec2:StopInstances, with a Condition checking ec2:ResourceTag/Owner equals ${aws:username}"
+      ],
+      "hints": [
+        "The EC2 condition uses StringEquals with the key ec2:ResourceTag/Owner",
+        "${aws:username} is a policy variable that automatically resolves to the requesting user's name",
+        "This Owner-tag condition pattern lets many people share EC2 permissions safely without touching each other's instances"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A valid 3-statement policy matching all three requirements, with the EC2 statement correctly using the Owner tag condition",
+        "ava_correct": "Excellent! இந்த Owner tag condition trick — ரொம்ப powerful pattern. 20 ML engineers இருந்தாலும், ஒவ்வொருத்தரும் தன்ன instances-ஐ மட்டும் control பண்ணுவாங்க, ஒரே policy-ல.",
+        "ava_wrong": "கொஞ்சம் பாருங்க — EC2 condition-ல ${aws:username} correct-ஆ use பண்ணீங்களா? இது policy variable, literal string இல்ல. இது தான் ஒவ்வொரு user-க்கும் dynamic-ஆ match ஆகும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Policy That Looked Fine But Was AdministratorAccess",
+      "ava_speaks": "Security audit-ல flag ஆன ஒரு real policy சொல்றேன்.",
+      "setup": "A script written 8 months ago was supposed to 'just read configuration from SSM Parameter Store.' The developer who wrote it has since left the company. Nobody reviewed the policy since it was written.",
+      "what_happened": "A routine security audit flagged this as a critical finding — the automated script's policy was found to be functionally identical to AdministratorAccess.",
+      "broken_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"*\",\n      \"Resource\": \"*\"\n    }\n  ]\n}",
+      "error_shown": "Security scanner alert: 'Policy grants unrestricted access to all AWS actions on all resources. This is equivalent to full administrator access and violates least privilege.'",
+      "the_real_problem": "Developer 'quickly' testing something wrote Action: '*' and Resource: '*' — 'இது temporary, later fix பண்றேன்'-ன்னு நினைச்சிருப்பாரு. ஆனா அது 8 மாசம் production-ல அப்படியே இருந்துச்சு. இந்த script compromise ஆனா, attacker-க்கு entire AWS account-ன் full control கிடைச்சிருக்கும்.",
+      "fix": {
+        "corrected_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"ssm:GetParameter\",\n        \"ssm:GetParameters\",\n        \"ssm:GetParametersByPath\"\n      ],\n      \"Resource\": \"arn:aws:ssm:ap-south-1:*:parameter/foodquick/production/*\"\n    }\n  ]\n}",
+        "result": "Script can now ONLY read production parameters — cannot touch any other AWS service or resource"
+      },
+      "lesson": "Action: '*' Resource: '*' — இது AdministratorAccess-க்கு equal. 'Quick fix, will clean up later' — இது தான் production-ல இருக்க most dangerous policies-க்கான origin story. Never write this, even temporarily."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Policy Design Decisions",
+      "ava_speaks": "3 quick design decisions.",
+      "challenges": [
+        {
+          "question": "You need to block ALL delete operations across the entire AWS account during a production freeze, regardless of what individual user policies say. Which IAM feature achieves this?",
+          "answer": "AWS Organizations Service Control Policy (SCP). SCP org-level-ல apply ஆகும் — admin கூட override பண்ண முடியாது. Individual user policies-ல Deny போடுறதை விட, SCP ஒரே rule, guaranteed enforcement."
+        },
+        {
+          "question": "A policy statement has Action: s3:GetObject and Resource: arn:aws:s3:::data-bucket (without the /*). Will this policy successfully allow reading objects?",
+          "answer": "இல்ல. GetObject object-level operation, அதுக்கு /* வேணும். இந்த policy technically valid JSON, ஆனா practically எந்த object-ஐயும் read பண்ண முடியாது — ARN format தப்பு."
+        },
+        {
+          "question": "Why is it better to write TWO statements (one for read, one for write with a condition) instead of ONE complex statement trying to do both?",
+          "answer": "Readability and maintainability. Multiple simple statements debug பண்ண easy, audit பண்ண easy. ஒரே statement-ல எல்லாத்தையும் cram பண்ணா, மாசங்களுக்கு அப்புறம் யாருமே அதை புரிஞ்சுக்க மாட்டாங்க."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Senior Engineers Review Policies",
+      "ava_speaks": "Production-க்கு போற ஒவ்வொரு IAM policy-யும், இந்த review process கடந்து தான் போகும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Write the policy targeting the exact minimum permissions needed",
+          "detail": "Start narrow. Add permissions only when a real error proves they're needed — never pre-emptively broaden access."
+        },
+        {
+          "step": 2,
+          "action": "Test using IAM Policy Simulator before attaching to production",
+          "detail": "Simulator shows exactly which actions would be Allowed or Denied without actually running them."
+        },
+        {
+          "step": 3,
+          "action": "Search for wildcards (* in Action or Resource) and justify each one",
+          "detail": "Every wildcard in a production policy should have a documented reason. If no one can explain it, remove it."
+        },
+        {
+          "step": 4,
+          "action": "Peer review — a second engineer reads the policy before it ships",
+          "detail": "Fresh eyes catch ARN format mistakes and overly broad permissions that the original author missed."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "IAM Policy Simulator",
+          "use": "Policy-ஐ attach பண்றத்துக்கு முன்னாடி, அது correct-ஆ work பண்ணுமான்னு test பண்ணலாம்."
+        },
+        {
+          "tool": "AWS Access Analyzer for Policy Validation",
+          "use": "Policy syntax errors, overly permissive statements automatic-ஆ flag பண்ணும்."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "இன்னைக்கு real policy design பண்ணீங்க — multiple statements, conditions, precise ARN scoping. Bucket vs object ARN வித்தியாசம், Owner tag condition pattern — இதெல்லாம் இப்போ உங்க toolkit-ல இருக்கு. அடுத்த lesson-ல, least privilege-ஐ ஆழமா பாப்போம் — permissions time-ஓட எப்படி accumulate ஆகுதுன்னும், அதை எப்படி clean பண்றதுன்னும்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.2 — Summary",
+      "points": [
+        "✓ Bucket-level ARN (no /*) for ListBucket, object-level ARN (/*) for GetObject/PutObject",
+        "✓ Condition keys restrict access by IP, region, tags, or other request attributes",
+        "✓ ${aws:username} policy variable enables per-user dynamic conditions",
+        "✓ Action: '*' Resource: '*' is functionally AdministratorAccess — never write this",
+        "✓ Multiple clear statements beat one complex statement — always"
+      ],
+      "coming_next": "Lesson C2.3: Least Privilege in Practice — auditing and trimming accumulated permissions"
+    }
+  }
+}

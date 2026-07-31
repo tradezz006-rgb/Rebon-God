@@ -1,0 +1,327 @@
+{
+  "lesson_id": "C2.5",
+  "lesson_title": "MFA, Password Policies, and AWS Organizations",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C2.4 — IAM Roles for Services",
+  "student_will_learn": [
+    "Enable MFA on the AWS root account and on individual IAM users",
+    "Configure an account-wide IAM password policy with strength and rotation rules",
+    "Explain how AWS Organizations groups accounts into Organizational Units",
+    "Explain how a Service Control Policy (SCP) can override even an explicit IAM Allow",
+    "Debug an AccessDenied error caused by an SCP guardrail instead of an IAM permission gap"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம IAM Users, Groups, Policies, Roles எல்லாம் பார்த்தோம் - இதெல்லாம் 'யாருக்கு என்ன access' pattern. இன்னைக்கு நாம வேற level-க்கு போறோம் - account-ஏ எப்படி protect பண்றது, அப்புறம் FoodQuick போல multiple AWS accounts வெச்சிருக்கும்போது அதை எப்படி centrally control பண்றதுnu பார்ப்போம். இதுல ஒரு twist இருக்கு - ஒரு rule இருக்கு, அது IAM Allow-ஐ கூட override பண்ணிடும். அது என்னனu இப்போ பார்ப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.5",
+        "MFA, Password Policies, and AWS Organizations",
+        "Guardrails that protect the whole account, not just one user"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Why a Password Alone Is Never Enough",
+      "ava_speaks": "Password மட்டும் இருந்தா, அது phishing ஆனா, leak ஆனா, அவ்ளோதான் - attacker உள்ள வந்திடுவான். MFA (Multi-Factor Authentication) ரெண்டாவது layer போடுது - password தெரிஞ்சாலும், phone-ல இருக்கற authenticator app-ல இருந்து ஒரு 6-digit code கூட வேணும். Root account-ku இது especially critical, ஏன்னா root-ku எந்த IAM policy-மும் restrict பண்ண முடியாது - root எல்லாத்தையும் பண்ணும். அதனால Day 1-லயே root MFA on பண்றது non-negotiable rule.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "MFA = Something You Know + Something You Have"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Without MFA",
+            "With MFA"
+          ],
+          "rows": [
+            [
+              "Leaked password = full account takeover",
+              "Leaked password alone is useless without the device"
+            ],
+            [
+              "Root account has zero built-in protection layer",
+              "Root requires a live 6-digit code from a registered device"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "AWS best practice: enable MFA on the root account within the first hour of account creation, before creating any resources."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "Root account password leak ஆயிடுச்சu. MFA on பண்ணி இருந்தா attacker-ஆ என்ன ஆகும்?",
+          "options": [
+            "A) Attacker எல்லாத்தையும் பண்ண முடியும், password போதும்",
+            "B) Attacker login பண்ண முடியாது, device-ல இருக்கற code தேவை",
+            "C) MFA password-ஐ replace பண்ணிடும், password தேவையே இல்ல",
+            "D) MFA வேற purpose-க்கு மட்டும், login-ஐ affect பண்ணாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! MFA இருந்தா, password மட்டும் தெரிஞ்சா போதாது - registered device-ல இருந்து live code கூட வேணும். Attacker device-ஐ வெச்சிருக்க மாட்டான்.",
+          "ava_wrong": "இல்ல, யோசி - MFA ரெண்டாவது factor சேர்க்குதu, password-ஐ replace பண்ணாது. Password தெரிஞ்சாலும், device இல்லாம login முடியாது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Root account MFA எப்போ enable பண்றது AWS best practice?",
+          "options": [
+            "A) Production launch பண்ணின பிறகு",
+            "B) 100 users சேர்ந்த பிறகு",
+            "C) Account create பண்ணின உடனே, resources create பண்றதுக்கு முன்னாடி",
+            "D) MFA optional-தான், தேவை இல்ல"
+          ],
+          "correct_index": 2,
+          "ava_correct": "Sari! Root MFA-ஐ day one-லயே on பண்ணணும் - account create ஆன உடனே. இதை பிற்பாடு பண்ணலாம்nu delay பண்ண கூடாது.",
+          "ava_wrong": "இல்ல, delay பண்ண கூடாது. Root-ku unlimited power இருக்கும்போது, protect பண்றதை பிற்பாடுக்கu push பண்றது ரொம்ப risky."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "FoodQuick's Root Account, No MFA, One Phishing Email",
+      "ava_speaks": "FoodQuick launch பண்ணின முதல் வாரம், ஒரு intern-கிட்ட phishing email வந்துச்சu - AWS support போல fake email. அவன் அந்த link-ல root password-ஐ type பண்ணிட்டான். Root-ku MFA இல்லாததால, attacker நேரடியா root console-ல login ஆயிட்டான். 6 மணி நேரத்துல, 40-க்கும் மேல் EC2 instances launch பண்ணி crypto mining பண்ணிட்டான் - FoodQuick-க்கu ₹14.2 லட்சம் bill வந்துச்சu, 3 நாள் கழிச்சu தான் கண்டுபிடிச்சாங்க. அதுக்கu அப்புறம்தான் root MFA, IAM password policy, budget alerts எல்லாம் day-1 checklist-ஆ மாறுச்சu.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Root Compromise Timeline — FoodQuick, Launch Week"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Hour 0",
+              "Intern clicks phishing link, enters root password"
+            ],
+            [
+              "Hour 0-6",
+              "Attacker launches 40+ EC2 instances for crypto mining"
+            ],
+            [
+              "Day 3",
+              "Team notices the bill spike and shuts it down"
+            ],
+            [
+              "Total impact",
+              "₹14.2 lakh in unauthorized charges"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Enabling Root MFA and Setting a Password Policy",
+      "ava_speaks": "இப்போ karthik-dev, root account-ku MFA on பண்றான், அப்புறம் whole account-க்கu ஒரு strong password policy set பண்றான். பாரு எப்படி பண்றான்nu.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "IAM",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல root account-ல login ஆகி, IAM Dashboard-ல 'Security Recommendations'-க்கu போறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM Dashboard → Security recommendations → Root user",
+              "highlight": "The 'MFA not enabled' warning next to root user",
+              "result": "Root account security status panel opens"
+            }
+          },
+          {
+            "ava_narration": "'Assign MFA device' click பண்றோம், 'Authenticator app' select பண்றோம் - இது Google Authenticator போன்ற app.",
+            "console_action": {
+              "type": "click",
+              "path": "Assign MFA device → Authenticator app",
+              "highlight": "Assign MFA device button",
+              "result": "QR code appears for scanning with an authenticator app"
+            }
+          },
+          {
+            "ava_narration": "Phone-ல authenticator app-ல QR code scan பண்ணி, consecutive-ஆ ரெண்டu 6-digit codes enter பண்றோம் - இது device-ஐ verify பண்ண.",
+            "console_action": {
+              "type": "fill",
+              "path": "MFA setup → Enter two consecutive codes",
+              "field": "MFA code 1, MFA code 2",
+              "value": "123456, 789012",
+              "highlight": "The two code input fields",
+              "result": "MFA device is registered and active on the root account"
+            }
+          },
+          {
+            "ava_narration": "இப்போ account-wide password policy set பண்றோம் - IAM → Account settings-க்கு போறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM → Account settings → Password policy",
+              "highlight": "Set password policy button",
+              "result": "Password policy configuration form opens"
+            }
+          },
+          {
+            "ava_narration": "Minimum length 14, symbols/numbers/uppercase/lowercase எல்லாம் require பண்றோம், 90 நாளைக்கு ஒரு தடவை expire ஆகணும், last 5 passwords reuse பண்ண கூடாதுனு set பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Password policy form",
+              "field": "Minimum length, Require symbols, Require numbers, Expiration, Prevent reuse",
+              "value": "14, true, true, 90 days, last 5 passwords",
+              "highlight": "Password requirements checklist",
+              "result": "Account-wide password policy is now enforced for every IAM user"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Root account is protected with MFA, and every IAM user in the account must now follow the 14-character password policy with 90-day rotation.",
+          "what_to_notice": "MFA ஒரு device-க்கு மட்டும், but password policy account-ல இருக்கற எல்லா IAM users-க்கும் automatic-ஆ apply ஆகும் - individual-ஆ ஒவ்வொரு user-க்கும் set பண்ண வேண்டாம்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How FoodQuick Structures Multiple AWS Accounts",
+      "ava_speaks": "FoodQuick வளர்ந்த பிறகு, ஒரே AWS account-ல dev, staging, prod எல்லாம் வெச்சிருக்கறது risky-ஆ இருக்கும். அதனால AWS Organizations use பண்ணி, தனி தனி accounts-ஆ separate பண்ணி, ஒரு Management account-ல இருந்து centrally control பண்றாங்க. இந்த diagram பாரு.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "                Management Account (root of the Org)",
+            "                          |",
+            "        -----------------------------------------",
+            "        |                 |                     |",
+            "   OU: Production    OU: Development        OU: Sandbox",
+            "        |                 |                     |",
+            "  foodquick-prod    foodquick-dev, staging   personal test accounts",
+            "        |",
+            "  SCP attached: 'Deny all actions outside ap-south-1'"
+          ]
+        },
+        "ava_narration": "Production OU-ல இருக்கற account-ல ஒரு SCP attach பண்ணி இருக்காங்க - அது ap-south-1 region தவிர வேற எந்த region-லயும் எதுவும் launch பண்ண முடியாதுனu block பண்ணுதu. இது IAM policy இல்ல, இது ஒரு org-level guardrail."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Enable MFA for an IAM User",
+      "instruction": "ananya-analyst-க்கu virtual MFA device assign பண்ணu, அவளோட IAM user console access-ஐ secure பண்ண.",
+      "scenario": "ananya-analyst FoodQuick-ல data analyst-ஆ join ஆனா, அவளுக்கu IAM console access இருக்கu (S3 read-only, QuickSight access). Company policy படி, console access இருக்கற எல்லா users-க்கும் MFA compulsory.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "IAM → Users → ananya-analyst → Security credentials tab",
+        "current_configuration": "ananya-analyst has console access with a password, no MFA device assigned yet"
+      },
+      "requirements": [
+        "Navigate to ananya-analyst's Security credentials tab",
+        "Assign a virtual MFA device (authenticator app type)",
+        "Complete verification with two consecutive MFA codes",
+        "Confirm the MFA device shows as 'Assigned' in the console"
+      ],
+      "hints": [
+        "Security credentials tab-ல 'Assign MFA device' button கீழ பக்கம் இருக்கும்",
+        "Authenticator app QR code scan பண்ண ஒரு real app தேவை இல்ல இங்க - simulation-ல codes கொடுக்கப்படும்",
+        "ரெண்டu consecutive codes கேட்பாங்க, ஒண்ணu மட்டும் போதாது - இது device-ஐ verify பண்ண"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "ananya-analyst's IAM user shows an assigned and active virtual MFA device in Security credentials",
+        "ava_correct": "Super ananya-analyst-க்கu MFA active ஆயிடுச்சu! இனிமே password மட்டும் leak ஆனாலும், account safe.",
+        "ava_wrong": "இன்னும் ஒரு step மிச்சம் இருக்கu போல - MFA device 'Assigned' status-க்கu வர ரெண்டu consecutive codes verify ஆகணும். Try again."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "AccessDenied Even Though IAM Says Allow",
+      "ava_speaks": "இப்போ karthik-dev-க்கu ஒரு weird problem வருதu. அவனுக்கu AdministratorAccess policy attach பண்ணி இருக்கu - அதாவது எல்லாத்துக்கும் Allow. ஆனா us-east-1 region-ல ஒரு EC2 instance launch பண்ண try பண்றப்போ, AccessDenied வருதu. அவன் confuse ஆயிடுறான் - 'என்ட policy-ல எல்லாம் Allow-ஆ இருக்கே, ஏன் Denied?'",
+      "setup": "karthik-dev has AdministratorAccess attached to his IAM user. He tries to launch an EC2 instance in us-east-1 to test a CDN integration for FoodQuick's US expansion.",
+      "what_happened": "The RunInstances API call fails with an authorization error, even though karthik-dev's IAM policy explicitly allows ec2:RunInstances with no resource restrictions.",
+      "broken_config": "IAM Policy attached to karthik-dev: AdministratorAccess (Effect: Allow, Action: '*', Resource: '*')\n\nSCP attached to the Production OU (set up in the earlier lesson block):\n{\n  \"Effect\": \"Deny\",\n  \"Action\": \"*\",\n  \"Resource\": \"*\",\n  \"Condition\": { \"StringNotEquals\": { \"aws:RequestedRegion\": \"ap-south-1\" } }\n}",
+      "error_shown": "An error occurred (UnauthorizedOperation) when calling the RunInstances operation: You are not authorized to perform this operation. Encoded authorization failure message included. Decoded reason: explicit deny in a service control policy",
+      "the_real_problem": "SCP account-ஐ சுத்தி இருக்கற ஒரு 'wall' மாதிரி. IAM policy எவ்ளோ generous-ஆ Allow பண்ணாலும், SCP அதுக்கu வெளிய போக முடியாது. இந்த case-ல, Production OU-க்கu attach பண்ணி இருக்கற SCP, ap-south-1 தவிர வேற எந்த region-லயும் எதுவும் பண்ண கூடாதுனu deny பண்ணுதu - இது karthik-dev-ஓட IAM permissions-ஐ கூட override பண்ணுதu.",
+      "fix": {
+        "corrected_config": "Option A: If us-east-1 access is genuinely needed, update the SCP condition to allow both regions:\n\"StringNotEquals\": { \"aws:RequestedRegion\": [\"ap-south-1\", \"us-east-1\"] }\n\nOption B: If the SCP is intentional (company only operates in India), don't change it — instead launch the test resource in ap-south-1, or in a separate Sandbox OU that doesn't have this SCP attached.",
+        "result": "karthik-dev can now either launch in the approved region, or the SCP is correctly updated to allow the specific additional region needed for the US expansion test."
+      },
+      "lesson": "IAM Allow ஒரு permission கொடுக்குதu, ஆனா SCP account-ஓட boundary-ஐ define பண்ணுதu - SCP Deny எப்போவும் IAM Allow-ஐ வெல்லும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — MFA, Policies, and Guardrails",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சu சொல்லu.",
+      "challenges": [
+        {
+          "question": "A new intern needs access to only a Sandbox environment to experiment freely, with zero risk to production. Should FoodQuick put the intern's account in the Production OU with restrictive IAM policies, or in a separate Sandbox OU?",
+          "answer": "Sandbox OU தான் correct. IAM policy restrict பண்ணலாம், ஆனா தப்பா ஒரு permission கொடுத்துடுறான்னா, Production OU-ல இருந்தா அது real risk. Sandbox OU-ல தனி SCP இருக்கும், production resources-ஐ touch பண்ணவே முடியாது - இது structural safety, IAM மட்டும் நம்பி இருக்க வேண்டாம்."
+        },
+        {
+          "question": "An IAM policy explicitly Allows s3:DeleteObject, but an SCP on the OU explicitly Denies s3:DeleteObject account-wide. What happens when the user tries to delete an object?",
+          "answer": "Deny wins. Explicit Deny at any level - IAM policy, SCP, resource policy - always overrides an Allow. SCP being at the org level makes it even more absolute, since it defines what's possible at all, before IAM is even evaluated."
+        },
+        {
+          "question": "FoodQuick's password policy requires 90-day rotation. An employee complains this is inconvenient and wants it removed. Is removing it a good idea?",
+          "answer": "இல்ல, remove பண்ண கூடாது - ஆனா convenience-ஐ balance பண்ண, MFA இருக்கிற users-க்கu rotation period-ஐ கொஞ்சம் தளர்த்தலாம் (AWS உம் இப்போ MFA இருக்கிற accounts-க்கu fixed rotation-ஐ கட்டாயம் இல்லைனu recommend பண்ணுதu), ஆனா minimum length, complexity rules எல்லாம் இருக்கவே வேணும்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Cloud Engineers Manage Org-Wide Guardrails",
+      "ava_speaks": "நிஜ companies-ல, individual IAM policies-ஐ manual-ஆ ஒவ்வொரு account-லயும் manage பண்றது scale ஆகாது. அதனால cloud teams AWS Organizations-ஐ 'landing zone' pattern-ஆ set பண்ணி, SCPs-ஐ centrally define பண்றாங்க - production account-கள் தப்பா ஒரு region-ல resources create பண்ணாம, expensive instance types launch பண்ணாம, root account use பண்ணாம இருக்க guardrails வெச்சிருப்பாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Set up AWS Organizations with a Management account and separate OUs for Production, Development, and Sandbox",
+          "detail": "இது 'landing zone' - புதுசா join ஆகற account எல்லாம் இதுக்குள்ள வந்து சேரும்"
+        },
+        {
+          "step": 2,
+          "action": "Attach baseline SCPs to each OU (region restriction, root account restriction, prevent leaving the Organization)",
+          "detail": "இது individual IAM policies-க்கu மேல ஒரு safety net, account எவ்ளோ users இருந்தாலும் இது maintain பண்ணப்படும்"
+        },
+        {
+          "step": 3,
+          "action": "Enforce MFA and password policy via AWS Config rules that auto-flag non-compliant accounts",
+          "detail": "Manual audit பண்றதுக்கu பதிலா, Config rule automatic-ஆ compliance-ஐ continuously check பண்ணும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Organizations",
+          "use": "Multiple accounts-ஐ ஒரு hierarchy-ல group பண்ணி, centrally SCPs apply பண்ண உதவும்"
+        },
+        {
+          "tool": "AWS Control Tower",
+          "use": "Organizations-ஐ automate பண்ணி, best-practice landing zone ஒரு click-ல set பண்ணும் - big companies இதை use பண்றாங்க"
+        },
+        {
+          "tool": "IAM Access Analyzer",
+          "use": "Account-ல எந்த resources external access-க்கu exposed ஆயிருக்குனu automatic-ஆ கண்டுபிடிக்கும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கu நாம root MFA, IAM user MFA, password policy, அப்புறம் AWS Organizations structure எல்லாம் பார்த்தோம். மிக முக்கியமா, SCP எப்போவும் IAM Allow-ஐ override பண்ணும்nu கத்துக்கிட்டோம் - இது cloud engineers ரொம்ப நாள் கழிச்சu தான் புரிஞ்சுக்குவாங்க, நீ இப்போவே கத்துக்கிட்ட! இதுக்கu அப்புறம் CS2 IAM section முடிஞ்சிடுச்சu. அடுத்தu CS3 Networking start பண்ணப் போறோம் - VPC-ல இருந்து ஆரம்பிப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.5 — Summary",
+      "points": [
+        "✓ Root account MFA must be enabled before any resources are created",
+        "✓ Account-wide password policy applies automatically to every IAM user",
+        "✓ AWS Organizations groups accounts into Organizational Units (OUs) for central control",
+        "✓ A Service Control Policy (SCP) Deny always overrides an IAM Allow",
+        "✓ AccessDenied with a fully-permissive IAM policy usually means an SCP guardrail is the real cause"
+      ],
+      "coming_next": "Lesson C3.1: VPC Fundamentals — starting the Networking section"
+    }
+  }
+}

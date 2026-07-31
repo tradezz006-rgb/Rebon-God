@@ -1,0 +1,330 @@
+{
+  "lesson_id": "C4.4",
+  "lesson_title": "Elastic Load Balancing",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C4.3 — AMIs and Snapshots",
+  "student_will_learn": [
+    "Explain what a load balancer does and why a single server isn't enough at scale",
+    "Distinguish between an Application Load Balancer (ALB) and a Network Load Balancer (NLB)",
+    "Explain what a target group is and how it connects a load balancer to instances",
+    "Explain how health checks determine whether traffic is sent to a target",
+    "Debug a scenario where healthy instances are marked unhealthy due to a health check misconfiguration"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Golden AMI-ல இருந்து, இப்போ நமக்கு multiple identical app servers இருக்கு. ஆனா ஒரு problem - user எந்த server-ஐ hit பண்ணணும்னு எப்படி தீர்மானிக்கும்? ஒரே server-ஐ எல்லாரும் hit பண்ணா, அது overload ஆயிடும். இதுதான் இன்னைக்கு நாம கத்துக்கப் போற Elastic Load Balancing - traffic-ஐ multiple servers-க்கு intelligently distribute பண்றது.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.4",
+        "Elastic Load Balancing",
+        "Ticket FQ-171 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "ALB vs NLB — Layer 7 vs Layer 4",
+      "ava_speaks": "Application Load Balancer (ALB), Layer 7-ல வேலை செய்யும் - அதாவது, அது HTTP/HTTPS content-ஐ புரிஞ்சுக்கும், path-based routing பண்ண முடியும் (example: /api-க்கு ஒரு target group, /images-க்கு வேற target group). Network Load Balancer (NLB), Layer 4-ல வேலை செய்யும் - அது raw TCP/UDP traffic-ஐ handle பண்ணும், content-ஐ புரிஞ்சுக்காது, ஆனா extremely high performance, static IP address தரும். Web applications-க்கு பொதுவா ALB தான் use பண்றாங்க, ultra-low-latency அல்லது non-HTTP protocols-க்கு NLB.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "ALB vs NLB"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Application Load Balancer (ALB)",
+            "Network Load Balancer (NLB)"
+          ],
+          "rows": [
+            [
+              "Layer 7 — understands HTTP/HTTPS content",
+              "Layer 4 — handles raw TCP/UDP, no content awareness"
+            ],
+            [
+              "Path-based and host-based routing",
+              "No content-based routing — pure connection forwarding"
+            ],
+            [
+              "Best for typical web applications and APIs",
+              "Best for extreme performance needs or non-HTTP protocols"
+            ],
+            [
+              "Dynamic IP addresses",
+              "Supports static IP addresses"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "For a typical FoodQuick web application, ALB is almost always the right choice — NLB is reserved for specific high-performance or protocol-level needs."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "/api/orders requests-ஐ ஒரு target group-க்கும், /api/payments requests-ஐ வேற target group-க்கும் route பண்ணணும். இதுக்கு ALB-ஆ NLB-ஆ சரியான தேர்வு?",
+          "options": [
+            "A) NLB, ஏன்னா அது faster",
+            "B) ALB, ஏன்னா அது path-based routing பண்ண முடியும்",
+            "C) ரெண்டுமே இதை பண்ண முடியாது",
+            "D) இதுக்கு Route 53 தான் தேவை, load balancer இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Path-based routing (/api/orders vs /api/payments) ALB-ஓட Layer 7 capability-ல தான் சாத்தியம் - NLB content-ஐ புரிஞ்சுக்காது, path பார்க்கவே முடியாது.",
+          "ava_wrong": "இல்ல, NLB Layer 4-ல வேலை செய்யும் - அதுக்கு HTTP path புரியாது. Path-based routing வேணும்னா, ALB தான் correct choice."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ALB-க்கும் NLB-க்கும் performance/latency angle-ல main trade-off என்ன?",
+          "options": [
+            "A) ALB faster, ஆனா features குறைவு",
+            "B) NLB ultra-low-latency தரும் ஆனா content-aware routing இல்ல, ALB feature-rich ஆனா ஒப்பீட்டளவில் slightly அதிக latency",
+            "C) ரெண்டும் exactly ஒரே performance",
+            "D) NLB-க்கு routing features அதிகம், ALB-க்கு latency குறைவு"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! NLB raw TCP forwarding, extremely fast, ஆனா content புரியாது. ALB content-aware, feature-rich, ஆனா அந்த processing-க்கு சிறிது overhead இருக்கும்.",
+          "ava_wrong": "இல்ல, trade-off வேற வழியா இருக்கு - NLB Layer 4-ல ultra-fast, content awareness இல்ல. ALB Layer 7-ல feature-rich, ஆனா அந்த content processing-க்கு சிறிது latency overhead."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Why a Single Server Was Never Going to Scale",
+      "ava_speaks": "FoodQuick early days-ல, ஒரே ஒரு EC2 instance தான் எல்லா traffic-ஐயும் handle பண்ணுச்சு. Orders volume வளர்ந்தப்போ, அந்த ஒரே server-ல CPU 100% ஆயிடுச்சு, requests queue ஆக ஆரம்பிச்சுது, checkout page timeout ஆக ஆரம்பிச்சுது. Swiggy, Zomato மாதிரி companies-ஓட early scaling stories-லயும் இதே pattern common - single-server architecture, growth-ஐ ஒரு certain point-ல எப்போவும் break பண்ணும். Load balancer இல்லாம, horizontal scaling (அதாவது, more servers add பண்றது) சாத்தியமே இல்ல.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Single Server vs Load-Balanced Fleet"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Single Server",
+            "Load-Balanced Fleet"
+          ],
+          "rows": [
+            [
+              "All traffic hits one instance — hard ceiling on capacity",
+              "Traffic spreads across many instances — capacity scales with fleet size"
+            ],
+            [
+              "One instance failure = full outage",
+              "One instance failure = load balancer routes around it"
+            ],
+            [
+              "No way to add capacity without downtime",
+              "New instances join the fleet without any downtime"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up an ALB With a Target Group",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட app servers-க்கு ஒரு ALB, ஒரு target group, health checks எல்லாம் set பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல EC2 Console-ல Target Groups-க்கு போய், 'Create target group' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Target Groups → Create target group",
+              "highlight": "Create target group button",
+              "result": "The target group creation wizard opens"
+            }
+          },
+          {
+            "ava_narration": "Target group name 'foodquick-app-tg', protocol HTTP, port 80, VPC foodquick-prod-vpc select பண்றோம். Health check path-ஆ '/health' கொடுக்கிறோம் - இது application-ஓட actual health endpoint.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create target group form",
+              "field": "Target group name, Protocol, Port, Health check path",
+              "value": "foodquick-app-tg, HTTP, 80, /health",
+              "highlight": "Health check path field",
+              "result": "A target group is created that will check /health on each registered instance"
+            }
+          },
+          {
+            "ava_narration": "App server instances-ஐ இந்த target group-க்கு register பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Register targets → Available instances",
+              "field": "Instances",
+              "value": "foodquick-app-server-1, foodquick-app-server-2, foodquick-app-server-3",
+              "highlight": "Instance selection checkboxes",
+              "result": "Three app server instances are now registered as targets"
+            }
+          },
+          {
+            "ava_narration": "இப்போ Load Balancers-க்கு போய், 'Create load balancer' -> Application Load Balancer select பண்றோம். Name 'foodquick-alb', scheme Internet-facing, subnets foodquick-public-1a மற்றும் foodquick-public-1b select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create Application Load Balancer form",
+              "field": "Name, Scheme, Subnets",
+              "value": "foodquick-alb, Internet-facing, foodquick-public-1a + foodquick-public-1b",
+              "highlight": "Subnet mapping section — both AZs selected",
+              "result": "The ALB is configured to span two Availability Zones for redundancy"
+            }
+          },
+          {
+            "ava_narration": "Listener-ல HTTPS port 443 add பண்ணி, default action-ஆ foodquick-app-tg-க்கு forward பண்ண select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Listeners and routing → Add listener",
+              "field": "Protocol, Port, Default action",
+              "value": "HTTPS, 443, Forward to foodquick-app-tg",
+              "highlight": "Default action dropdown",
+              "result": "The ALB now forwards all incoming HTTPS traffic to the registered app servers via the target group"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "foodquick-alb is live, spanning two AZs, forwarding HTTPS traffic to foodquick-app-tg, which health-checks all three app servers on /health before sending them any traffic.",
+          "what_to_notice": "Health check path '/health'-ஐ, application-ல actually exist பண்ற endpoint-கூட match பண்ணி இருக்கணும் - இல்லனா healthy instances கூட unhealthy-nு mark ஆகிடும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How Traffic Flows Through the ALB and Target Group",
+      "ava_speaks": "இந்த diagram பாரு - ALB எப்படி traffic-ஐ healthy targets-க்கு மட்டும் route பண்ணும்னு காட்டுது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Internet",
+            "   |",
+            "foodquick-alb (spans public-1a and public-1b)",
+            "   |",
+            "Target Group: foodquick-app-tg",
+            "   |-- app-server-1 (health check /health: 200 OK) -> receives traffic",
+            "   |-- app-server-2 (health check /health: 200 OK) -> receives traffic",
+            "   |-- app-server-3 (health check /health: 503)    -> marked unhealthy, NO traffic sent"
+          ]
+        },
+        "ava_narration": "Health check fail ஆன instance-க்கு ALB traffic அனுப்பவே அனுப்பாது - இது users-ஐ ஒரு broken server-ஐ hit பண்றதில் இருந்து protect பண்ணுது."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Add a Second Target Group for a New Service",
+      "instruction": "FoodQuick-ஓட ஒரு புது 'restaurant-search' microservice-க்கு, ஒரு தனி target group create பண்ணி, path-based routing rule add பண்ணு.",
+      "scenario": "Ravi, /search path-க்கு வர requests, main app servers-க்கு பதிலா, ஒரு புது dedicated restaurant-search microservice fleet-க்கு போகணும்னு request பண்ணி இருக்காங்க.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Target Groups → Create target group",
+        "current_configuration": "foodquick-alb exists with one listener rule forwarding everything to foodquick-app-tg. The restaurant-search instances exist but aren't registered anywhere yet."
+      },
+      "requirements": [
+        "Create a new target group named foodquick-search-tg with health check path /health",
+        "Register the restaurant-search instances to this new target group",
+        "Add a new listener rule on foodquick-alb: IF path is /search*, THEN forward to foodquick-search-tg",
+        "Confirm the default rule still forwards everything else to foodquick-app-tg unchanged"
+      ],
+      "hints": [
+        "Target group create பண்றது, C2.4-ல IAM roles create பண்ணது மாதிரி தான் - existing setup-ஐ தொடாம, புது ஒண்ணு add பண்றது",
+        "Listener rules-ல, path pattern rules-ஐ priority order-ல add பண்ணலாம் - specific path rules (/search*) default rule-க்கு முன்னாடி evaluate ஆகணும்",
+        "Default rule-ஐ delete பண்ணவோ மாத்தவோ வேண்டாம் - அதுதான் மற்ற எல்லா traffic-க்கும் fallback"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "foodquick-search-tg exists with restaurant-search instances registered, and foodquick-alb has a new rule routing /search* to it while all other traffic still goes to foodquick-app-tg",
+        "ava_correct": "Correct! இப்போ /search requests தனியா, dedicated microservice fleet-க்கு போகும் - main app servers-ஐ disturb பண்ணாம.",
+        "ava_wrong": "Rule priority-ஐ ஒரு தடவை check பண்ணு - path-specific rule, default rule-க்கு முன்னாடி evaluate ஆகணும், இல்லனா /search traffic-மும் தப்பா main app-க்கே போயிடும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Healthy Servers Marked Unhealthy — A Health Check Path Mismatch",
+      "ava_speaks": "priya-dev, ஒரு target group setup பண்றப்போ, health check path-ஐ '/healthcheck'nு configure பண்ணிட்டா - ஆனா application code actually '/health' path-ல தான் health status serve பண்ணுது. என்ன ஆச்சுனு பாருங்க.",
+      "setup": "priya-dev creates a target group for a new fleet of app servers and configures the health check path as /healthcheck, assuming that's the standard convention, without checking what path the application actually implements.",
+      "what_happened": "All three app servers are running perfectly fine and serving real user traffic correctly when accessed directly, but the ALB marks every single one of them as 'unhealthy' and stops sending them any traffic at all, causing a complete outage despite the servers being completely functional.",
+      "broken_config": "Target group: foodquick-app-tg\nHealth check path configured: /healthcheck\nApplication's actual health endpoint: /health (returns 200 OK)\n\nRequest to /healthcheck on the application: 404 Not Found (this route doesn't exist in the app)",
+      "error_shown": "Target group console: All 3 targets showing state 'Unhealthy' — Reason: Health checks failed with these codes: [404]. Application logs (checked separately) show no errors — the app itself is running fine and responding correctly on /health.",
+      "the_real_problem": "Health check path ஒரு assumption-ஓட base-ல configure பண்ணப்பட்டது, application code-ஐ actually verify பண்ணாம. ALB-க்கு, servers 'healthy'-ஆ இருக்கானு தெரியறதுக்கு ஒரே ஒரு வழி - configured health check path-ல ஒரு success response கிடைக்கறதுதான். Path தப்பா இருந்தா, servers எவ்ளோ perfectly fine-ஆ இருந்தாலும், ALB அவங்களை 'dead'nு மட்டும் தான் பார்க்கும்.",
+      "fix": {
+        "corrected_config": "Update the target group's health check path from /healthcheck to /health, matching the application's actual endpoint.",
+        "result": "Within a couple of health check intervals, all three targets transition back to 'Healthy', and the ALB resumes sending traffic to them — the outage resolves immediately."
+      },
+      "lesson": "Health check path config பண்றப்போ, application code-ல actually அந்த endpoint exist பண்றதா-ன்னு verify பண்ணாம 'standard convention'nு assume பண்றது, perfectly healthy servers-ஐயும் unhealthy-ஆ mark பண்ணி, unnecessary outage உருவாக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Load Balancing Design Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A target group's health check interval is set to 5 minutes, with 2 consecutive failures needed to mark a target unhealthy. If an instance genuinely crashes, roughly how long could users keep getting routed to it before the ALB stops sending traffic there?",
+          "answer": "Up to about 10 minutes (2 checks x 5-minute interval) before the target is marked unhealthy — a long window during which real user requests could fail. This is why health check intervals and thresholds need to be tuned tightly enough to catch failures quickly, balanced against not being so aggressive that transient blips cause unnecessary flapping."
+        },
+        {
+          "question": "FoodQuick is building a new service that needs to preserve the original client IP address and requires extremely low, consistent latency for a custom binary protocol, not HTTP. ALB or NLB?",
+          "answer": "NLB. A non-HTTP protocol immediately rules out ALB's Layer 7 content awareness, which isn't useful (or applicable) here. NLB's Layer 4 pass-through and static IP support fit both the protocol requirement and the low-latency need."
+        },
+        {
+          "question": "A target group has 4 healthy instances and 1 unhealthy instance. Does the unhealthy instance still count toward the load balancer's overall capacity calculations, or is it effectively invisible to routing?",
+          "answer": "It's effectively invisible to routing — the ALB only sends traffic to targets currently marked healthy. The unhealthy instance remains registered (so it can be checked again and rejoin automatically once healthy), but it receives zero traffic while in that state."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Validate Health Checks Before They Cause an Outage",
+      "ava_speaks": "Real companies-ல, health check configuration ஒரு 'set it and forget it' step இல்ல - அது deployment process-ஓட ஒரு verified, tested பகுதி.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Include the health check path as an explicit, tested part of the application's API contract, documented alongside the app's actual routes",
+          "detail": "இது priya-dev-ஓட mistake மாதிரி, assumption-ல இருந்து configure பண்றதை தவிர்க்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Manually curl the health check path against a running instance before registering it to a target group",
+          "detail": "இது ஒரு simple, 30-second check, ஆனா configuration error-ஐ production-ல impact ஆவதுக்கு முன்னாடியே கண்டுபிடிக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Monitor target group health status changes via CloudWatch alarms, alerting if healthy target count drops below a safe threshold",
+          "detail": "இது ஒரு health check misconfiguration-ஐ, users complain பண்றதுக்கு முன்னாடியே, team-க்கு தெரியப்படுத்தும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "ALB Target Group health status console",
+          "use": "ஒவ்வொரு target-ஓட current health state-ஐயும், அது ஏன் unhealthy-ஆ mark ஆனதுனு (status code, reason) directly காட்டும்"
+        },
+        {
+          "tool": "CloudWatch HealthyHostCount / UnHealthyHostCount metrics",
+          "use": "Target group-ல healthy vs unhealthy target count-ஐ time-series-ஆ track பண்ணி, alarms set பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம ALB vs NLB, target groups, health checks எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, health check path application-ஓட actual endpoint-கூட match ஆகணும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம Auto Scaling Groups பார்ப்போம் - traffic spike-க்கு automatic-ஆ scale பண்றது எப்படி.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.4 — Summary",
+      "points": [
+        "✓ ALB works at Layer 7 with content-aware, path-based routing; NLB works at Layer 4 for raw, high-performance TCP/UDP forwarding",
+        "✓ A target group connects a load balancer to a set of registered instances",
+        "✓ Health checks determine which targets receive traffic — unhealthy targets get none",
+        "✓ Path-based routing rules let one ALB serve multiple backend services from different URL paths",
+        "✓ A health check path that doesn't match the application's actual endpoint marks healthy servers as unhealthy, causing an entirely avoidable outage"
+      ],
+      "coming_next": "Lesson C4.5: Auto Scaling Groups"
+    }
+  }
+}

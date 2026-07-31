@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C7.1",
+  "ticket": "FQ-218",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-218 — Ravi Krishnan (Head of Engineering)\n\nThis is a different kind of ticket. No fire to fight, no cost leak to chase — at least not yet. I want to do something we've never actually done: step back and look at what we've built, properly, before we add anything else.\n\nYou've touched every layer of this infrastructure since FQ-142. IAM, networking, compute, storage, monitoring — you've seen where it was held together with assumptions and good intentions. I want to use AWS's Well-Architected Framework to do an honest review of where we actually stand across all five pillars, and decide what the next real investments should be.\n\nStart there. Show me a real picture — the good parts and the gaps — not just the parts that are easy to talk about.\n\n— Ravi\n\nP.S. — FQ-142 is technically still open. I want to close it properly when this ticket is done.\n\nDesign must name VPC/CIDR, security groups, load balancer, Auto Scaling, EC2, and S3 before build.",
+  "arc_outro": "Ravi Krishnan (Head of Engineering)\n\nThat's the most complete picture of FoodQuick's infrastructure we've ever had. Reliable pillar has moved the furthest — Multi-AZ, proper ASG policy, working alarms. Security and Cost are genuinely better but still have documented gaps worth closing. Operational Excellence has more work ahead than any of the others.\n\nOne more thing from the WAF review I want to highlight before we move forward: FoodQuick now has proper cost attribution, working monitoring, documented processes, and an architecture that was designed rather than accumulated. That's a different company from the one you walked into at FQ-142.\n\nNext: Infrastructure as Code. The last thing I want is someone rebuilding this from memory if we ever have to start over.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C7.1-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C7.1",
+      "scenario": "Ravi asks you to start the WAF review before the team meets. He sends a pre-reading note: 'The Well-Architected Framework is five pillars. Before we start rating FoodQuick against them, I want to make sure everyone understands what the framework is actually for — and what it's not for.'",
+      "question": "What is the Well-Architected Framework actually designed to help with — and what would be a wrong way to use it?",
+      "options": [
+        "A) It's a checklist to determine whether an architecture is 'compliant' with AWS standards — pass every item and the architecture is officially approved",
+        "B) It's a structured set of questions and trade-off reasoning to help identify risks, make deliberate decisions, and understand the real cost of architectural choices — not a pass/fail test, and not a guarantee that a 'reviewed' architecture is perfect or complete",
+        "C) It's a pricing tool to help estimate AWS bills more accurately before building",
+        "D) It only applies to architectures being built from scratch — existing architectures cannot be meaningfully reviewed against it"
+      ],
+      "correct_index": 1,
+      "explanation": "WAF pass/fail checklist not — trade-off reasoning tool. 'Reviewed' — for saying 'perfect' — meaning not. Real value: gaps-a identify doing, deliberate decisions doing, accepting certain risks knowingly. Existing architecture-kum apply will happen, 'from scratch' only not.",
+      "ren_correct": "Correct — WAF is trade-off reasoning, not a compliance checklist. Real value is identifying gaps and making deliberate decisions.",
+      "ren_wrong": "A bit think again — WAF pass/fail compliance tool not. This trade-off reasoning, gaps identify for doing, perfect guarantee for doing not."
+    },
+    {
+      "id": "C7.1-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.1",
+      "question": "What are the five AWS Well-Architected Framework pillars?",
+      "options": [
+        "A) Compute, Storage, Networking, Database, and Security",
+        "B) Operational Excellence, Security, Reliability, Performance Efficiency, and Cost Optimization",
+        "C) Availability, Scalability, Durability, Maintainability, and Affordability",
+        "D) IAM, VPC, EC2, S3, and CloudWatch — one pillar per core AWS service category"
+      ],
+      "correct_index": 1,
+      "explanation": "Ainthu pillars: Operational Excellence (processes, automation, learning from failures), Security (identity, data protection, incident response), Reliability (recovery, scaling, managing disruption), Performance Efficiency (right resources, monitoring, continuous optimization), Cost Optimization (eliminate waste, right-size, right pricing models). Ovva pillar also AWS service names alla, cross-cutting concerns.",
+      "ren_correct": "Correct — ainthu pillars exactly. Service names not, cross-cutting concerns.",
+      "ren_wrong": "A bit think again — pillars AWS service categories alla. Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization — cross-cutting architecture concerns."
+    },
+    {
+      "id": "C7.1-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.1",
+      "question": "The WAF notes that 'there are no right answers' and often involves genuine trade-offs between pillars. Give a real example: what is a common trade-off between the RELIABILITY pillar and the COST OPTIMIZATION pillar?",
+      "options": [
+        "A) There are no real trade-offs between pillars — improving any one pillar automatically improves all others",
+        "B) Increasing reliability typically costs more: Multi-AZ deployments, redundant NAT Gateways, larger ASG minimums, Reserved Instances for baseline capacity — all improve reliability but increase cost. The WAF asks you to be deliberate about which trade-offs you're making, not to pretend they don't exist",
+        "C) Reliability improvements always REDUCE cost, so no trade-off exists there",
+        "D) Cost optimization improvements always make reliability worse, so the two pillars are always directly opposed with no middle ground"
+      ],
+      "correct_index": 1,
+      "explanation": "This real trade-off — Multi-AZ, redundant NAT, larger ASG minimums, all Reliability improve does but Cost adhigam. WAF idha deny do not do, that explicit-a acknowledge after doing, 'this risk is acceptable' or 'this cost is worth it' deliberate-a decide doing WAF's point.",
+      "ren_correct": "Correct — real trade-off exists, WAF asks you to be deliberate about it, not to pretend it doesn't.",
+      "ren_wrong": "A bit think again — pillar improvements automatically all-pillars improve what was done. Real trade-offs is there, WAF that acknowledge does."
+    },
+    {
+      "id": "C7.1-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.1",
+      "scenario": "You pull together the honest current state across all five WAF pillars, based on everything done since FQ-142.",
+      "broken_config": "FoodQuick Well-Architected Review — Current State:\n\nRELIABILITY:\n Strengths: Multi-AZ for order-service ASG and RDS, health checks working, ASG target-tracking policy live, max capacity verified under load, mix of instance types\n Gaps: No formal runbook for common failure scenarios, recovery untested beyond individual component tests\n Rating: Solid foundation, process gaps remain\n\nSECURITY:\n Strengths: SG-to-SG references, BPA enforced on all buckets (automated re-check), secrets in Parameter Store, Session Manager fleet-wide, CloudTrail multi-region, IAM least-privilege applied to known roles\n Gaps: No formal periodic IAM access review process, driver-documents incident (6 weeks exposure) unresolved in terms of regulatory notification decision\n Rating: Meaningfully improved, ongoing gaps\n\nCOST OPTIMIZATION:\n Strengths: Reserved Instances for stable workloads, Spot for ML batch, Intelligent-Tiering for product images, CloudWatch retention policies, log script fixed, EFS-to-EBS migration done\n Gaps: No formal tagging strategy (hard to attribute costs by team/service), no cost anomaly alerts configured\n Rating: Much better, attribution still weak\n\nOPERATIONAL EXCELLENCE:\n Strengths: CloudTrail multi-region, working alarms with distribution-list subscribers, correct dashboard metrics, X-Ray tracing, decommissioning runbook updated, quarterly all-regions review scheduled\n Gaps: No Infrastructure as Code (everything built manually — no reproducibility guarantee), no formal post-incident review process beyond the ad-hoc cases done in these tickets\n Rating: Most work remaining\n\nPERFORMANCE EFFICIENCY:\n Strengths: Correct instance types (t3.micro replaced with m5 where needed), ASG scales to actual load, EBS volume types matched to workloads, p99 latency monitored\n Gaps: No load testing framework for planned future changes, no formal capacity planning process",
+      "what_to_find": [
+        "Reliability is the strongest pillar — the work done across CS3 (networking), CS4 (compute resilience), and CS6 (monitoring) has meaningfully addressed the most critical reliability gaps",
+        "Operational Excellence has the most remaining work — the absence of Infrastructure as Code means the entire architecture exists only in human memory and manual console actions; if rebuilt from scratch, critical details would likely be missed or inconsistently applied",
+        "All five pillars have SOME gaps — a 'reviewed' architecture with genuine gaps is more honest and actionable than one declared complete",
+        "The driver-documents regulatory notification question is correctly flagged as still open — it's a legal/compliance decision, not an engineering one, and engineering shouldn't close it unilaterally"
+      ],
+      "correct_fix": "No immediate fixes in this task — the audit's job is to produce an honest picture. Each pillar's gaps become the prioritized backlog for CS7's remaining lessons and beyond. The right next step is to agree on priority order with Ravi, not to try to fix all gaps simultaneously.",
+      "explanation": "This real WAF review — strength AND gaps honestly, both also. 'All good' — says WAF's value-a destroy does. Operational in Excellence IaC gap next lesson's focus will happen."
+    },
+    {
+      "id": "C7.1-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C7.1",
+      "question": "Having completed the WAF review, arrange the correct order for acting on its findings.",
+      "items": [
+        "Present the honest review findings to Ravi, including both strengths and gaps",
+        "Agree on priority order for addressing gaps, based on actual risk level and effort required",
+        "Address the highest-priority gaps first (in FoodQuick's case: IaC for reproducibility, formal IAM review process)",
+        "Re-run a WAF review after significant changes, since the architecture will keep evolving",
+        "Document which gaps are being deliberately accepted for now and why, so they're not accidentally forgotten"
+      ],
+      "correct_order": [
+        0,
+        1,
+        4,
+        2,
+        3
+      ],
+      "explanation": "Present first (honest picture for Ravi must give), then priority agree must do, then accepted gaps document must do (formally — 'we're accepting this risk consciously'), then highest-priority gaps address must do, last-a re-review must do after changes. Document accepted gaps's step before action — 'we'll come back to it' — document panwe forget will happen.",
+      "ren_correct": "Correct — document accepted gaps deliberately before moving to fix the highest-priority ones, so nothing falls through accidentally.",
+      "ren_wrong": "Order again paaru — accepted gaps document do is important, just 'we'll get to it later' — formally-document panwe poidum."
+    },
+    {
+      "id": "C7.1-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.1",
+      "scenario": "Ravi reviews the WAF findings and asks: 'The redundant NAT Gateways (one per AZ, from C3.3) and the extra Reserved Instances for the ASG baseline (from C4.6) both cost real money. Under Cost Optimization, are those justified expenses or things we should cut to improve the score?'",
+      "question": "How should this be answered using proper WAF trade-off reasoning?",
+      "options": [
+        "A) They should be cut immediately — any cost that can be reduced improves the Cost Optimization pillar score, regardless of what it does to other pillars",
+        "B) Both are justified costs that were deliberately chosen after understanding the trade-off: the redundant NAT Gateways protect against a single NAT going down taking all outbound private subnet access with it (Reliability vs Cost trade-off, made deliberately in C3.3). The Reserved Instance baseline protects against scaling lag during flash sales (Reliability/Performance vs Cost, made deliberately in C4.5 and C4.6). WAF asks that trade-offs be deliberate — they were. Reversing them to improve a Cost score while degrading Reliability would be the actual mistake",
+        "C) Both should be reviewed every month and eliminated when traffic is low, then re-added when traffic is high",
+        "D) WAF Cost Optimization requires eliminating all redundancy, regardless of reliability impact"
+      ],
+      "correct_index": 1,
+      "explanation": "This WAF trade-off reasoning's real application — 'Cost Optimization score improve for doing Reliability sacrifice we will do' — WAF sollaathu. Deliberate trade-off but, that's architectural judgment. WAF's value: blind cuts-a prevent doing, not mandate them.",
+      "ren_correct": "Correct — deliberate trade-offs are the goal, not eliminating all cost regardless of pillar impact.",
+      "ren_wrong": "A bit think again — WAF Cost Optimization all redundancy eliminate must do — sollaathu. Deliberate, justified trade-offs acceptable-a."
+    },
+    {
+      "id": "C7.1-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.1",
+      "scenario": "karthik-dev asks: 'The WAF review shows gaps across every pillar. Does that mean the architecture is bad? We've done so much work across CS2 through CS6.'",
+      "question": "How should you respond honestly?",
+      "options": [
+        "A) 'Yes — having any WAF gaps means the architecture has failed and everything needs to be rebuilt'",
+        "B) 'No — a WAF review that shows gaps is a BETTER outcome than one that claims perfection. The gaps are real and should be addressed in priority order, but the architecture has meaningfully improved in every pillar compared to FQ-142. The honest picture with documented gaps is more useful than a falsely clean one that creates hidden risk'",
+        "C) 'The gaps don't matter — since we found them, they're now documented and therefore no longer risks'",
+        "D) 'Yes, but only the Operational Excellence gaps — the other pillars' gaps are acceptable by WAF standards'"
+      ],
+      "correct_index": 1,
+      "explanation": "WAF gaps being there 'bad architecture' not — gaps honest-a identify to do mudiyardhu, address for doing needed, but this 'failed' — collaathu. Gap-free review — that superficial review — real architectures always have gaps, deliberate in decision-making irundhu progress will come.",
+      "ren_correct": "Correct — gaps found honestly is better than claimed-perfect with hidden risk. Progress is real, gaps are the next work.",
+      "ren_wrong": "A bit think again — WAF gaps being there failure not. All architectures have gaps, honest identification is the point."
+    },
+    {
+      "id": "C7.1-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C7.1",
+      "scenario": "During the WAF review, ananya-analyst raises a concern: 'I ran the same report on our AWS bill as I did six months ago. Even with all the cost fixes, our bill grew by 35% in the last two quarters. Does that mean the cost optimization work didn't work?'",
+      "error_shown": "AWS Cost Explorer — last 6 months:\nTotal spend: Q-1 ₹3.2L → Q-2 ₹4.3L (35% increase)\n\nOrder volume over same period: +58% growth\nCost-per-order trend: Q-1 ₹0.28/order → Q-2 ₹0.24/order (14% improvement)\n\nNew resources since cost work began: 3 additional Reserved Instances (planned baseline), multi-region CloudTrail logging, 3x NAT Gateways (one per AZ), X-Ray tracing",
+      "diagnosis": "The total bill growing while the company grew faster is not evidence the cost work failed — it's evidence the company scaled. The correct metric for cost optimization is cost efficiency (cost per order, or cost as a % of revenue), not absolute bill size. Cost-per-order improved 14%, which means each rupee of AWS spend is now producing 14% more business value than before the work. The 35% absolute increase reflects deliberate investment in reliability and monitoring that accompanied 58% order growth.",
+      "fix": "Report the correct framing to Ravi: total cost grew because the company grew, but cost efficiency improved 14% (₹0.28 → ₹0.24 per order). Going forward, track cost-per-order and cost-as-%-of-GMV as the real cost optimization KPIs, not absolute AWS spend which will always grow with a growing company.",
+      "explanation": "This real analytical mistake — absolute cost-a optimization metric-a treat doing, efficiency metric without. Growing for company absolute cost grow will happen, that failure not. Cost-per-order or cost-as-%-of-GMV real metric."
+    },
+    {
+      "id": "C7.1-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.1",
+      "scenario": "You present the WAF review findings to Ravi. He asks for a prioritized action list based on actual risk, not just pillar balance.",
+      "broken_config": "Proposed priority order (before Ravi's review):\n1. Cost Optimization — tagging strategy (LOW effort, LOW immediate risk)\n2. Operational Excellence — Infrastructure as Code (HIGH effort, HIGH future risk)\n3. Security — IAM periodic review process (MEDIUM effort, MEDIUM risk)\n4. Reliability — formal recovery runbooks (MEDIUM effort, MEDIUM risk)\n5. Performance — load testing framework (HIGH effort, LOW immediate risk)\n\nRavi's reaction: 'You've put the easiest item first, not the most important one. I want to understand your reasoning — because if the reason is just that it's easier, that's not good prioritization.'",
+      "what_to_find": [
+        "The proposed order puts the easiest item (tagging) first, not because it has the highest risk or business impact, but implicitly because it's easiest — this is exactly the wrong prioritization logic for WAF gap remediation",
+        "IaC (item 2) has the highest future risk: without it, the entire architecture exists only in manual console state — any disaster recovery, region expansion, or compliance audit would require rebuilding from human memory",
+        "The IAM review process (item 3) has immediate regulatory relevance given the driver-documents incident still open",
+        "A correct re-prioritization would put IaC and IAM review first, since their gap cost (if realized) is much higher than the tagging gap"
+      ],
+      "correct_fix": "Reorder: (1) IaC — highest future risk, (2) IAM periodic review — regulatory relevance + active open incident, (3) Formal recovery runbooks — operational reliability, (4) Cost tagging — business attribution, (5) Load testing framework — forward-looking but lower immediate risk. Document the reasoning for the order, not just the order itself.",
+      "explanation": "Prioritization — 'easiest first' not — 'highest risk first'. IaC gap irundha, any in disaster entire architecture rebuild from memory — that HIGH risk. Tagging gap irundha, attribution weak — LOW immediate risk. This real engineering prioritization."
+    },
+    {
+      "id": "C7.1-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C7.1",
+      "cases": {
+        "case_1": "FoodQuick's RDS is now Multi-AZ, and Priya wants to add read replicas for the analytics team's reporting queries to reduce load on the primary",
+        "case_2": "A new engineer suggests disabling CloudTrail to save on S3 storage costs, since 'the security issues are fixed now'",
+        "case_3": "The team wants to test a major configuration change to the order-service ASG, but has no staging environment",
+        "case_4": "Deepak wants to add health check dashboards for every individual EC2 instance in the fleet"
+      },
+      "correct_answers": {
+        "case_1": "Performance Efficiency AND Reliability — read replicas reduce load on the primary (Performance) while adding a degree of read availability (Reliability); both pillars benefit, no meaningful trade-off against other pillars here",
+        "case_2": "A Security AND Operational Excellence regression — CloudTrail is not optional security infrastructure, and the storage cost (~₹1/month) is negligible. This is a case where 'Cost Optimization' logic is being misapplied to justify removing a foundational capability",
+        "case_3": "An Operational Excellence gap — testing major changes on production without a staging environment is a classic 'no safe experiment' problem, one of WAF Operational Excellence's explicit focus areas",
+        "case_4": "Likely an operational complexity increase with limited value — individual instance health is already handled by the ALB health checks and ASG; adding per-instance dashboards for a fleet that auto-scales adds noise and maintenance overhead. Performance Efficiency asks whether the complexity is justified"
+      },
+      "scenario": "Map each of the following proposed changes or situations to the WAF pillar(s) most relevant for evaluating it.",
+      "explanation": "Naanku different different WAF pillar application — read replicas (Performance+Reliability), CloudTrail disable (Security+OpEx regression), no staging (OpEx gap), per-instance dashboards (Performance Efficiency question mark). This real judgment — right in pillar think after doing evaluate must do.",
+      "ren_correct": "Correct — each case-kum right WAF pillar(s) base after doing evaluate did you do.",
+      "ren_wrong": "A bit think again — each situation also different different WAF in pillar evaluate must do. Pillar correctly identify doing also analysis's part."
+    },
+    {
+      "id": "C7.1-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C7.1",
+      "scenario": "Ravi asks for a summary cost of the WAF review's highest-priority gap: moving to Infrastructure as Code. The team has two options — Terraform (open source, engineering time to learn and implement, ~₹0 tool cost) or AWS CloudFormation (built in, no separate tool cost, same engineering time investment).",
+      "question": "How should the cost of the IaC gap itself be framed, and is the tool choice (Terraform vs CloudFormation) the primary cost question here?",
+      "solution": "The real cost of NOT having IaC is not measured in monthly AWS charges — it's measured in the cost of a forced rebuild (hours to days of engineering time, potential config drift introducing new vulnerabilities, guaranteed downtime) if the infrastructure ever needs to be recreated from scratch. A rough estimate: rebuilding FoodQuick's current infrastructure manually from memory would take a senior engineer 2-3 days minimum, at ₹2,500/hour, that's ₹40,000-60,000 in pure engineering time, plus any mistakes made from imperfect memory. The tool choice (Terraform vs CloudFormation) is secondary — either eliminates the gap. The primary question is when to invest the 1-2 weeks of engineering time to capture the current infrastructure in code, not which tool to use.",
+      "explanation": "IaC cost framing — real cost is risk of forced rebuild without it, not monthly tool cost. Tool choice secondary, timing and scope is important question."
+    },
+    {
+      "id": "C7.1-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.1",
+      "scenario": "Time to report back to Ravi on this piece of FQ-218.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"WAF review complete. Architecture is in good shape.\"",
+        "B) \"Completed a full WAF review across all five pillars. Reliability is the strongest (Multi-AZ, working ASG policy, correct monitoring) — meaningful work done since FQ-142. Operational Excellence has the most remaining gap: no IaC means the architecture exists only in manual console state, highest future risk. Cost efficiency improved 14% (₹0.28→₹0.24/order) despite 35% absolute bill growth, which reflects 58% order volume growth — cost-per-order is the right metric, not absolute spend. Proposed priority order: IaC first (highest risk), then IAM periodic review (regulatory relevance), then formal recovery runbooks, then cost tagging, then load testing framework. Accepted gaps documented deliberately, not just noted informally.\"",
+        "C) \"Found some gaps in the WAF review. Will fix them eventually.\"",
+        "D) \"All five WAF pillars show gaps so the architecture needs to be fully rebuilt from scratch.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — honest strengths AND gaps, correct cost efficiency metric (not absolute spend), prioritized action list with reasoning, AND accepted gaps formally documented. 'Architecture is in good shape' overclaim, 'rebuild from scratch' overcorrection — both wrong.",
+      "ren_correct": "This correct report — honest, specific, correctly frames cost efficiency vs absolute spend, prioritized with reasoning.",
+      "ren_wrong": "This report either overclaim ('good shape') or overcorrect ('rebuild everything') — honest picture with prioritized gaps correct answer."
+    }
+  ],
+  "act_number": 1,
+  "act_title": "Design FoodQuick Properly",
+  "builds_layer": "Architecture Blueprint Layer"
+}

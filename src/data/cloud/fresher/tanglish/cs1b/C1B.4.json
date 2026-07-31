@@ -1,0 +1,356 @@
+{
+  "lesson_id": "C1B.4",
+  "id": "C1B.4",
+  "lesson_title": "VPC: The Private Office Building",
+  "section_id": "CS1B",
+  "section_name": "Core Services Awareness",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "content_status": "live",
+  "duration_minutes": 5,
+  "prerequisites": "C1B.3",
+  "student_will_learn": [
+    "VPC isolation",
+    "Public vs private subnets",
+    "Security Groups as bouncers"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "CS1B · VPC: The Private Office Building. Ren teaching mode on.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Phase · CS1B",
+        "VPC: The Private Office Building"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 1",
+      "ava_speaks": "EC2-ல server ரெடி, S3-ல storage ரெடி, IAM-ல security badge-ம் குடுத்தாச்சு. But இந்த servers-லாம் physically எங்க இருக்கு? Internet-ல open-ஆ இருந்தா, hackers ஈஸியா attack பண்ணிடுவாங்க. That brings us to Pillar 4: Amazon VPC.",
+      "emotion": "explaining",
+      "board_actions": [
+        {
+          "type": "clear_board"
+        }
+      ],
+      "whiteboard_action": "clear",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 1,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Pillar 4: Amazon VPC",
+      "ava_speaks": "VPC stands for 'Virtual Private Cloud'. Jargon-அ விடுங்க. Imagine AWS is a massive corporate building. VPC is renting your own private, locked floor in that building. It draws an invisible, secure fence around your infrastructure.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Pillar 4: Amazon VPC"
+        },
+        {
+          "type": "write_bullet",
+          "text": "VPC = Virtual Private Cloud"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Your isolated, private section of AWS."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Protects your servers from the public internet."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 4: Amazon VPC",
+        "points": [
+          "VPC = Virtual Private Cloud",
+          "Your isolated, private section of AWS.",
+          "Protects your servers from the public internet."
+        ]
+      },
+      "trigger_event": null,
+      "step": 2,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 3",
+      "ava_speaks": "Let's take PhonePe. அவங்க users-ஓட payment details-அ process பண்ற database internet-ல public-ஆ இருந்தா என்ன ஆகும்? Total disaster. They strictly need to hide it. That's why they use a VPC to control exactly who can enter and leave their network.",
+      "emotion": "serious",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 3,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Public vs Private Subnets",
+      "ava_speaks": "உங்க VPC-க்குள்ள 'Subnets' னு ரெண்டு rooms create பண்ணலாம். First, the 'Public Subnet'. இது Reception area மாதிரி. Internet-ல இருந்து யார் வேணாலும் வரலாம். உங்க User-facing App/Website-அ இங்க தான் host பண்ணுவீங்க.",
+      "emotion": "explaining",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Public vs Private Subnets"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Public Subnet = The Reception (Faces the internet)."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Put Web Servers & Load Balancers here."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Public vs Private Subnets",
+        "points": [
+          "Public Subnet = The Reception (Faces the internet).",
+          "Put Web Servers & Load Balancers here."
+        ]
+      },
+      "trigger_event": null,
+      "step": 4,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Public vs Private Subnets",
+      "ava_speaks": "Second, the 'Private Subnet'. This is the locked Vault. PhonePe-ஓட core Database-அ இங்க தான் வைப்பாங்க. Internet-ல இருந்து direct-ஆ யாராலயும் உள்ள போக முடியாது. Only the web servers in the Public Subnet can talk to the Private Subnet.",
+      "emotion": "encouraging",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Public vs Private Subnets"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Public Subnet = The Reception (Faces the internet)."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Put Web Servers here."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Private Subnet = The Vault (Hidden)."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Put sensitive Databases here."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Public vs Private Subnets",
+        "points": [
+          "Public Subnet = The Reception (Faces the internet).",
+          "Put Web Servers here.",
+          "Private Subnet = The Vault (Hidden).",
+          "Put sensitive Databases here."
+        ]
+      },
+      "trigger_event": null,
+      "step": 5,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Security Groups (The Bouncers)",
+      "ava_speaks": "இந்த doors-அ guard பண்ண 'Security Groups' இருக்கு. Think of a Security Group as a strict bouncer with a VIP list. It strictly controls which traffic is allowed into your EC2 instance and drops everything else.",
+      "emotion": "excited",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Security Groups (The Bouncers)"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Act as a virtual firewall for your EC2 instances."
+        },
+        {
+          "type": "write_bullet",
+          "text": "You write the VIP list (allow rules)."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Blocks all bad traffic by default."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Security Groups (The Bouncers)",
+        "points": [
+          "Act as a virtual firewall for your EC2 instances.",
+          "You write the VIP list (allow rules).",
+          "Blocks all bad traffic by default."
+        ]
+      },
+      "trigger_event": null,
+      "step": 6,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 7",
+      "ava_speaks": "So, VPC is the boundary, Subnets are the rooms, and Security Groups are the bouncers. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": "start_workspace_tasks",
+      "step": 7,
+      "speaker": "Ren"
+    }
+  ],
+  "lesson_flow": [
+    {
+      "step": 1,
+      "speaker": "Ren",
+      "text": "EC2-ல server ரெடி, S3-ல storage ரெடி, IAM-ல security badge-ம் குடுத்தாச்சு. But இந்த servers-லாம் physically எங்க இருக்கு? Internet-ல open-ஆ இருந்தா, hackers ஈஸியா attack பண்ணிடுவாங்க. That brings us to Pillar 4: Amazon VPC.",
+      "emotion": "explaining",
+      "whiteboard_action": "clear"
+    },
+    {
+      "step": 2,
+      "speaker": "Ren",
+      "text": "VPC stands for 'Virtual Private Cloud'. Jargon-அ விடுங்க. Imagine AWS is a massive corporate building. VPC is renting your own private, locked floor in that building. It draws an invisible, secure fence around your infrastructure.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 4: Amazon VPC",
+        "points": [
+          "VPC = Virtual Private Cloud",
+          "Your isolated, private section of AWS.",
+          "Protects your servers from the public internet."
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "speaker": "Ren",
+      "text": "Let's take PhonePe. அவங்க users-ஓட payment details-அ process பண்ற database internet-ல public-ஆ இருந்தா என்ன ஆகும்? Total disaster. They strictly need to hide it. That's why they use a VPC to control exactly who can enter and leave their network.",
+      "emotion": "serious",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 4,
+      "speaker": "Ren",
+      "text": "உங்க VPC-க்குள்ள 'Subnets' னு ரெண்டு rooms create பண்ணலாம். First, the 'Public Subnet'. இது Reception area மாதிரி. Internet-ல இருந்து யார் வேணாலும் வரலாம். உங்க User-facing App/Website-அ இங்க தான் host பண்ணுவீங்க.",
+      "emotion": "explaining",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Public vs Private Subnets",
+        "points": [
+          "Public Subnet = The Reception (Faces the internet).",
+          "Put Web Servers & Load Balancers here."
+        ]
+      }
+    },
+    {
+      "step": 5,
+      "speaker": "Ren",
+      "text": "Second, the 'Private Subnet'. This is the locked Vault. PhonePe-ஓட core Database-அ இங்க தான் வைப்பாங்க. Internet-ல இருந்து direct-ஆ யாராலயும் உள்ள போக முடியாது. Only the web servers in the Public Subnet can talk to the Private Subnet.",
+      "emotion": "encouraging",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Public vs Private Subnets",
+        "points": [
+          "Public Subnet = The Reception (Faces the internet).",
+          "Put Web Servers here.",
+          "Private Subnet = The Vault (Hidden).",
+          "Put sensitive Databases here."
+        ]
+      }
+    },
+    {
+      "step": 6,
+      "speaker": "Ren",
+      "text": "இந்த doors-அ guard பண்ண 'Security Groups' இருக்கு. Think of a Security Group as a strict bouncer with a VIP list. It strictly controls which traffic is allowed into your EC2 instance and drops everything else.",
+      "emotion": "excited",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Security Groups (The Bouncers)",
+        "points": [
+          "Act as a virtual firewall for your EC2 instances.",
+          "You write the VIP list (allow rules).",
+          "Blocks all bad traffic by default."
+        ]
+      }
+    },
+    {
+      "step": 7,
+      "speaker": "Ren",
+      "text": "So, VPC is the boundary, Subnets are the rooms, and Security Groups are the bouncers. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "whiteboard_action": "none",
+      "trigger_event": "start_workspace_tasks"
+    }
+  ],
+  "workspace_metadata": {
+    "workspace_id": "WS_C1B.4",
+    "lesson_id": "C1B.4",
+    "title": "Workspace: The Secure Cloud Building",
+    "type": "scenario_task_set"
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "WS-C1B4-01",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: The Secure Cloud Building",
+      "question": "Razorpay is deploying a new payment processing architecture inside their Amazon VPC. They have an EC2 web server that customers access via the internet, and an RDS database containing highly sensitive user credit card data. How should they arrange this?",
+      "options": [
+        "Put both the EC2 web server and the RDS database in a Public Subnet so they can easily talk to the internet.",
+        "Put the EC2 web server in a Public Subnet (the reception area), and the RDS database in a Private Subnet (the locked vault).",
+        "Put both the EC2 web server and the RDS database in a Private Subnet to ensure maximum security for everything.",
+        "Keep the database in a Public Subnet but secure it by not telling anyone the IP address."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Web servers internet- open- Public Subnet (Reception)-. But sensitive payment database- Private Subnet- (Vault). Direct- internet- database- access do.",
+      "ava_feedback_wrong": "Web servers internet- open- Public Subnet (Reception)-. But sensitive payment database- Private Subnet- (Vault). Direct- internet- database- access do.",
+      "explanation": "Web servers internet- open- Public Subnet (Reception)-. But sensitive payment database- Private Subnet- (Vault). Direct- internet- database- access do.",
+      "if_wrong_route_to": "C1B.4",
+      "source_lesson": "C1B.4",
+      "whiteboard_heading": "Workspace: The Secure Cloud Building",
+      "whiteboard_points": []
+    },
+    {
+      "task_id": "WS-C1B4-02",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: The Secure Cloud Building",
+      "question": "PayPulse's public checkout EC2 should accept HTTPS from the internet, but SSH should only come from the office bastion. Random scanners are already hitting the box. What do you attach to the instance to enforce that VIP allow-list?",
+      "options": [
+        "An IAM user password policy",
+        "A Security Group with allow rules for 443 from 0.0.0.0/0 and 22 only from the bastion",
+        "A CloudWatch billing alarm",
+        "An S3 bucket policy on the homepage images"
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Security Group = instance-level bouncer. Encode the VIP list as allow rules — HTTPS open, SSH bastion-only.",
+      "ava_feedback_wrong": "IAM passwords and S3 policies don't filter inbound TCP to an EC2. Security Group is the bouncer for this ticket.",
+      "explanation": "Security Group = instance-level bouncer. Encode the VIP list as allow rules — HTTPS open, SSH bastion-only.",
+      "if_wrong_route_to": "C1B.4",
+      "source_lesson": "C1B.4",
+      "whiteboard_heading": "Workspace: Security Group as Bouncer",
+      "whiteboard_points": []
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Concepts clear-aa? Workspace tickets ready. Let's lock this in."
+  }
+}

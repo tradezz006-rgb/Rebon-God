@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C4.1",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nNetworking's solid now, thanks to you and Priya. Different problem this time: compute. Nobody's owned this full-time in two years — it was one engineer's side responsibility, and FoodQuick's grown 40x since whatever they originally sized things for.\n\nFirst thing: ananya-analyst says the nightly reporting job has been failing or crawling for weeks. Second thing, and this one's just for hygiene: pull a full list of every running EC2 instance in the account. I want to know what we're actually paying for before we fix anything else.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nGood catch on reporting-db-01 — that CPU credit exhaustion explains weeks of ananya-analyst's pain in one diagnosis. Glad it's fixed.\n\nThat other instance you flagged — i-0a9b8c7d6e5f4a3b2 — I don't recognize it either, and neither does anyone else I've asked so far. 'temp-migration-helper' and an owner tag for someone who doesn't work here anymore is not a great combination. Don't touch it yet. Let's keep digging as we go through the rest of this ticket — I have a feeling we'll understand it once we're deeper into how this account actually got built.\n\nNext: let's actually get one of these instances launched and connected to properly, not just theorized about.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.1-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.1",
+      "scenario": "ananya-analyst reports the nightly reporting job on reporting-db-01 (a self-hosted PostgreSQL instance used only for internal analytics — separate from the main foodquick-orders-db, which is RDS) has been intermittently crawling or failing for weeks, always around the same time each night.",
+      "question": "What should you check first, before assuming anything about the cause?",
+      "options": [
+        "A) Immediately resize the instance to something bigger — more resources can't hurt",
+        "B) Pull the CloudWatch metrics for reporting-db-01 around the failure window — specifically CPU utilization and, since this looks like it could be a t-family instance, CPU credit balance",
+        "C) Assume it's a PostgreSQL query optimization issue and start rewriting the nightly report's SQL",
+        "D) Restart the instance and see if the problem goes away on its own"
+      ],
+      "correct_index": 1,
+      "explanation": "Symptom-ai we saw udane fix for doing try without doing, DATA first paakkanum. CloudWatch metrics — CPU utilization, CPU credit balance (t-family but) — exact time in window what happen — kaatum. This first, correct step — guess without doing evidence's start doing.",
+      "ren_correct": "Correct — data first, guess without doing. CloudWatch metrics real answer gives.",
+      "ren_wrong": "A bit think again — resize doing or restart doing that problem what — theriyaaamal try doing. Metrics first paakkanum."
+    },
+    {
+      "id": "C4.1-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.1",
+      "question": "What does it mean for a t3 instance to be 'burstable', and what happens when its CPU credits run out?",
+      "options": [
+        "A) t3 instances always run at full CPU speed with no limits — 'burstable' is just marketing language with no real effect",
+        "B) t3 instances earn CPU credits while running below their baseline CPU level, and spend credits to burst ABOVE baseline when needed. Once credits are exhausted, performance is throttled hard down to the baseline level — not a gradual slowdown, a real, sudden performance ceiling",
+        "C) t3 instances get slower gradually over time regardless of usage, unrelated to any credit system",
+        "D) CPU credits only affect network performance, not actual compute/CPU speed"
+      ],
+      "correct_index": 1,
+      "explanation": "t3 burstable's mechanism — for baseline kaiizhae if it was credits earn does, for baseline maelae poga needed pothu credits spend does. Credits exhaust but, performance HARD for baseline throttle aagidaum — gradual not, sudden ceiling. This exactly for reporting-db-01 nadanthudhu.",
+      "ren_correct": "Correct — burstable — free anything not, credit system's real limit is there.",
+      "ren_wrong": "Burstable's real mechanism you missed. Credits exhaust but SUDDEN throttle will happen, gradual slowdown not."
+    },
+    {
+      "id": "C4.1-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.1",
+      "question": "FoodQuick needs to pick instance families for four different workloads: a steady, predictable batch-processing job; a memory-hungry in-memory cache; a general-purpose web server with balanced needs; and a CPU-intensive video-transcoding service. Which family generally fits a CPU-intensive, compute-heavy workload best?",
+      "options": [
+        "A) t3 (burstable) — ideal for anything CPU-intensive since it can burst above baseline",
+        "B) c5 (compute-optimized) — built with a higher ratio of CPU power to memory, specifically for CPU-bound workloads like transcoding, batch computation, or scientific modeling",
+        "C) r5 (memory-optimized) — the memory-to-CPU ratio is unrelated to which family fits a CPU-heavy job best",
+        "D) All instance families perform identically for CPU-bound work — the family only affects storage, not compute"
+      ],
+      "correct_index": 1,
+      "explanation": "c5 compute-optimized — high CPU-to-memory ratio, exact fit CPU-heavy for work (transcoding, batch compute). t3 burstable — SUSTAINED CPU-heavy for work fit aagaathu (credits exhaust will happen). r5 memory-optimized — cache/in-memory for DB fit, for CPU-heavy not. Family therndhu edukkardhu workload characteristics-ai base done must be.",
+      "ren_correct": "Correct — c5 sustained CPU-heavy for workload real fit.",
+      "ren_wrong": "A bit think again — sustained CPU-heavy for work t3 burstable fit aagaathu, credits exhaust will happen. c5 for this design did family."
+    },
+    {
+      "id": "C4.1-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.1",
+      "scenario": "You pull the CloudWatch metrics for reporting-db-01 covering the last week's failure window.",
+      "broken_config": "reporting-db-01 (t3.micro, 2 vCPU baseline: 10%, self-hosted PostgreSQL for internal reporting):\n\nCPUCreditBalance (last 7 days, 00:00-03:00 window, when the nightly report runs):\n├── Day 1: starts at 144 credits, drops to 0 by 01:40, CPUUtilization spikes to 100% then throttles to ~10%\n├── Day 2: starts at 98 credits (didn't fully recover from Day 1), drops to 0 by 01:15\n├── Day 3: starts at 61 credits, drops to 0 by 00:50\n└── (pattern: credit balance never recovers to baseline (144) between runs — it's in a downward spiral)\n\nInstance specs: t3.micro — 2 vCPU, 1 GB RAM, baseline 10% CPU, max 24 credits/hour earn rate",
+      "what_to_find": [
+        "CPUCreditBalance hits ZERO every single night during the report — this is a hard resource ceiling, not an intermittent glitch",
+        "The starting credit balance is DECREASING day over day (144 → 98 → 61) — the instance never gets enough idle time between nightly runs to fully replenish its credit balance, so the problem is getting worse, not staying constant",
+        "1 GB of RAM on a t3.micro is also extremely small for even a modest internal reporting database — CPU credits aren't the only constraint here",
+        "This instance was never sized for a sustained nightly compute+memory workload — a t3.micro is meant for workloads with brief, occasional bursts, not predictable nightly batch processing"
+      ],
+      "correct_fix": "Move reporting-db-01 to a non-burstable instance family sized for a sustained, predictable nightly workload — a general-purpose m5 or (if the reporting job is genuinely CPU-bound) a compute-optimized c5, with enough baseline vCPU and RAM to complete the report without ever touching a credit ceiling.",
+      "explanation": "This exact spec mistake — 't3.micro used for production database, throttles under load.' There are two kinds of problems sernthis there — CPU credit exhaustion AND RAM insufficient. Downward-spiral pattern (never fully recovering) kaatuthu this getting worse over time, one-time glitch not."
+    },
+    {
+      "id": "C4.1-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.1",
+      "question": "Arrange the correct order of steps to safely move reporting-db-01 to a properly-sized instance type.",
+      "items": [
+        "Review actual historical CPU and memory usage during a full nightly run to understand real requirements, not just guess",
+        "Take a snapshot/backup of the current instance's data before changing anything",
+        "Choose the new instance type based on the actual usage data gathered",
+        "Stop the instance, change its instance type, and start it back up",
+        "Run a full nightly report cycle on the new instance type to confirm the fix holds before considering this done"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Data first paakkanum (guess without doing right instance type therndhu edukka), then for safety backup must do, then thbut data's base done type therndhu edukkanum, then change must do, last real workload's verify must do.",
+      "ren_correct": "Nice sequencing — data-driven decision, safety backup, and real verification at the end.",
+      "ren_wrong": "Order again paaru — backup without doing anything change must not, and correct type therndhu edukka real usage data first is needed."
+    },
+    {
+      "id": "C4.1-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.1",
+      "scenario": "Usage data shows reporting-db-01's nightly job is steady, predictable, and moderately CPU-intensive (consistently 60-70% CPU for the full 2-3 hour window), with modest memory needs (under 4GB used at peak).",
+      "question": "Given this usage pattern, which instance type is the right fit?",
+      "options": [
+        "A) A bigger t3 instance (e.g. t3.xlarge) — more baseline still helps even for sustained loads",
+        "B) An m5.large or c5.large (non-burstable, general-purpose or compute-optimized) — since the load is steady and predictable rather than bursty, a non-burstable family with a real fixed baseline avoids the credit-exhaustion problem entirely, and the modest memory needs mean a large-family size (not xlarge or bigger) is enough",
+        "C) An r5.4xlarge — when in doubt, memory-optimized and larger is always the safest choice",
+        "D) Keep it on t3, just monitor the credit balance more closely going forward"
+      ],
+      "correct_index": 1,
+      "explanation": "Steady, predictable, sustained for load — t3 (burstable) FIT aagaatha family, how much periya t3 even then credit system's limit irukum. Non-burstable (m5/c5) family correct choice — fixed baseline, no credit ceiling. Modest memory —, large size podhum, unnecessary over-provisioning do not do.",
+      "ren_correct": "Correct — steady for load non-burstable family, right-sized for memory match but size.",
+      "ren_wrong": "A bit think again — sustained for load anything t3 size also credit ceiling-ai hit does. Non-burstable family real fix."
+    },
+    {
+      "id": "C4.1-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.1",
+      "scenario": "While reviewing the fleet, you also notice karthik-dev's personal development environment: an m5.4xlarge (16 vCPU, 64GB RAM) that CloudWatch shows sitting at 3-6% CPU utilization almost the entire time, spiking briefly only during his actual working hours.",
+      "question": "Unlike the mystery instance, this one has a known owner and a known purpose. What's the right recommendation here?",
+      "options": [
+        "A) Leave it as-is — since it has a known owner and purpose, its size doesn't matter",
+        "B) Right-size it down significantly (e.g. to an m5.large or even a t3.medium, given the low sustained usage with occasional bursts) — a known purpose doesn't mean the current size is justified; this is straightforward waste, unlike the mystery instance which needs investigation first",
+        "C) Terminate it immediately without discussion, since dev environments are lower priority than production",
+        "D) Upgrade it further, since developer productivity always benefits from more compute headroom regardless of actual usage"
+      ],
+      "correct_index": 1,
+      "explanation": "This mystery instance's different topic — for this known owner (karthik-dev) um known purpose also (personal dev work) is there, so straight away right-size we can do, investigation needed not. 3-6% utilization on a 16 vCPU machine — clear over-provisioning — how much periya even if 'known purpose' — says that justify do not do.",
+      "ren_correct": "Correct — known owner + known purpose —, straightforward right-sizing decision, mystery instance like investigation needed not.",
+      "ren_wrong": "A bit think again — known purpose even if, actual usage data (3-6%) clearly over-provisioning-ai kaatuthu. Right-size must do, leave must not."
+    },
+    {
+      "id": "C4.1-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.1",
+      "scenario": "You proceed to resize reporting-db-01 from t3.micro to m5.large. Since EC2 doesn't support live/hot resizing, you stop the instance first. After changing the type and starting it back up, a colleague notices the temporary scratch files the nightly job used to write to /mnt/scratch are gone.",
+      "error_shown": "ls: cannot access '/mnt/scratch': No such file or directory (the mount point that used to hold temporary query scratch space no longer has any data)",
+      "diagnosis": "reporting-db-01 had an INSTANCE STORE volume (ephemeral storage, physically attached to the specific underlying host) mounted at /mnt/scratch, separate from its EBS-backed root volume. Instance store data is guaranteed to be wiped whenever an instance is stopped (or if it moves to different underlying hardware, which changing instance type causes) — this is expected, documented behavior, NOT a bug. The EBS-backed root volume (where the actual PostgreSQL data lived) persisted correctly through the stop/start, exactly as expected.",
+      "fix": "This isn't something to \"fix\" — it's expected instance store behavior. If persistent scratch space is genuinely needed going forward, mount a small additional EBS volume at /mnt/scratch instead (EBS persists through stop/start and instance type changes; instance store does not). In this case, since it was only temporary query scratch space, nothing of real value was lost — but this is worth confirming explicitly rather than assuming.",
+      "explanation": "This real, important distinction — EBS-backed root volume um instance store volume also different different behavior. Instance type change for doing stop must do, that instance store-ai WIPE does (guaranteed), but EBS volumes persist does. This bug not, expected AWS behavior — but idhai theriyaaamal irundha, real data loss to happenlam."
+    },
+    {
+      "id": "C4.1-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.1",
+      "scenario": "Separately, per Ravi's request, you pull a complete list of every running EC2 instance in the account for a general hygiene review.",
+      "broken_config": "Full EC2 fleet (ap-south-1):\n├── order-service ×4 (m5.large, ASG-managed) — known, active\n├── notification-worker ×1 (m5.large) — known, active\n├── bastion host ×1 (t3.micro) — known, active (from C3.2a)\n├── reporting-db-01 ×1 (m5.large, just resized this lesson) — known, active\n└── i-0a9b8c7d6e5f4a3b2 (m5.4xlarge) — Name tag: \"temp-migration-helper\" — Owner tag: \"rohan.d\" — Launch date: ~18 months ago — CPUUtilization: consistently ~4% — no one on the current team recognizes this instance or 'rohan.d'",
+      "what_to_find": [
+        "i-0a9b8c7d6e5f4a3b2 is dramatically over-provisioned for its actual usage — m5.4xlarge (16 vCPU, 64GB RAM) running at ~4% CPU is a huge, ongoing waste on its own, regardless of anything else",
+        "The Name tag ('temp-migration-helper') and an 18-month runtime are contradictory — 'temp' does not usually mean 18 months",
+        "The Owner tag references someone ('rohan.d') nobody on the current team recognizes — there is no one to simply ask 'what is this for?'",
+        "Because the purpose and ownership are both unknown, this should NOT be terminated immediately, even though it's clearly wasteful — it could theoretically still be holding something important that isn't documented anywhere else"
+      ],
+      "correct_fix": "Do not terminate or modify this instance yet. Flag it clearly to Ravi with everything found (over-provisioning, naming contradiction, unrecognized owner) as a discrete, unresolved finding, and continue the broader FQ-171 investigation with this open rather than acting on it in isolation.",
+      "explanation": "This exact same discipline we in C3 kraraukitanyour — understand anything touch do not. How much wasteful thonalum, purpose theriyaamal terminate doing risky. This CS4's own mystery — investigate we will do, but ippo ilalaai."
+    },
+    {
+      "id": "C4.1-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.1",
+      "scenario": "Ravi asks you to document a quick reference for the team: given four different upcoming workloads, which instance family fits each one?",
+      "cases": {
+        "case_1": "A new recommendation-engine service that needs to run inference computations continuously with high, sustained CPU usage",
+        "case_2": "A new Redis-based session cache that needs to hold a large working set in memory with relatively light CPU needs",
+        "case_3": "A lightweight internal admin dashboard used by 3 people a few times a day, mostly idle otherwise",
+        "case_4": "The main order-service web tier, needing a balanced mix of CPU and memory for typical request handling"
+      },
+      "correct_answers": {
+        "case_1": "c5 (compute-optimized) — sustained high CPU usage fits a high CPU-to-memory ratio family, and being sustained (not bursty), a non-burstable family avoids any credit ceiling",
+        "case_2": "r5 (memory-optimized) — a large in-memory working set needs a high memory-to-CPU ratio, which r5 is built for",
+        "case_3": "t3 (burstable) — genuinely light, infrequent usage with long idle periods is exactly what burstable instances are designed for; credits accumulate during the idle time and cover the occasional burst of activity",
+        "case_4": "m5 (general purpose) — a balanced, moderate mix of CPU and memory needs, without a strong lean toward either extreme, is exactly m5's use case"
+      },
+      "explanation": "Naangu different different workload characteristics — sustained-CPU-heavy (c5), memory-heavy (r5), genuinely-light-and-bursty (t3, this t3's REAL correct use case, reporting-db-01's mistake's opposite), balanced (m5). This thbut real skill — family therndhu edukkardhu workload shape-ai base done, default anything family use doing not.",
+      "ren_correct": "Correct — each workload-kum characteristics-ai base done family match do, this real judgment.",
+      "ren_wrong": "A bit think again — each case's characteristics (sustained CPU, memory-heavy, light-bursty, balanced) exact different different for family match will happen."
+    },
+    {
+      "id": "C4.1-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.1",
+      "scenario": "Ravi asks for a rough monthly cost figure on the unresolved i-0a9b8c7d6e5f4a3b2 instance, just to understand the scale of the waste while it stays open as an investigation. An On-Demand m5.4xlarge in ap-south-1 costs roughly ₹58,000/month running continuously.",
+      "question": "How should this be framed for Ravi, given the instance has been running for approximately 18 months?",
+      "solution": "At roughly ₹58,000/month, this single instance has cost approximately ₹10.4 lakh over its ~18-month runtime — regardless of what it turns out to be for. Framed as: 'Whatever this instance is doing, it has cost roughly ₹10.4 lakh so far and continues to cost ₹58,000/month while unresolved. This alone justifies prioritizing the investigation, even though it can't be safely terminated yet without understanding it first.'",
+      "explanation": "This real business framing — 'we don't know what it does' — saysku vida, 'this already ₹10.4 lakh cost having done, still continue aaguthu' — real ₹ number kudukkaphu, urgency create does, but we still resolve did not do."
+    },
+    {
+      "id": "C4.1-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.1",
+      "scenario": "Time to report back to Ravi on this first piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed reporting-db-01. Also found an unused instance, terminated it to save costs.\"",
+        "B) \"reporting-db-01 was throttling nightly from CPU credit exhaustion on an undersized t3.micro — moved to m5.large (non-burstable, sized to the actual usage pattern), verified a full report cycle completes cleanly now. Separately, found i-0a9b8c7d6e5f4a3b2: an m5.4xlarge running at ~4% CPU for ~18 months, tagged 'temp-migration-helper' with an owner ('rohan.d') nobody recognizes — roughly ₹10.4 lakh spent on it so far. NOT terminated — purpose and ownership are both unknown, flagging for further investigation as we go deeper into this account.\"",
+        "C) \"Everything's running fine now. No other issues found.\"",
+        "D) \"reporting-db-01 is fixed. The other instance is probably fine, didn't look into it further.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — main fix specific AND VERIFIED must be, AND that unresolved mystery-ai clearly flag must do, authority without anything action (terminate) eduthukkaamal. 'Terminated it' — says dangerous — purpose theriyaamal anything delete doing risky.",
+      "ren_correct": "This correct report — specific, verified, and honestly flags the unresolved mystery without acting on it prematurely.",
+      "ren_wrong": "This report either dangerous action (unauthorized terminate) eduthukkittu is, or real finding-ai miss does/dismiss does."
+    }
+  ],
+  "act_number": 1,
+  "act_title": "Instance Types That Fit the Work",
+  "builds_layer": "Compute Shape Layer"
+}

@@ -1,0 +1,280 @@
+{
+  "lesson_id": "C2.2",
+  "act_number": 3,
+  "act_title": "Precision Over Permission",
+  "builds_layer": "Access Precision Layer",
+  "total_tasks": 14,
+  "arc_intro": "Ravi's words are still hanging over you: 'twice is not a coincidence, dig into why this keeps happening.' But before you can properly investigate the pattern, you need to fix something more basic — the way FoodQuick's policies get WRITTEN in the first place. Sloppy, imprecise permissions are probably how both the mystery key and the forgotten admin role happened. This piece is about closing that root cause.",
+  "tasks": [
+    {
+      "id": "C2.2-T1",
+      "sequence": 1,
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "You tell Ravi your plan: audit and tighten how policies are written across the account, not just fix individual incidents as they surface. He asks: 'How is this different from what you already did in the last two pieces?'",
+      "question": "What's the actual difference between fixing individual bad configurations (what you did before) and fixing HOW policies get written in general?",
+      "options": [
+        "A) There's no real difference, it's the same work",
+        "B) Before, you fixed specific broken things you found. Now, you're addressing the underlying habit — imprecise policies (wildcards, missing conditions, wrong ARN scope) — that likely CAUSED those specific problems in the first place",
+        "C) This is only about making policies shorter",
+        "D) This only matters for large companies, not FoodQuick's size"
+      ],
+      "correct_index": 1,
+      "explanation": "Symptom fix doing, root cause fix doing. Individual incidents fix do -, incidents — address do, pattern.",
+      "ren_correct": "Correct! Root cause thinking — This is real progress.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.2-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "question": "Quick check before the audit: what does 'arn:aws:s3:::foodquick-invoices/*' cover?",
+      "options": [
+        "A) The bucket and all objects inside it",
+        "B) Only the objects inside foodquick-invoices, not the bucket container itself",
+        "C) All buckets starting with 'foodquick'",
+        "D) The bucket only, no objects"
+      ],
+      "correct_index": 1,
+      "explanation": "/* object-level only. Bucket itself list do is needed, /* without ARN is needed.",
+      "ren_correct": "Correct, quick and clean.",
+      "ren_wrong": "Not quite. /* = objects only, not the bucket container."
+    },
+    {
+      "id": "C2.2-T3",
+      "sequence": 3,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "question": "Second quick check: an Allow and an explicit Deny both apply to the same action. Which wins?",
+      "options": [
+        "A) Allow, if it was attached first",
+        "B) Deny, always, no exceptions",
+        "C) Whichever is more recently modified",
+        "D) AWS picks randomly"
+      ],
+      "correct_index": 1,
+      "explanation": "Deny always win do — order, recency, matter do.",
+      "ren_correct": "Good, this one's locked in now.",
+      "ren_wrong": "Not quite. Deny always wins, no exceptions, ever."
+    },
+    {
+      "id": "C2.2-T4",
+      "sequence": 4,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "You pull every policy currently active across FoodQuick's account to sweep for the same class of problem — not one policy this time, a full sweep.",
+      "broken_config": "Policy Sweep Results:\n├── log-shipper-policy — Action: s3:*, Resource: * (way too broad)\n├── analyst-readonly-policy — Action: s3:GetObject + s3:ListBucket, Resource: bucket/* only (ARN mismatch — ListBucket needs bucket-level ARN)\n├── ml-team-policy — ec2:Terminate/Stop/Start, Resource: *, NO condition block (should be scoped to Owner tag)\n└── backup-role-policy — Action: s3:GetObject, rds:CreateDBSnapshot, Resource: scoped correctly (this one is fine)",
+      "what_to_find": [
+        "log-shipper-policy: dangerous wildcard, needs scoping to one action and one bucket",
+        "analyst-readonly-policy: ARN level mismatch on ListBucket, same bug pattern seen before",
+        "ml-team-policy: missing Condition block entirely, doesn't actually restrict to each engineer's own instances",
+        "backup-role-policy: this one is already correct, no action needed"
+      ],
+      "correct_fix": "Fix 3 of 4 policies. log-shipper: scope to s3:PutObject on the specific log bucket only. analyst-readonly: add the correct bucket-level ARN for ListBucket separately from the object-level ARN. ml-team: add Condition block matching ec2:ResourceTag/Owner to ${aws:username}.",
+      "explanation": "3 mistakes, 3 policies-. specific pattern — wildcard, ARN mismatch, missing condition. mistakes account repeat."
+    },
+    {
+      "id": "C2.2-T5",
+      "sequence": 5,
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "question": "Arrange the correct order for rolling out these policy fixes safely across an active production account.",
+      "items": [
+        "Draft and test each corrected policy in a non-production context before touching production",
+        "Fix the highest-risk policy first (log-shipper's s3:* wildcard)",
+        "Fix the ARN mismatch bug (analyst-readonly) — lower risk but easy to fix",
+        "Fix the missing condition block (ml-team) — requires coordinating with the ML team since it changes their workflow",
+        "Verify nothing broke by checking each affected team can still do their actual job"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Order matters: secure control first, then migrate access, then retire the old path."
+    },
+    {
+      "id": "C2.2-T6",
+      "sequence": 6,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "You start executing. First: log-shipper-policy, the highest risk item from the sweep.",
+      "broken_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": \"*\"\n    }\n  ]\n}",
+      "what_to_find": [
+        "s3:* grants every S3 action including DeleteBucket and PutBucketPolicy",
+        "Resource: * applies to every bucket in the account",
+        "The log shipper only ever needs to write files — nothing else"
+      ],
+      "correct_fix": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:PutObject\",\n      \"Resource\": \"arn:aws:s3:::foodquick-service-logs/*\"\n    }\n  ]\n}",
+      "explanation": "Map every finding before you change anything — missing one leaves a hole in the investigation."
+    },
+    {
+      "id": "C2.2-T7",
+      "sequence": 7,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "Now analyst-readonly-policy. ananya-analyst has been unable to list bucket contents for weeks, quietly working around it by asking colleagues to send her file lists manually.",
+      "question": "Write the corrected policy statements. She needs both ListBucket (bucket-level) and GetObject (object-level) on the 'foodquick-analytics' bucket.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "Two separate statements needed: one for s3:ListBucket with Resource arn:aws:s3:::foodquick-analytics (no /*)",
+        "One for s3:GetObject with Resource arn:aws:s3:::foodquick-analytics/* (with /*)",
+        "Both statements needed together, not one combined ARN for both actions"
+      ],
+      "explanation": "separate statements — bucket-level ARN ListBucket-, object-level ARN GetObject-. ARN use do. ananya weeks- in this stuck."
+    },
+    {
+      "id": "C2.2-T8",
+      "sequence": 8,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "While fixing the ml-team-policy, you check when it was originally created and by whom, to understand why the Condition block was never added.",
+      "error_shown": "IAM Policy: ml-team-policy\nCreated: [same week as the mysterious dev-shared access key from your first investigation]\nCreated by: [same deleted user account that created the AdministratorAccess role from your second investigation]\nComment field: 'quick access for the sprint, will scope later'",
+      "diagnosis": "This is not a coincidence anymore. The same now-deleted user account that created the unexplained AdministratorAccess role also wrote this policy — in the same week the mysterious access key appeared on dev-shared. Someone was moving fast, writing broad permissions with a note to 'fix it later,' and later never came.",
+      "fix": "This cannot be fully resolved here either — but you now have a real lead: a specific person (whoever held this deleted account) and a specific week. Fix the policy itself now (add the Condition block), but flag this timeline connection clearly for Ravi — this is bigger than three unrelated incidents.",
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    },
+    {
+      "id": "C2.2-T9",
+      "sequence": 9,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "You finish the ml-team-policy fix with the Condition block. Before moving on, verify it actually enforces what it's supposed to.",
+      "broken_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"ec2:TerminateInstances\", \"ec2:StopInstances\", \"ec2:StartInstances\"],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"ec2:ResourceTag/Owner\": \"karthik-dev\"\n        }\n      }\n    }\n  ]\n}",
+      "what_to_find": [
+        "The Condition hardcodes 'karthik-dev' as a literal string, meaning this policy only ever works correctly for karthik-dev specifically",
+        "Every other ML team member would get denied even for their OWN instances, since their username doesn't match the hardcoded value",
+        "This needs the ${aws:username} policy variable instead of a fixed name, so it works correctly for whoever is making the request"
+      ],
+      "correct_fix": "Change \"ec2:ResourceTag/Owner\": \"karthik-dev\" to \"ec2:ResourceTag/Owner\": \"${aws:username}\" — this makes the condition dynamic, matching each requester's own username automatically instead of one hardcoded person.",
+      "explanation": "Hardcoded username — only do. ${aws:username} policy variable use do, request username automatic- match. This is scalable fix."
+    },
+    {
+      "id": "C2.2-T10",
+      "sequence": 10,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "With the sweep mostly done, Ravi asks you to handle three new access requests using Condition keys correctly, to prove the team has actually internalized this pattern.",
+      "cases": {
+        "case_1": "Restrict write access on the invoices bucket to only FoodQuick's office IP range.",
+        "case_2": "Restrict delete operations account-wide to only 9am-6pm IST, to prevent accidental automation-triggered deletes overnight.",
+        "case_3": "Restrict a new intern's EC2 permissions to only instances they personally launch, going forward."
+      },
+      "correct_answers": {
+        "case_1": "Condition with IpAddress and aws:SourceIp matched to the office CIDR range.",
+        "case_2": "Condition with DateGreaterThan/DateLessThan or a time-window condition restricting the action to business hours.",
+        "case_3": "Condition with ec2:ResourceTag/Owner matched to ${aws:username}, same pattern as the ml-team fix."
+      },
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    },
+    {
+      "id": "C2.2-T11",
+      "sequence": 11,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "karthik-dev is newer to precision policy writing than you at this point. He asks you to explain, in plain terms, why the ml-team-policy fix (T9) actually matters — he says 'it worked for me, so what's the problem?'",
+      "question": "Explain it to him the way you'd explain it to a teammate, not the way you'd write it in documentation.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "The policy 'worked' for him specifically because his username happened to be hardcoded into it — it would have silently failed or wrongly blocked every other team member",
+        "A policy that only works for one specific person by accident is not actually correct, even if it passes a quick personal test",
+        "Using ${aws:username} makes it correct for everyone automatically, not just whoever happened to test it first"
+      ],
+      "explanation": "teach-back task — simple- explain doing, useful skill. 'Worked for me' — dangerous trap, hardcoded value-."
+    },
+    {
+      "id": "C2.2-T12",
+      "sequence": 12,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "Final capstone check before closing this piece. This policy was found in a service nobody has reviewed in a while — find every issue, there is more than one.",
+      "broken_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"AllowStuff\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\"s3:GetObject\", \"s3:PutObject\", \"s3:DeleteObject\"],\n      \"Resource\": \"arn:aws:s3:::foodquick-*\"\n    },\n    {\n      \"Sid\": \"AllowEC2\",\n      \"Effect\": \"Allow\",\n      \"Action\": \"ec2:*\",\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringEquals\": { \"aws:RequestedRegion\": \"us-east-1\" }\n      }\n    }\n  ]\n}",
+      "what_to_find": [
+        "'arn:aws:s3:::foodquick-*' is a wildcard bucket match — this affects EVERY bucket starting with 'foodquick', not one specific bucket, likely far broader than intended",
+        "s3:DeleteObject included alongside Get/Put — does this service actually need delete permission, or was it copy-pasted in?",
+        "ec2:* is a massive wildcard action — full EC2 control including terminate, security groups, everything",
+        "The region Condition (us-east-1) doesn't limit WHAT can be done, only WHERE — and FoodQuick's standard region is ap-south-1, so this looks like a leftover from a different context entirely, possibly copied from an unrelated example"
+      ],
+      "correct_fix": "Scope S3 to the exact bucket needed, remove DeleteObject unless genuinely required. Replace ec2:* with the specific 2-3 actions this service actually needs. Fix or remove the region condition — if this service should only operate in ap-south-1, the condition itself is pointing at the wrong region entirely.",
+      "explanation": "4 problems, policy- — mistake types-. Wildcard resource, unnecessary action, wildcard action, wrong region condition. real-world policies slowly, accidentally, dangerous."
+    },
+    {
+      "id": "C2.2-T13",
+      "sequence": 13,
+      "type": "quiz",
+      "difficulty": "medium",
+      "environment": "quiz_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "question": "After this full sweep, which single habit would have prevented most of what you found today?",
+      "options": [
+        "A) Writing policies faster so there's less time to make mistakes",
+        "B) Never using wildcards (* in Action or Resource) without a specific, documented reason — and never leaving a 'will scope later' comment without actually scoping it later",
+        "C) Only senior engineers should ever write IAM policies",
+        "D) Using AdministratorAccess by default and narrowing it down only if something breaks"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: Never using wildcards (* in Action or Resource) without a specific, documented reason — and never leaving a 'will scope later' comment without actually scoping it later",
+      "ren_correct": "Exactly right — this is the actual lesson underneath everything today.",
+      "ren_wrong": "Not quite. Speed problem. Undocumented wildcards, unfollowed-up 'later' notes — root cause."
+    },
+    {
+      "id": "C2.2-T14",
+      "sequence": 14,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.2",
+      "max_attempts": 3,
+      "scenario": "Time to report back to Ravi and close this piece — the biggest one yet.",
+      "question": "Write your status update: what you fixed, and the real finding underneath it all.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "Swept and corrected multiple imprecise policies across the account — wildcard actions, wildcard resources, missing Condition blocks, ARN scope mismatches",
+        "Found a direct connection: the same deleted user account that created the mysterious CloudTrail key AND the forgotten AdministratorAccess role also wrote the ml-team-policy, all in the same week, with a 'will scope later' note that was never followed up",
+        "This is no longer three separate incidents — it's one person's rushed habits from months ago, and there may be more like this still undiscovered"
+      ],
+      "explanation": "Access Precision Layer resolved — This is real turning point. connect. Ravi- clear- piece- set do."
+    }
+  ],
+  "arc_outro": "Access Precision Layer: secured. But this piece ends differently from the last two — you didn't just fix things, you found the thread connecting all of it. Ravi reads your report twice. 'One person, one rushed week, and we're still finding the damage months later. I need you to go find everything else this person might have left behind — before the auditor does.' Next: the real investigation begins."
+}

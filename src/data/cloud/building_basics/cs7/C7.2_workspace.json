@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C7.2",
+  "ticket": "FQ-218",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-218 — Ravi Krishnan (Head of Engineering)\n\nWAF review put IaC at the top of the priority list for one reason: without it, the architecture exists only in manual console actions and human memory. Let's fix that.\n\nQuick thing before we start — Deepak mentioned he made a direct console change to a security group last week for debugging. karthik-dev said 'that's fine, it's defined in our CloudFormation template so it's tracked.' I want you to check whether that statement is actually true.\n\n— Ravi\n\nBuild the network layer for real: subnets, IGW, NAT, and non-overlapping CIDR.",
+  "arc_outro": "Ravi Krishnan (Head of Engineering)\n\nThe SG drift finding was a good reminder of why this matters — 'defined in the template' and 'deployed state matches the template' are two different things, and assuming they're the same is exactly how drift compounds quietly over time. Good catch, good fix, proper process going forward.\n\nThe CloudFormation coverage isn't complete yet — we've captured the core compute and security layer, but storage and monitoring still need their own stacks. That's fine for now, this gives us a solid starting point and a discipline for future changes.\n\nNext: cost attribution. The tagging gap has been on the list since the WAF review — I want to be able to answer 'which team owns this cost' before the next board meeting.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C7.2-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C7.2",
+      "scenario": "karthik-dev says: 'Deepak's manual SG change is fine — the security group is defined in our CloudFormation template, so AWS tracks it.' You decide to check the actual deployed security group against the template before the discussion with Ravi.",
+      "question": "What's wrong with karthik-dev's reasoning that 'defined in a template means AWS tracks changes to it'?",
+      "options": [
+        "A) Nothing — CloudFormation automatically keeps deployed resources in sync with their template definition at all times",
+        "B) CloudFormation defines what the resource SHOULD look like when a stack is created or updated, but it does NOT automatically revert manual console changes. If someone changes a resource directly in the console, CloudFormation has no automatic mechanism to detect or undo that — the deployed state can silently diverge from the template definition until someone explicitly runs a drift detection or stack update",
+        "C) karthik-dev is correct that templates track changes, but only for security groups, not other resource types",
+        "D) CloudFormation templates are just documentation — they have no connection to actual deployed resources at all"
+      ],
+      "correct_index": 1,
+      "explanation": "CloudFormation's template 'what should be deployed' define does — but deployed state-a automatically sync to do manual change revert what was done. in Console manual change did, template unaware-a will be, drift silently accumulate will happen until explicitly detect they will do.",
+      "ren_correct": "Correct — template definition and deployed state are separate things; manual changes create silent drift.",
+      "ren_wrong": "A bit think again — CloudFormation automatic sync what was done. Manual changes create drift that template doesn't know about."
+    },
+    {
+      "id": "C7.2-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.2",
+      "question": "What is 'infrastructure drift' in the context of IaC, and why is it specifically dangerous?",
+      "options": [
+        "A) Drift refers to the slow performance degradation of cloud resources over time, unrelated to configuration",
+        "B) Drift is when the actual deployed state of infrastructure diverges from what the IaC template/code defines as the intended state — dangerous because it means the template is no longer a reliable picture of what's actually running, security changes may have been quietly reversed, and any future stack update might accidentally overwrite manual changes or fail unexpectedly",
+        "C) Drift only occurs when an IaC tool is outdated and needs to be upgraded",
+        "D) Drift is a normal and expected part of running infrastructure with IaC — it's considered acceptable as long as it's less than 10% of resources"
+      ],
+      "correct_index": 1,
+      "explanation": "Drift — deployed state vs template definition's gap — dangerous because template 'reliable picture' without aagudhu, security changes quietly reversed can be, future stack update unexpected-a fail can happen or manual changes overwrite can happen. Silent-a accumulate aagardhu real risk.",
+      "ren_correct": "Correct — drift is the silent gap between template and reality, dangerous because it makes the template untrustworthy.",
+      "ren_wrong": "A bit think again — drift performance degradation not. Template vs deployed state's silent gap, security implications's."
+    },
+    {
+      "id": "C7.2-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.2",
+      "question": "At a high level, what's the main practical difference between CloudFormation and Terraform as IaC tools?",
+      "options": [
+        "A) CloudFormation supports multiple cloud providers; Terraform only works with AWS",
+        "B) CloudFormation is AWS-native (no separate tool to install, tight AWS service integration, AWS manages the state), while Terraform is cloud-agnostic (works with AWS, GCP, Azure, and more) with its own state management that the team must maintain. Both can manage AWS infrastructure — the choice often comes down to multi-cloud needs and team familiarity",
+        "C) Terraform is owned and operated by AWS; CloudFormation is a third-party tool",
+        "D) They're functionally identical in every way — the only difference is the file format used for templates"
+      ],
+      "correct_index": 1,
+      "explanation": "CloudFormation AWS-native — install needed not, AWS state manage does, tight AWS integration. Terraform cloud-agnostic — AWS, GCP, Azure support does, team themselves state manage must do. Both in AWS velai does, choice multi-cloud need and team familiarity-a base after doing.",
+      "ren_correct": "Correct — CloudFormation AWS-native, Terraform cloud-agnostic with self-managed state. Both valid for AWS.",
+      "ren_wrong": "A bit think again — providers reverse-ah. CloudFormation AWS-only, Terraform multi-cloud. AWS state management important practical difference."
+    },
+    {
+      "id": "C7.2-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.2",
+      "scenario": "You run CloudFormation drift detection on the order-service stack and compare the results.",
+      "broken_config": "CloudFormation Drift Detection Results — order-service stack:\n\nResource: sg-order-svc-0072 (order-service security group)\nStatus: DRIFTED\n\nExpected (per template):\n Inbound rules:\n └── Port 80+443, Source: sg-alb-foodquick-order (ALB SG reference)\n\nActual (deployed state):\n Inbound rules:\n ├── Port 80+443, Source: sg-alb-foodquick-order (ALB SG reference) ✓\n └── Port 22, Source: 203.x.x.x/32 (Deepak's home IP — manually added last week for SSH debugging)\n\nAll other resources in the stack: NO_CHANGE",
+      "what_to_find": [
+        "The security group has drifted: a manual inbound rule for port 22 from Deepak's home IP was added directly in the console last week — this rule does not exist in the template and was not intentional as a permanent change",
+        "This rule partially undoes the security work from C4.4 (restricting the order-service SG to only accept traffic from the ALB) — an external IP can now reach these instances on port 22 directly, bypassing Session Manager",
+        "The template is now an unreliable picture of the actual security configuration — if anyone checked the template to understand 'what does this SG allow,' they would see an incomplete picture",
+        "All other stack resources show NO_CHANGE — the drift is isolated to this one SG, which is useful: drift detection found the exact change, not a vague 'something is different'"
+      ],
+      "correct_fix": "Remove the manual port 22 rule from the deployed SG (restore the template's intended state). If Deepak legitimately needs SSH access for future debugging sessions, add that rule intentionally via a template change so it's tracked — or use Session Manager as established in C4.2b, which requires no open ports at all.",
+      "explanation": "This exact spec mistake made real and personal — Deepak's own manual change, discovered via drift detection. in C4.4 close do SG gap, ippo partial-a reopen aagidhuchu. 'Defined in template' and 'deployed state matches template' different different things."
+    },
+    {
+      "id": "C7.2-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C7.2",
+      "question": "Arrange the correct order to safely resolve the drift and establish a process to prevent it going forward.",
+      "items": [
+        "Notify Deepak that the port 22 rule will be removed, and confirm he's not actively using it right now",
+        "Remove the manually-added port 22 rule from the deployed SG, restoring it to match the template",
+        "Run drift detection again to confirm the stack shows NO_CHANGE for all resources",
+        "Agree on a team rule: any infrastructure change must go through a template update and stack deployment, not direct console modifications — with Session Manager as the standard for ad-hoc access needs",
+        "Document the incident (what drifted, how it was found, how it was resolved) as the first entry in the new IaC change log"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First confirm Deepak not using it (communication before removing access), then rule remove must do, then drift in detection verify must do, then process rule agree must do, LAST-a document must do future for incidents reference-a.",
+      "ren_correct": "Nice sequencing — notify before removing access, verify after fixing, process rule and documentation close the loop.",
+      "ren_wrong": "Order again paaru — for Deepak notify without doing port 22 remove doingle in velai if there was lock out can happen. Communicate first."
+    },
+    {
+      "id": "C7.2-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.2",
+      "scenario": "karthik-dev asks: 'Should we use CloudFormation or Terraform for FoodQuick's IaC? I've seen both at previous companies.'",
+      "question": "How should this decision be reasoned through for FoodQuick's specific situation?",
+      "options": [
+        "A) Terraform is always better than CloudFormation for any company, regardless of context",
+        "B) For FoodQuick's current situation (AWS-only infrastructure, small team, no existing IaC at all), CloudFormation is a practical starting point — no additional tool to install or learn, no state management overhead for the team, and deep AWS service integration. Terraform becomes more relevant if FoodQuick expands to multiple cloud providers or the team has strong prior Terraform expertise. The most important thing is starting with either — the cost of no IaC (as the WAF review showed) is higher than the cost of either tool choice",
+        "C) CloudFormation is always better because it's the official AWS tool",
+        "D) The choice must be made only after consulting AWS Support, since they assign specific IaC tools to accounts"
+      ],
+      "correct_index": 1,
+      "explanation": "This context-based decision — FoodQuick AWS-only, small team, no existing IaC. CloudFormation practical starting point (no extra tool, AWS state management, tight integration). Terraform multi-cloud if it was or team strong familiarity-a if it was better. Most important: START with either — tool in debate time waste to do must not.",
+      "ren_correct": "Correct — context-based reasoning, not a universal answer. Starting matters more than which tool.",
+      "ren_wrong": "A bit think again — 'always better' universal answer not. Context (AWS-only, team size, familiarity) drive must do this decision."
+    },
+    {
+      "id": "C7.2-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.2",
+      "scenario": "ananya-analyst asks: 'I've heard IaC described as idempotent. What does that actually mean in practice?'",
+      "question": "What does idempotency mean for IaC, and why does it matter?",
+      "options": [
+        "A) Idempotency means the template file can never be modified after it's first created",
+        "B) Idempotency means running the same IaC template multiple times produces the same result — if the infrastructure already matches the template, running it again makes no changes; if it drifted, it brings it back to the defined state. This means you can safely re-apply a template without fear of creating duplicates or causing unintended changes, making deployments predictable and repeatable",
+        "C) Idempotency is a Terraform-specific concept that doesn't apply to CloudFormation",
+        "D) Idempotency means the template automatically backs up the previous infrastructure state before making changes"
+      ],
+      "correct_index": 1,
+      "explanation": "Idempotency — same template multiple times run even if done same result — already matching if it was no changes, drifted-a if it was back to defined state. This deployments predictable-a, repeatable-a does — double-run panrfor that fearless-a can be.",
+      "ren_correct": "Correct — idempotent means same result every time, safe to re-apply without fear of duplicates.",
+      "ren_wrong": "A bit think again — idempotency template-lock not. Same template multiple times same result kudukkudhu meaning."
+    },
+    {
+      "id": "C7.2-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C7.2",
+      "scenario": "You've removed the drifted port 22 rule manually. Now you run a CloudFormation stack update to add a small legitimate change (a tag update on all resources). The update fails.",
+      "error_shown": "CloudFormation Stack Update: FAILED\nRollback initiated\n\nResource: sg-order-svc-0072\nError: Unable to update security group: the requested inbound rule already exists — Port 80+443, Source: sg-alb-foodquick-order. Cannot create duplicate rule.",
+      "diagnosis": "The port 22 rule was removed manually (correctly), but BEFORE running the stack update, there was still another instance of drift — something else in the SG had been modified and wasn't fully reconciled with the template. The stack update tried to apply the template's full defined state, found a rule it thought it needed to create already existed (or vice versa), and failed with a duplicate-rule conflict. This is a classic 'partial drift remediation followed by a stack update' failure mode — if any drift remains when a stack update runs, the update can conflict with the existing state in unexpected ways.",
+      "fix": "Run drift detection AGAIN before running any stack update, to confirm the deployed state completely matches the template before trying to update. Never assume 'I fixed the drift I knew about' means 'all drift is gone' — drift detection is the authoritative check, not human memory of what was changed.",
+      "explanation": "This real sequence-a padam panrfor that is important — drift partially fix after doing, stack update run did, remaining drift conflict create aagidhu. Drift detection authoritative check — 'I think I fixed it' insufficient. Always verify before update."
+    },
+    {
+      "id": "C7.2-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.2",
+      "scenario": "Full drift remediation and stack update both complete successfully. Final audit before reporting back.",
+      "broken_config": "CloudFormation Stack: order-service-stack\nStack Status: UPDATE_COMPLETE\n\nDrift Detection (post-fix):\n├── sg-order-svc-0072: NO_CHANGE ✓\n├── order-service-launch-template: NO_CHANGE ✓\n├── order-service-asg: NO_CHANGE ✓\n├── foodquick-order-alb: NO_CHANGE ✓\n└── All other managed resources: NO_CHANGE ✓\n\nNew team process (agreed and documented):\n├── All infrastructure changes must go through a template PR and stack deployment — no direct console modifications\n├── Drift detection runs weekly as part of Deepak's monitoring review\n└── Session Manager is the standard for ad-hoc EC2 access — no port 22 rules in any SG, period\n\nResources NOT yet covered by IaC stacks:\n├── S3 buckets (foodquick-product-images, foodquick-driver-documents, etc.)\n├── CloudWatch log groups and alarms\n└── IAM roles (except those created by CloudFormation for its own stacks)",
+      "what_to_find": [
+        "All managed resources now show NO_CHANGE — drift is fully remediated, not partially",
+        "The new team process is documented (not just agreed verbally) — making it a real structural change, not just a conversation that fades",
+        "The remaining uncovered resources (S3, CloudWatch, IAM) are explicitly named — this is honest scope documentation, not pretending IaC coverage is complete when it isn't",
+        "Session Manager as the standard for EC2 access (no open port 22 in any SG) closes the drift's specific risk and prevents the same manual-change trigger from recurring"
+      ],
+      "correct_fix": "No further changes for this lesson — the order-service stack is correctly reconciled. The uncovered resources (S3, CloudWatch, IAM) are the next IaC expansion scope, not an emergency gap.",
+      "explanation": "This 'recognize this is already correct' verify task — we complete-a drift fix we have done, process document we have done, AND scope honestly acknowledged (remaining uncovered resources). Not pretending IaC coverage is complete."
+    },
+    {
+      "id": "C7.2-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C7.2",
+      "cases": {
+        "case_1": "FoodQuick's production VPC, subnets, route tables, and security groups",
+        "case_2": "The content of FoodQuick's S3 buckets (the actual image files, log files, order exports)",
+        "case_3": "Deepak's personal SSH key pair in the EC2 console",
+        "case_4": "The CloudWatch alarms for order-service (HighErrorRate, HighCPU)"
+      },
+      "correct_answers": {
+        "case_1": "Manage with IaC — networking resources are the most critical to have reproducibly defined; losing this to human memory in a DR scenario is the highest-risk gap in the entire stack",
+        "case_2": "NOT managed by IaC — IaC manages the infrastructure (the bucket itself, its configuration, its lifecycle policies), not the data objects inside it. S3 object content is data, not infrastructure",
+        "case_3": "NOT managed by IaC — personal credentials and developer access artifacts are identity/access management concerns, typically managed through IAM policies and individual access methods, not encoded into infrastructure templates",
+        "case_4": "Manage with IaC — CloudWatch alarms are infrastructure configuration, not data. Defining them in code means alarm configuration changes are reviewed, tracked, and reproducible — not manual console clicks that can quietly drift"
+      },
+      "scenario": "Ravi asks for a clear framework on what should and should not be managed through IaC templates.",
+      "explanation": "Naanku different different resource type — VPC/networking (manage with IaC, highest DR risk), S3 object content (not IaC, data not infrastructure), personal credentials (not IaC, identity management), CloudWatch alarms (manage with IaC, configuration not data). This real judgment: IaC — infrastructure for configuration, for data or personal for credentials not.",
+      "ren_correct": "Correct — infrastructure configuration belongs in IaC; data content and personal credentials don't.",
+      "ren_wrong": "A bit think again — IaC manages infrastructure configuration, not the data inside resources or personal access credentials. Distinction matters."
+    },
+    {
+      "id": "C7.2-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C7.2",
+      "scenario": "Ravi asks for the real cost of the drift incident — not in AWS charges (there were none), but in engineering time and security risk. The drift lasted one week. Deepak's home IP had open SSH access to the production order-service instances for that entire period.",
+      "question": "How should the cost of this drift incident be framed honestly, given that nothing bad actually happened?",
+      "solution": "Direct AWS cost: ₹0 — no infrastructure was harmed, no charges changed. Real cost has two components: (1) Engineering time: approximately 3-4 hours total (discovering drift, deciding what to do, removing the rule, resolving the stack update conflict, documenting the process) at ₹2,500/hour ≈ ₹7,500-10,000. (2) Risk cost: one week of open SSH access from an external IP to production order-service instances — this could have been discovered and exploited by a scanner or attacker during that window. The ₹42L comparable security incident from FQ-189 (driver-documents) illustrates what 'window of external access to production systems' can cost when noticed by the wrong party. Framed honestly: this drift cost almost nothing this time, but the same pattern (manual change creating a silent security gap) is the same root cause as FQ-189's six-week driver-documents exposure. The process fix has real value.",
+      "explanation": "Drift incidents often cost nothing until they cost everything — honest framing is 'near-miss with a real risk window,' not 'nothing happened so no real cost.' Process fix value is prevention of the next incident, not remediation of this one."
+    },
+    {
+      "id": "C7.2-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.2",
+      "scenario": "Time to report back to Ravi on this piece of FQ-218.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Set up IaC and fixed a small SG issue. Everything's tracked now.\"",
+        "B) \"Drift detection found that Deepak's manual port 22 rule (added for SSH debugging last week) created an unintended security gap — external SSH access to production order-service instances for one week, partially reversing C4.4's SG restriction. Removed, stack fully reconciled (NO_CHANGE on all resources after fix), stack update conflict resolved by running drift detection before the update. New team process: all changes via template PR + stack deployment, no direct console modifications, weekly drift detection, Session Manager as standard for ad-hoc access. IaC coverage currently limited to core compute/networking stack — S3, CloudWatch, and IAM are next expansion scope, documented explicitly as open.\"",
+        "C) \"The drift was Deepak's fault — flagged to Ravi for follow-up.\"",
+        "D) \"IaC is set up and complete. All resources are now managed by CloudFormation.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific drift finding (including the security implication), full fix chain, process rule, AND honest scope (IaC coverage is not complete, specific gaps named). Option C blame-framing wrong. Option D overclaims — not all resources are managed, specifically named what isn't.",
+      "ren_correct": "This correct report — specific, security-implication honest, complete fix chain, honest scope acknowledgment.",
+      "ren_wrong": "This report either blame-a frame does (C) or overclaim does ('IaC complete, all resources managed' — D) — both wrong."
+    }
+  ],
+  "act_number": 2,
+  "act_title": "Build the Network for Real",
+  "builds_layer": "Network Build Layer"
+}

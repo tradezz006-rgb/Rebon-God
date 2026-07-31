@@ -1,0 +1,225 @@
+{
+  "lesson_id": "C4.3",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nWe've cleaned up user data and access. Now let's talk about how order-service actually gets built and changed over time. Right now, half of what makes an instance 'order-service' happens via user data at boot, and the other half is whatever someone manually did to it after the fact — with zero record of what that was.\n\npriya-dev pushed a hotfix directly onto a live instance yesterday to unblock a customer issue. I haven't asked her about backups yet. Let's find out what actually happened before we decide how worried to be.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nGlad we caught the intermittent 500s before a customer did the finding for us. Reconstructing a change with no backup point was exactly as painful as it should have been — a good, if uncomfortable, lesson. Golden AMI pipeline is in place now, snapshots are part of the process instead of an afterthought, and priya-dev's original hotfix is baked in properly and actually tested this time.\n\nNext: load balancing. Every one of order-service's instances is currently reachable directly — let's fix that properly.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.3-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.3",
+      "scenario": "Ravi wants to move order-service toward a proper 'golden AMI' pattern — a pre-built image with dependencies and configuration already baked in — instead of relying so heavily on user data scripts and manual changes after boot.",
+      "question": "What's the main practical benefit of baking configuration into a golden AMI, compared to doing everything via user data at every boot?",
+      "options": [
+        "A) There's no real benefit — user data and golden AMIs accomplish exactly the same thing with no meaningful difference",
+        "B) Instances launch faster (less work to do at boot time) and are more consistent (every instance from the same AMI starts in an identical, known-good state) — reducing the chance of configuration drift between instances",
+        "C) Golden AMIs are required by AWS for any instance using an Auto Scaling Group, user data is not allowed with ASGs",
+        "D) Golden AMIs eliminate the need for security groups entirely"
+      ],
+      "correct_index": 1,
+      "explanation": "Golden in AMI dependencies already baked in because it is there, instance boot in time a bit velai only must do — faster launch. Ella instance also same in AMI irundhu start aagardhala, consistent state guarantee aagudhu, drift risk kammi aagudhu. User data still useful-a will be instance-specific for setup, but heavy lifting in AMI already baked-in if it was better.",
+      "ren_correct": "Correct-a is clear — faster boot and consistency real benefit, golden AMI's.",
+      "ren_wrong": "A bit think again — golden AMI and user data same thing not. in AMI baked-in config —, boot faster-a will happen and drift kammi will happen."
+    },
+    {
+      "id": "C4.3-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.3",
+      "question": "How does an EBS snapshot actually work, in terms of what data it stores?",
+      "options": [
+        "A) Every snapshot is a full, complete copy of the entire volume, regardless of how many previous snapshots exist",
+        "B) The first snapshot captures the full volume; every subsequent snapshot is INCREMENTAL, storing only the blocks that changed since the last snapshot — but each snapshot can still be used independently to restore the volume to that exact point in time",
+        "C) Snapshots only capture file names and metadata, never the actual data inside files",
+        "D) EBS snapshots are stored on the same volume they were taken from, not separately"
+      ],
+      "correct_index": 1,
+      "explanation": "First snapshot full-a will be, then varra each snapshot also incremental — last for snapshot then change but blocks only store does. But each snapshot standalone-a use we can do, that specific for point-in-time restore for doing — incremental storage- — incomplete not.",
+      "ren_correct": "Correct — incremental storage, but each snapshot standalone-a usable, point-in-time for restore.",
+      "ren_wrong": "A bit off track. Every snapshot full copy not — first only full, then incremental. But each snapshot also independently usable."
+    },
+    {
+      "id": "C4.3-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.3",
+      "question": "What's the benefit of using a LAUNCH TEMPLATE with versioning, instead of just launching instances manually each time or hardcoding one fixed AMI ID everywhere?",
+      "options": [
+        "A) Launch templates are purely a cosmetic organizational feature in the console with no functional benefit",
+        "B) Launch templates let you version your launch configuration (AMI, instance type, security groups, etc.) as one unit, so an ASG can be updated to a new version cleanly and can roll back to a previous version quickly if something goes wrong with the new one",
+        "C) Launch templates automatically fix any application-level bugs in the AMI they reference",
+        "D) Launch templates can only be used with Spot instances, never On-Demand"
+      ],
+      "correct_index": 1,
+      "explanation": "Launch template versioning —, ella launch config (AMI, instance type, SG, etc.) a unit-a bundle after doing version we can do. New for version ASG update we can do cleanly, and any problem vandha, previous for version rollback doing also fast-a we can do. This manual launch or hardcoded AMI ID-a vida very safer, repeatable process.",
+      "ren_correct": "Correct — versioning real value, clean update AND clean rollback both kidaikkum.",
+      "ren_wrong": "A bit think again — launch template cosmetic not. Versioning real functional benefit gives, update and rollback both easy-a."
+    },
+    {
+      "id": "C4.3-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.3",
+      "scenario": "You investigate exactly what priya-dev did yesterday to unblock the customer issue.",
+      "broken_config": "Timeline reconstructed from her Slack messages and shell history:\n├── 14:32 - SSH'd directly into order-service instance i-04f7a2b9c1e6d3a8f (one specific instance in the ASG, not all of them)\n├── 14:35 - Edited /etc/order-service/config.yaml directly, changed a timeout value from 5000ms to 15000ms\n├── 14:37 - Restarted the order-service process on that instance only\n├── 14:40 - Confirmed the customer issue was resolved\n└── No snapshot, no AMI update, no launch template change, no record of this anywhere except Slack messages and her own memory\n\nCurrent ASG state:\n├── i-04f7a2b9c1e6d3a8f: config.yaml has the 15000ms timeout (manually changed)\n├── 3 other running instances: config.yaml still has the original 5000ms timeout (from the golden AMI / user data baseline)\n└── If the ASG scales up or this specific instance is replaced, the fix disappears with no record of what it was",
+      "what_to_find": [
+        "The fix was applied to exactly ONE instance manually, not to the golden AMI, launch template, or user data — meaning the other 3 instances still have the old, broken configuration",
+        "This creates configuration drift: the fleet is no longer uniform, and nobody looking at the AMI or launch template would know this fix exists",
+        "There is no snapshot or AMI backup of the instance's state from BEFORE the change — if the change itself caused a NEW problem, there's no clean rollback point",
+        "If the ASG ever terminates this specific instance (scale-in, health check failure, AZ issue), the fix is silently lost — with no record anywhere of what it was or why it was needed"
+      ],
+      "correct_fix": "Immediate: take a snapshot of the current, correctly-working state of i-04f7a2b9c1e6d3a8f right now, before anything else happens to it — this at least captures a known-good state to reference. Then plan to properly validate the timeout change and bake it into an updated golden AMI so it propagates to the whole fleet consistently, rather than living on one instance's memory.",
+      "explanation": "This exact spec mistake — production config change, no backup, no rollback path, and now config drift too. Immediate step-a even if, for aparment (before/after) snapshot edukkanum, then proper-a golden in AMI bake must do ella instance-kum consistent-a."
+    },
+    {
+      "id": "C4.3-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.3",
+      "question": "Arrange the correct order for properly validating priya-dev's timeout fix and rolling it out safely to the whole fleet.",
+      "items": [
+        "Take a snapshot/AMI of the current instance's state, capturing the working fix as a known reference point",
+        "Test the 15000ms timeout change thoroughly in a staging environment, not just observe that the immediate customer issue went away",
+        "Once validated, update the golden AMI to include the new timeout value",
+        "Update the launch template to reference the new AMI version",
+        "Allow the ASG to gradually replace old instances with new ones launched from the updated AMI, verifying each one as it comes up"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First safety net (snapshot of current working state), then real validation (staging test, not just 'customer issue disappeared'), then golden AMI update, then launch template point must do new for AMI, LAST-a gradual rollout verify while doing.",
+      "ren_correct": "Nice sequencing — safety net first, real validation next, gradual rollout last.",
+      "ren_wrong": "Order again paaru — snapshot/safety net first edukkanum, then proper validation and rollout."
+    },
+    {
+      "id": "C4.3-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.3",
+      "scenario": "karthik-dev asks: 'If we're moving to a golden AMI pattern, does that mean user data becomes completely useless now?'",
+      "question": "How should you answer?",
+      "options": [
+        "A) Yes — golden AMIs completely replace user data, which should never be used again",
+        "B) No — they serve different, complementary purposes. Golden AMI bakes in the shared, common configuration/dependencies every instance needs. User data still has a role for instance-specific or environment-specific setup that varies at launch time (e.g. fetching environment-specific secrets, registering with a specific config), which shouldn't be baked into a shared image",
+        "C) No — user data should now be used for everything, and the golden AMI pattern should be abandoned instead",
+        "D) They're identical mechanisms with different names, so it doesn't matter which is used"
+      ],
+      "correct_index": 1,
+      "explanation": "Golden AMI and user data both complementary — shared, common stuff in AMI bake must do, instance-specific or environment-specific setup (already we in C4.2b we saw Parameter Store fetch like) user in data must be. Both replace doing not, correct division of responsibility real answer.",
+      "ren_correct": "Correct — both different, complementary roles, one replace doing not.",
+      "ren_wrong": "A bit extreme-a you thought. Golden AMI and user data replace doing not — both different vera, complementary purpose."
+    },
+    {
+      "id": "C4.3-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.3",
+      "scenario": "Before baking the timeout fix into a new golden AMI, you want to take an EBS snapshot of the validated staging instance as an extra safety net.",
+      "question": "What's the actual value of taking this snapshot, given the AMI itself will also be created from this instance?",
+      "options": [
+        "A) There's no additional value — creating an AMI already captures everything a snapshot would, making a separate snapshot redundant",
+        "B) A standalone snapshot gives a lightweight, fast way to restore just the volume's data to this exact point if something goes wrong with the AMI creation process itself, or if you need to inspect/mount this specific state later without launching a full new instance from an AMI",
+        "C) Snapshots are only useful for instance store volumes, not EBS, so this step is pointless",
+        "D) Snapshots must always be taken before an AMI can be created — AWS technically requires it as a prerequisite"
+      ],
+      "correct_index": 1,
+      "explanation": "AMI creation also snapshot also internally related-a can be (AMI creation snapshot use does), but standalone snapshot edukkardhu extra safety net — AMI creation process itself any issue vandha, not that specific state-a inspect must do — vandha, lightweight-a that for point poi let us lookam, full instance launch without doing.",
+      "ren_correct": "Correct — standalone snapshot extra flexibility gives, AMI creation process's vera-a.",
+      "ren_wrong": "A bit think again — snapshot completely redundant not. That vera, lightweight-a use we can do specific for scenarios."
+    },
+    {
+      "id": "C4.3-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.3",
+      "scenario": "Three days after priya-dev's original manual fix, the new golden AMI is being rolled out. But before the rollout finishes, customers start reporting intermittent 500 errors from order-service — specifically only for orders with more than 20 line items.",
+      "error_shown": "Application log: \"TimeoutError: order validation exceeded 15000ms for order #48291 (34 line items)\" — occurring only on i-04f7a2b9c1e6d3a8f (the instance priya-dev manually changed), not on the other 3 instances still running the original 5000ms timeout",
+      "diagnosis": "priya-dev's original 15000ms timeout fix solved the specific customer issue she was looking at (which involved smaller orders), but it turns out large orders (20+ line items) take LONGER than even 15000ms to validate under current load, causing a timeout that behaves differently (and confusingly) compared to the original 5000ms failure. Because this instance was never properly load-tested with a realistic range of order sizes before being treated as \"the fix,\" this edge case was missed entirely — and because there was no rollback snapshot from BEFORE her change, there's no quick way back to a known-good state either.",
+      "fix": "Roll back i-04f7a2b9c1e6d3a8f to the pre-change state using the snapshot taken in T3 (the safety net captured after her fix, which at least gives a comparison point), investigate the actual root cause of why large-order validation is slow in the first place (likely a genuine performance issue, not just a timeout number), and only bake a NEW fix into the golden AMI once it's been tested against realistic order sizes, not just the original customer's specific case.",
+      "explanation": "This real consequence of skipping proper validation — a specific case fix do, different edge case create do, therla. Snapshot if it was also (in T3 edutha), first for change earlier backup without was there, root cause investigate doing still kashtama irundhwill be. This exact spec mistake's full consequence."
+    },
+    {
+      "id": "C4.3-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.3",
+      "scenario": "After properly investigating, the real root cause turns out to be an unoptimized validation query that scales poorly with line-item count. You fix that root cause, test it against a realistic range of order sizes, and prepare to bake it into the golden AMI properly this time.",
+      "broken_config": "Corrected process, before final rollout:\n├── Root cause fixed: validation query optimized (from O(n²) to O(n) behavior with line-item count)\n├── Tested against orders ranging from 1 to 100 line items in staging, including the original 34-line-item case that failed\n├── Timeout value kept at a more reasonable 8000ms (not the original 5000ms which was genuinely too tight, nor the untested 15000ms)\n├── New golden AMI created from this validated staging instance, with a snapshot ALSO taken independently as a rollback reference point\n└── Launch template updated to the new AMI version, ASG set to gradually replace instances",
+      "what_to_find": [
+        "This time, the fix addresses the actual root cause (slow validation query) rather than just adjusting a timeout number to mask a slower underlying problem",
+        "Testing covered a realistic range of order sizes, including the specific case that broke last time — not just the original customer's narrow scenario",
+        "Both an AMI update AND an independent snapshot were taken this time, giving both a fleet-wide rollout path and a quick rollback reference",
+        "The timeout value itself was also reconsidered (8000ms) rather than blindly keeping either the original too-tight value or the previous untested one"
+      ],
+      "correct_fix": "No further changes needed — this is the properly validated, properly backed-up version of the fix. Proceed with the gradual ASG rollout as planned.",
+      "explanation": "This 'recognize this is already correct' verify task — we ippo root cause fix we have done, realistic testing we have done, AND proper backup/rollback path is there. This T3's mistake-a vida how much different-a is there — kaatradhu."
+    },
+    {
+      "id": "C4.3-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.3",
+      "scenario": "Ravi asks for a standing policy going forward: how should the team handle urgent production hotfixes in general, given what just happened?",
+      "options": [
+        "A) Ban all manual production changes entirely, even in genuine emergencies — everything must go through the full golden AMI pipeline first, no exceptions",
+        "B) Allow urgent manual hotfixes when genuinely needed, but REQUIRE a snapshot/backup taken immediately before any manual change, and require the fix to be properly tested and baked into the golden AMI within a defined short window afterward (not left indefinitely as a one-instance manual patch)",
+        "C) Continue allowing manual hotfixes with no process changes — this was just bad luck, not a process problem",
+        "D) Manual hotfixes should only be allowed on weekends, when customer traffic is lower"
+      ],
+      "correct_index": 1,
+      "explanation": "Complete ban impractical-a will be genuine in emergency (this real trade-off, CS7's Deep Craft in phase deeper-a paakkum topic). But 'no process changes' um wrong — real gap was there. Balanced answer: emergency manual fix allow do, but MANDATORY backup-first, and mandatory proper bake-in within a defined window — 'temporary' fix permanent-a become aagamust not.",
+      "ren_correct": "Correct — balanced policy, emergency fix allow we will do but mandatory backup and mandatory proper follow-up.",
+      "ren_wrong": "A bit extreme-a you thought — complete ban um 'no change needed' um both wrong. Balanced, mandatory-backup policy real answer."
+    },
+    {
+      "id": "C4.3-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.3",
+      "scenario": "Ravi asks about the ongoing cost of maintaining regular EBS snapshots and multiple golden AMI versions, given the team plans to snapshot before every production change going forward. Each snapshot costs roughly ₹4/GB-month for the incremental data it stores; order-service's root volume is 40GB, with typical incremental snapshots storing 2-5GB of actual changes.",
+      "question": "How should the ongoing snapshot/AMI storage cost be framed against the risk it protects against?",
+      "solution": "A typical incremental snapshot (2-5GB of changed data) costs roughly ₹8-20/month to retain. Even keeping 10-15 recent snapshots as rollback points across the fleet costs on the order of a few hundred rupees a month total — negligible compared to the cost of an incident like the one just handled, where hours of engineering time went into reconstructing an unrecorded change with no clean rollback. The snapshot cost is essentially free insurance against exactly this scenario; the real cost discipline needed is deleting genuinely old, unneeded snapshots periodically, not avoiding snapshots to save money.",
+      "explanation": "This real cost framing — snapshot cost very kammi (incremental storage only), risk avoid doing real value. Cost discipline — 'snapshot edukkama being there' not, 'old, unwanted snapshots clean doing' — this real balance."
+    },
+    {
+      "id": "C4.3-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.3",
+      "scenario": "Time to report back to Ravi on this piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the timeout issue. Everything's on the golden AMI now.\"",
+        "B) \"priya-dev's original manual fix (timeout 5000ms to 15000ms, one instance only, no backup) masked a real root cause — a validation query that scaled poorly with order line-item count — which surfaced as intermittent 500s on large orders during rollout. Root cause fixed and properly load-tested across a realistic range of order sizes, timeout reset to a validated 8000ms, baked into a new golden AMI with an independent snapshot also taken this time. Recommending a standing policy: emergency manual hotfixes still allowed, but backup-first and proper bake-in within a defined window are now mandatory.\"",
+        "C) \"There was a bug but it's fixed now, nothing else to add.\"",
+        "D) \"priya-dev's original fix was wrong, she should be more careful next time.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — full chain explain must do (original fix, what it masked, root cause, proper fix, AND the process policy). 'She should be more careful' — wrong tone and wrong lesson — this process gap, individual blame not; this exact same non-punitive framing we in CS2 irundhu follow we have done.",
+      "ren_correct": "This correct report — full technical chain, honest, AND framed as a process fix, not individual blame.",
+      "ren_wrong": "This report either incomplete-a is there or wrong in tone is there (individual blame) — process gap-a fix must do, a person-a blame doing not."
+    }
+  ],
+  "act_number": 4,
+  "act_title": "AMIs, Snapshots, Launch Templates",
+  "builds_layer": "Image Reuse Layer"
+}

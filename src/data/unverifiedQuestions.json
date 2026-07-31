@@ -1,0 +1,10 @@
+[
+  {
+    "status": "unverified",
+    "lesson_id": "example",
+    "question": "Example user doubt",
+    "ai_generated_response": "Example response",
+    "whiteboard_summary": "Example whiteboard",
+    "timestamp": "2026-05-15T00:00:00.000Z"
+  }
+]

@@ -1,0 +1,356 @@
+{
+  "lesson_id": "C1B.2",
+  "id": "C1B.2",
+  "lesson_title": "S3: The Infinite Hard Drive in the Sky",
+  "section_id": "CS1B",
+  "section_name": "Core Services Awareness",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "content_status": "live",
+  "duration_minutes": 5,
+  "prerequisites": "C1B.1",
+  "student_will_learn": [
+    "S3 buckets and objects",
+    "Flat storage vs folders",
+    "Files, images, backups"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "CS1B · S3: The Infinite Hard Drive in the Sky. Ren teaching mode on.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Phase · CS1B",
+        "S3: The Infinite Hard Drive in the Sky"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 1",
+      "ava_speaks": "Awesome. EC2-ல compute (brain) எப்படி work ஆகுது-னு பாத்துட்டோம். But ஒரு app-க்கு photos, videos, user uploads-லாம் எங்க store பண்றது? That brings us to Pillar 2: Amazon S3.",
+      "emotion": "excited",
+      "board_actions": [
+        {
+          "type": "clear_board"
+        }
+      ],
+      "whiteboard_action": "clear",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 1,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Pillar 2: Amazon S3",
+      "ava_speaks": "S3 stands for 'Simple Storage Service'. EC2 வந்து renting a computer by the hour-னா, S3 is literally renting an infinite hard drive in the sky.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Pillar 2: Amazon S3"
+        },
+        {
+          "type": "write_bullet",
+          "text": "S3 = Simple Storage Service"
+        },
+        {
+          "type": "write_bullet",
+          "text": "The infinite hard drive in the sky"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Used for files, images, videos, backups"
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 2: Amazon S3",
+        "points": [
+          "S3 = Simple Storage Service",
+          "The infinite hard drive in the sky",
+          "Used for files, images, videos, backups"
+        ]
+      },
+      "trigger_event": null,
+      "step": 2,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 3",
+      "ava_speaks": "Normally, நம்ம laptop-ல folders குள்ள folders-னு வைப்போம். This is a nested hierarchy. 1000 files இருந்தா இது ஓகே. But Swiggy or Zomato-ல millions of food photos இருக்கும். Folder structure use பண்ணா, file தேடி எடுக்குறதுக்குள்ள search ரொம்ப slow ஆகிடும்.",
+      "emotion": "explaining",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 3,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Buckets, not Folders",
+      "ava_speaks": "So, S3 completely removes folders. Instead, it uses 'Buckets'. Think of a Bucket as a massive, flat container. You just drop your files directly into this giant Bucket. No messy mazes, no endless clicks.",
+      "emotion": "encouraging",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Buckets, not Folders"
+        },
+        {
+          "type": "write_bullet",
+          "text": "No deep, messy folder hierarchies."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Everything lives in a giant, flat Bucket."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Buckets must have globally unique names."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Buckets, not Folders",
+        "points": [
+          "No deep, messy folder hierarchies.",
+          "Everything lives in a giant, flat Bucket.",
+          "Buckets must have globally unique names."
+        ]
+      },
+      "trigger_event": null,
+      "step": 4,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "What is an Object?",
+      "ava_speaks": "And S3-ல அத 'files'-னு சொல்ல மாட்டோம், 'Objects'-னு சொல்லுவோம். Object = Your File + Metadata (Nametags). அந்த Nametags-ல file-ஓட details இருக்கும். அதனால தான் Hotstar-ல billions of videos இருந்தாலும், instant-ஆ scale ஆகி play ஆகுது.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "What is an Object?"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Object = File + Metadata (Nametags)"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Instantly searchable at scale."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Perfect for massive media libraries."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "What is an Object?",
+        "points": [
+          "Object = File + Metadata (Nametags)",
+          "Instantly searchable at scale.",
+          "Perfect for massive media libraries."
+        ]
+      },
+      "trigger_event": null,
+      "step": 5,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Infinite & Uncrashable",
+      "ava_speaks": "Best part? S3 storage is literally infinite. Hard drive 'full' ஆகுமோ-னு கவலையே வேணாம். And it's incredibly safe. AWS physically copies your data across multiple data centers. Uncrashable storage.",
+      "emotion": "excited",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Infinite & Uncrashable"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Unlimited storage capacity."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Pay only for exactly what you store."
+        },
+        {
+          "type": "write_bullet",
+          "text": "11 9s of Durability (data loss is near impossible)."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Infinite & Uncrashable",
+        "points": [
+          "Unlimited storage capacity.",
+          "Pay only for exactly what you store.",
+          "11 9s of Durability (data loss is near impossible)."
+        ]
+      },
+      "trigger_event": null,
+      "step": 6,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 7",
+      "ava_speaks": "So, EC2 is the brain, S3 is the infinite bucket for files. Clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": "start_workspace_tasks",
+      "step": 7,
+      "speaker": "Ren"
+    }
+  ],
+  "lesson_flow": [
+    {
+      "step": 1,
+      "speaker": "Ren",
+      "text": "Awesome. EC2-ல compute (brain) எப்படி work ஆகுது-னு பாத்துட்டோம். But ஒரு app-க்கு photos, videos, user uploads-லாம் எங்க store பண்றது? That brings us to Pillar 2: Amazon S3.",
+      "emotion": "excited",
+      "whiteboard_action": "clear"
+    },
+    {
+      "step": 2,
+      "speaker": "Ren",
+      "text": "S3 stands for 'Simple Storage Service'. EC2 வந்து renting a computer by the hour-னா, S3 is literally renting an infinite hard drive in the sky.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 2: Amazon S3",
+        "points": [
+          "S3 = Simple Storage Service",
+          "The infinite hard drive in the sky",
+          "Used for files, images, videos, backups"
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "speaker": "Ren",
+      "text": "Normally, நம்ம laptop-ல folders குள்ள folders-னு வைப்போம். This is a nested hierarchy. 1000 files இருந்தா இது ஓகே. But Swiggy or Zomato-ல millions of food photos இருக்கும். Folder structure use பண்ணா, file தேடி எடுக்குறதுக்குள்ள search ரொம்ப slow ஆகிடும்.",
+      "emotion": "explaining",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 4,
+      "speaker": "Ren",
+      "text": "So, S3 completely removes folders. Instead, it uses 'Buckets'. Think of a Bucket as a massive, flat container. You just drop your files directly into this giant Bucket. No messy mazes, no endless clicks.",
+      "emotion": "encouraging",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Buckets, not Folders",
+        "points": [
+          "No deep, messy folder hierarchies.",
+          "Everything lives in a giant, flat Bucket.",
+          "Buckets must have globally unique names."
+        ]
+      }
+    },
+    {
+      "step": 5,
+      "speaker": "Ren",
+      "text": "And S3-ல அத 'files'-னு சொல்ல மாட்டோம், 'Objects'-னு சொல்லுவோம். Object = Your File + Metadata (Nametags). அந்த Nametags-ல file-ஓட details இருக்கும். அதனால தான் Hotstar-ல billions of videos இருந்தாலும், instant-ஆ scale ஆகி play ஆகுது.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "What is an Object?",
+        "points": [
+          "Object = File + Metadata (Nametags)",
+          "Instantly searchable at scale.",
+          "Perfect for massive media libraries."
+        ]
+      }
+    },
+    {
+      "step": 6,
+      "speaker": "Ren",
+      "text": "Best part? S3 storage is literally infinite. Hard drive 'full' ஆகுமோ-னு கவலையே வேணாம். And it's incredibly safe. AWS physically copies your data across multiple data centers. Uncrashable storage.",
+      "emotion": "excited",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Infinite & Uncrashable",
+        "points": [
+          "Unlimited storage capacity.",
+          "Pay only for exactly what you store.",
+          "11 9s of Durability (data loss is near impossible)."
+        ]
+      }
+    },
+    {
+      "step": 7,
+      "speaker": "Ren",
+      "text": "So, EC2 is the brain, S3 is the infinite bucket for files. Clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "whiteboard_action": "none",
+      "trigger_event": "start_workspace_tasks"
+    }
+  ],
+  "workspace_metadata": {
+    "workspace_id": "WS_C1B.2",
+    "lesson_id": "C1B.2",
+    "title": "Workspace: Scaling the Infinite Drive",
+    "type": "scenario_task_set"
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "WS-C1B2-01",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: Scaling the Infinite Drive",
+      "question": "Myntra needs to securely store 50 million high-resolution product photos. When users open the app, these images must load instantly across India. Which AWS storage architecture is the correct choice?",
+      "options": [
+        "Save the photos directly on the local hard drives of their EC2 web servers to keep them close to the application.",
+        "Create a complex, 10-level deep folder hierarchy in an on-premise server to keep the categories organized.",
+        "Store them in an Amazon S3 Bucket as Objects for infinite, flat scalability and fast retrieval.",
+        "Store the raw image files inside a Relational Database (RDS) to keep them strictly organized."
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "S3 infinite storage. Photos, videos, user uploads- S3 Bucket- Object- store doing correct architecture. EC2 hard drive-, server crash photos- (Data loss).",
+      "ava_feedback_wrong": "S3 infinite storage. Photos, videos, user uploads- S3 Bucket- Object- store doing correct architecture. EC2 hard drive-, server crash photos- (Data loss).",
+      "explanation": "S3 infinite storage. Photos, videos, user uploads- S3 Bucket- Object- store doing correct architecture. EC2 hard drive-, server crash photos- (Data loss).",
+      "if_wrong_route_to": "C1B.2",
+      "source_lesson": "C1B.2",
+      "whiteboard_heading": "Workspace: Scaling the Infinite Drive",
+      "whiteboard_points": []
+    },
+    {
+      "task_id": "WS-C1B2-02",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: Scaling the Infinite Drive",
+      "question": "CampusKart stores 8 million product photos in one S3 bucket. Support asks: 'How do we find every image tagged season=festive without walking nested laptop-style folders?' What property of an S3 Object makes that possible?",
+      "options": [
+        "Each Object is actually a tiny EC2 that runs search code.",
+        "Each Object is the file plus Metadata (nametags) — so season=festive can be attached and queried without deep folder mazes.",
+        "S3 only stores zip archives, so support must unzip locally.",
+        "S3 forces the same nested C:\\Users\\... folder tree as a laptop, so metadata isn't needed."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Object = File + Metadata. nametags billions of photos- instant retrieve — laptop folder maze.",
+      "ava_feedback_wrong": "S3 Object = file + metadata nametags. That's how CampusKart finds festive SKUs without folder archaeology.",
+      "explanation": "Object = File + Metadata. nametags billions of photos- instant retrieve — laptop folder maze.",
+      "if_wrong_route_to": "C1B.2",
+      "source_lesson": "C1B.2",
+      "whiteboard_heading": "Workspace: Object = File + Metadata",
+      "whiteboard_points": []
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Concepts clear-aa? Workspace tickets ready. Let's lock this in."
+  }
+}

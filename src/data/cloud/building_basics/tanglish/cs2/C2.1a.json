@@ -1,0 +1,339 @@
+{
+  "lesson_id": "C2.1a",
+  "lesson_title": "Creating IAM Users and Groups — The Digital Keycard System",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "Fresher Phase complete (CS1 + CS1B), Transition Assessment passed",
+  "student_will_learn": [
+    "Why the root account must never be used for daily work",
+    "How to create individual IAM users for each team member",
+    "How IAM groups let you manage permissions at scale",
+    "How to attach a policy to a group and have all members inherit it",
+    "Why shared credentials destroy accountability and audit trails"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "வணக்கம். FoodQuick crisis-ல நாம இப்போ IAM session-க்கு வந்திருக்கோம். Fresher pace-ல IAM concept theory-ஆ கத்துக்கிட்டீங்க — keycard system மாதிரி இருக்கும்-னு. இப்போ real-ஆ console-ல போய் அத configure பண்ணப் போறோம். First real ticket. No more theory. Let's go.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.1a",
+        "Creating IAM Users and Groups",
+        "The Digital Keycard System"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Why Root Account Access Is a Loaded Gun",
+      "ava_speaks": "FoodQuick startup-ல 10 developers வேலை பண்றாங்க. அவங்க எல்லாரும் ஒரே root account password use பண்றாங்க-ன்னு வெச்சுக்குங்க. அது ஏன் problem-ன்னு பாப்போம். Root account-ங்குறது AWS account-ன் master key. இது எல்லாத்தையும் பண்ணும் — delete பண்ணும், billing மாத்தும், security settings மாத்தும், எதுவும் பண்ணும். ஒரு developer-ன் laptop hack ஆனா, அந்த password leak ஆனா — attacker-க்கு உங்க entire company-ன் AWS account முழுசா கிடைச்சிடும். அதனால தான் IAM Users create பண்றோம். ஒவ்வொரு நபருக்கும் தனி login. Root account-ஐ ஒரு safe-ல வெச்சு பூட்டி — daily work-க்கு touch பண்ணக்கூடாது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Root Account Problem"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Shared Root Login",
+            "Individual IAM Users"
+          ],
+          "rows": [
+            [
+              "One password, everyone knows it",
+              "Each person has their own login"
+            ],
+            [
+              "No way to know who did what",
+              "CloudTrail shows exact person for every action"
+            ],
+            [
+              "Leaked once = full account compromised",
+              "Leaked once = only that user's permissions exposed"
+            ],
+            [
+              "Cannot remove access for one person only",
+              "Remove one user without affecting others"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Rule: Root account is used ONCE during account setup, then locked away. Never used for daily work again."
+        },
+        {
+          "type": "write_definition_box",
+          "text": "IAM User = An individual identity in AWS with its own credentials (username + password, or access keys). One IAM User per human being. Always."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "A startup gives all 10 developers the same IAM user credentials to log in. A production database gets deleted. What is the biggest problem with this setup?",
+          "options": [
+            "A) IAM only supports up to 5 concurrent logins per user",
+            "B) There is no audit trail — CloudTrail cannot show which developer deleted the database",
+            "C) Shared credentials are slower to authenticate",
+            "D) IAM users cannot access production environments"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Shared credentials = zero accountability. CloudTrail logs-ல 'dev-shared' delete பண்ணுச்சு-ன்னு தான் காட்டும். ஆனா அந்த 10 பேர்ல யாருன்னு கண்டுபிடிக்கவே முடியாது.",
+          "ava_wrong": "இல்ல, சிந்தியுங்க. Shared login வெச்சிருந்தா, CloudTrail-ல ஒரே username தான் தெரியும். Real problem என்னன்னா — accountability இல்ல. யாரு delete பண்ணாங்கன்னே தெரியாது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "You attach an S3ReadOnly policy to the 'Developers' IAM group. A new developer is added to that group. What happens to their S3 permissions?",
+          "options": [
+            "A) Nothing — you must attach the policy to each user individually",
+            "B) They automatically inherit S3ReadOnly access through group membership",
+            "C) They get temporary S3 access for 24 hours until approved",
+            "D) The policy must be re-attached to the group after adding the new member"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! Group membership-ன்னா automatic inheritance. ஒரு policy group-ல attach பண்ணா, அந்த group-ல இருக்க எல்லாருக்கும் automatic-ஆ கிடைச்சிடும்.",
+          "ava_wrong": "இல்ல. Group-ன் whole point என்னன்னா — policy ஒரே இடத்துல attach பண்றது, group members எல்லாருக்கும் automatic-ஆ apply ஆகும். Individual-ஆ ஒவ்வொரு user-க்கும் பண்ண வேண்டாம்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The ₹12 Lakh Root Account Mistake",
+      "ava_speaks": "Hyderabad startup-ல நடந்த real incident சொல்றேன். Senior developer ஒருத்தர் .env file-ஐ accidentally GitHub-ல public-ஆ push பண்ணிட்டாரு. அந்த file-ல root account access keys இருந்துச்சு. 47 minutes தான் அது public-ஆ இருந்துச்சு. அந்த 47 minutes-ல enna நடந்துச்சுன்னா — attacker 4 different regions-ல 50 EC2 instances launch பண்ணிட்டாரு, crypto mining-க்காக. Bill: ₹12 லட்சம், 47 minutes-ல மட்டும். இப்போ யோசிங்க — அவங்க IAM users use பண்ணி இருந்தா, ஒவ்வொரு user-க்கும் specific permissions இருந்திருந்தா — attacker-க்கு அந்த ஒரு user-ன் permissions மட்டும் தான் கிடைச்சிருக்கும். Root account leak ஆனா — game over.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Real Incident: Hyderabad Startup, 2023"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "What Happened"
+          ],
+          "rows": [
+            [
+              "Day 1",
+              "Developer commits .env file to GitHub public repo"
+            ],
+            [
+              "+47 minutes",
+              "Repo made public accidentally, keys exposed"
+            ],
+            [
+              "+52 minutes",
+              "Bot scanner finds exposed AWS keys"
+            ],
+            [
+              "+58 minutes",
+              "50 EC2 instances launched across 4 regions"
+            ],
+            [
+              "+3 hours",
+              "Team discovers the breach, rotates keys"
+            ],
+            [
+              "Total damage",
+              "₹12,00,000 in 47 minutes"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Creating Your First IAM User and Group",
+      "ava_speaks": "இப்போ real-ஆ IAM console-க்கு போவோம். FoodQuick-க்கு ஒரு 'priya-dev' user create பண்ணப் போறோம், 'Developers' group-ல add பண்ணி.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "IAM",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல IAM console-க்கு போவோம். Users section-ஐ கிளிக் பண்ணுங்க.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Services → IAM → Users",
+              "highlight": "Users menu item",
+              "result": "IAM Users dashboard opens, showing empty user list"
+            }
+          },
+          {
+            "ava_narration": "இப்போ 'Create user' button கிளிக் பண்ணி, username 'priya-dev'-ன்னு type பண்ணுங்க.",
+            "console_action": {
+              "type": "fill",
+              "field": "User name",
+              "value": "priya-dev",
+              "result": "New user form shows the username entered"
+            }
+          },
+          {
+            "ava_narration": "அடுத்ததா 'Developers' group create பண்ணி, S3ReadOnlyAccess policy attach பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM → User groups → Create group",
+              "highlight": "Attach permissions policies section",
+              "result": "New group 'Developers' created with S3ReadOnlyAccess attached"
+            }
+          },
+          {
+            "ava_narration": "கடைசியா, priya-dev-ஐ Developers group-ல add பண்றோம். இப்போ அவங்களுக்கு automatic-ஆ S3 read access கிடைச்சிடும்.",
+            "console_action": {
+              "type": "select",
+              "field": "Add user to groups",
+              "value": "Developers",
+              "result": "priya-dev is now a member of Developers group with inherited S3ReadOnlyAccess"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "IAM user 'priya-dev' created and added to 'Developers' group, which has S3ReadOnlyAccess policy attached",
+          "what_to_notice": "priya-dev never got permissions directly attached to her user. She got them through group membership — this is the correct pattern."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "What You Just Built",
+      "ava_speaks": "இப்போ பாருங்க — இது தான் நாம் build பண்ண structure. Root account எதுவுமே தொடல. Group create பண்ணோம், policy அந்த group-க்கு attach பண்ணோம், user-ஐ group-க்குள்ள add பண்ணோம். இது தான் scale ஆகுற IAM design.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Root Account",
+            "  └── LOCKED (MFA enabled, no daily use)",
+            "",
+            "IAM Group: Developers",
+            "  └── Policy: AmazonS3ReadOnlyAccess",
+            "  └── Members:",
+            "        └── priya-dev (inherits S3 read access)"
+          ]
+        },
+        "ava_narration": "priya-dev-க்கு direct-ஆ எந்த policy-யும் attach பண்ணல. அவங்க Developers group-ல இருக்கறதால, group-ன் policy automatic-ஆ கிடைக்குது. நாளைக்கு இன்னொரு developer வந்தா, group-ல add பண்றோம் — அவ்ளோ தான்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Onboard the FoodQuick Team",
+      "instruction": "FoodQuick just hired 2 more people. Create the correct IAM structure for them.",
+      "scenario": "FoodQuick hired Karthik as a backend developer and Ananya as a data analyst. Karthik needs the same access as priya-dev (S3 read via Developers group). Ananya needs read-only access to only the 'foodquick-analytics' S3 bucket — nothing else.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "IAM → Users",
+        "current_configuration": "priya-dev exists in Developers group with S3ReadOnlyAccess. No other users or groups exist yet."
+      },
+      "requirements": [
+        "Create IAM user 'karthik-dev' and add to the existing Developers group",
+        "Create a new group called 'DataAnalysts'",
+        "Create a custom policy allowing S3:GetObject only on 'foodquick-analytics' bucket",
+        "Attach the custom policy to DataAnalysts group",
+        "Create IAM user 'ananya-analyst' and add to DataAnalysts group"
+      ],
+      "hints": [
+        "Karthik should follow the exact same pattern as priya-dev — no new group needed",
+        "Ananya needs a NEW group because her permissions are different from Developers",
+        "The custom policy resource ARN should be: arn:aws:s3:::foodquick-analytics/*"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Two new users created (karthik-dev, ananya-analyst), one new group created (DataAnalysts) with a scoped S3 policy, correct group memberships",
+        "ava_correct": "Super! Karthik Developers group-ல, Ananya DataAnalysts group-ல — correct separation. இது தான் real-world IAM design. Scale ஆகும்போது இது தான் easy-ஆ manage பண்ண முடியும்.",
+        "ava_wrong": "கொஞ்சம் மறுபடி பாருங்க. Ananya-க்கு Developers group-ல போட்டா, அவங்களுக்கு S3 முழுசுக்கும் read access கிடைச்சிடும் — அது தேவையில்ல. Ananya-க்கு தனி group, தனி scoped policy வேணும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Friday 5PM Resignation",
+      "ava_speaks": "Real scenario சொல்றேன். இது FoodQuick-ல நடந்த ஒரு near-miss.",
+      "setup": "It is 5pm on a Friday. Ravi, a backend developer at FoodQuick, submits his resignation effective immediately — a dispute with his manager. Ravi had access to: EC2 (read), S3 production bucket (read/write), RDS (read). He also had access keys for a side automation script stored in his local .env file.",
+      "what_happened": "The IT team changed Ravi's console password immediately and felt confident the issue was handled. They planned to fully deprovision his account on Monday.",
+      "broken_config": "Action taken: Changed IAM console password only. Access keys left active.",
+      "error_shown": "Sunday night, CloudTrail shows 3 API calls from Ravi's access key ID — a S3 ListBucket call and 2 GetObject calls on the production bucket, from an IP address not associated with the company office.",
+      "the_real_problem": "Console password change பண்ணா — அது console login-ஐ மட்டும் block பண்ணும். Access keys வேற. அவை separate credentials. Ravi-ன் .env file-ல இருந்த access keys still valid-ஆ இருந்துச்சு. அவரு console-ல login பண்ணாம, directly AWS API call பண்ணி production data access பண்ணிட்டாரு.",
+      "fix": {
+        "corrected_config": "Correct offboarding sequence: 1) Disable console access immediately, 2) Deactivate ALL access keys (not just password), 3) Remove user from all IAM groups, 4) Review CloudTrail for the departing user's last 48 hours of activity, 5) Rotate any shared credentials the user had access to",
+        "result": "Access keys deactivated means any API call using them fails immediately with InvalidAccessKeyId error"
+      },
+      "lesson": "Console password ரொம்ப பேரு change பண்ணி relax ஆயிடுவாங்க. ஆனா access keys separate credential. Offboarding-ல எப்போவுமே: password AND access keys AND group membership — மூணும் ஒரே நேரத்துல handle பண்ணணும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Quick IAM Decisions",
+      "ava_speaks": "3 quick scenarios. Console இல்ல, judgment மட்டும்.",
+      "challenges": [
+        {
+          "question": "TechFlow has 3 backend developers, 1 DevOps engineer, and 1 data analyst joining next month. Should you create individual policies for each of the 5 people, or create groups first?",
+          "answer": "Groups first. FoodQuick, TechFlow — எந்த startup ஆனாலும், group structure முதல்ல design பண்ணணும். 5 பேருக்கு individual policies attach பண்ணா, நாளைக்கு permission change பண்ணும்போது 5 இடத்துல போய் மாத்தணும். Groups-ல ஒரே இடத்துல மாத்தினா போதும்."
+        },
+        {
+          "question": "A contractor joins for exactly 30 days to help with a migration project. Should you add them to your existing 'Developers' group?",
+          "answer": "இல்ல. Contractor-க்கு தனி, scoped permissions வேணும் — migration task-க்கு தேவையான access மட்டும். Existing Developers group-ல போட்டா, அவங்களுக்கு தேவையில்லாத extra permissions கிடைச்சிடும். 30 நாள் கழிச்சு, account disable பண்ணிட வேணும்."
+        },
+        {
+          "question": "You notice a developer's IAM user has permissions from 3 different groups they were added to over 2 years, but they now only work on one project. What should you do?",
+          "answer": "Audit and clean up. Time போற போது, group memberships accumulate ஆகும் — 'privilege creep' இதுதான். Current role-க்கு தேவையான group மட்டும் வெச்சு, மத்தத்தை remove பண்ணணும். இது Building Basics-ன் அடுத்த lesson-ல deep-ஆ பாப்போம்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Real Cloud Engineers Onboard Team Members",
+      "ava_speaks": "இது தான் real companies-ல நடக்குற process. New employee join ஆகும்போது, IT/DevOps team இந்த checklist follow பண்றாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "HR confirms the new hire's role and team",
+          "detail": "IAM group decision role-ஐ base பண்ணி தான் — Developer, DevOps, Analyst, Admin."
+        },
+        {
+          "step": 2,
+          "action": "Cloud engineer creates the IAM user with a temporary password",
+          "detail": "Console access-க்கு மட்டும் — access keys அப்போவே create பண்ண மாட்டாங்க, தேவைப்பட்டா மட்டும்."
+        },
+        {
+          "step": 3,
+          "action": "User is added to the correct IAM group based on role",
+          "detail": "Never direct policy attachment to individual users — always through groups."
+        },
+        {
+          "step": 4,
+          "action": "MFA setup is mandatory before first real work session",
+          "detail": "New user login பண்ணும்போதே MFA force பண்றது — enterprise companies-ல standard."
+        },
+        {
+          "step": 5,
+          "action": "Access is verified with a test task before granting production access",
+          "detail": "New user correct permissions கிடைச்சிருக்கானு verify பண்ணிட்டு, production systems-க்கு access கொடுக்கறாங்க."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS IAM Identity Center",
+          "use": "Larger companies IAM users-க்கு பதிலா, centralized identity management use பண்றாங்க — single sign-on for multiple AWS accounts."
+        },
+        {
+          "tool": "Terraform / IaC for IAM",
+          "use": "Working Level pace-ல பாப்போம் — IAM users, groups, policies எல்லாம் code-ஆ define பண்றது, console click பண்றத்துக்கு பதிலா."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "இன்னைக்கு நல்லா முன்னேறினோம். Root account danger புரிஞ்சிருக்கும் இப்போ — ஏன் அது lock பண்ணி வெக்கணும்-ன்னு. IAM users individual-ஆ create பண்றது, groups use பண்ணி permissions manage பண்றது — இது தான் foundation. அடுத்த lesson-ல, IAM policies-ஐ deep-ஆ பாப்போம் — actual JSON எழுதி, precise permissions design பண்றது.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.1a — Summary",
+      "points": [
+        "✓ Root account = master key. Lock it away after setup, never use daily.",
+        "✓ Every human gets their own IAM user — never shared credentials.",
+        "✓ Groups let you manage permissions at scale — attach policy once, all members inherit.",
+        "✓ Offboarding requires: disable console access AND deactivate access keys AND remove from groups.",
+        "✓ Privilege creep happens when permissions accumulate — audit regularly."
+      ],
+      "coming_next": "Lesson C2.1b: IAM Policies and Roles — writing real JSON policies"
+    }
+  }
+}

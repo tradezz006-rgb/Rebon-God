@@ -1,0 +1,322 @@
+{
+  "lesson_id": "C4.2a",
+  "lesson_title": "Launching EC2",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C4.1 — EC2 Instance Types",
+  "student_will_learn": [
+    "Walk through the EC2 launch wizard and understand each major decision point",
+    "Explain the difference between stopping and terminating an instance",
+    "Explain what happens to data on an instance when it's stopped versus terminated",
+    "Connect to an instance using Systems Manager Session Manager instead of SSH",
+    "Identify why data stored on instance store volumes is lost on stop, not just terminate"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம correct instance type தேர்ந்தெடுக்கறது எப்படினு பார்த்தோம். இப்போ Ravi-ஓட FQ-171 ticket-ல அடுத்த step - உண்மையிலேயே ஒரு EC2 instance launch பண்றது எப்படினு, அப்புறம் அதை stop பண்றதுக்கும் terminate பண்றதுக்கும் உள்ள வித்தியாசம் என்னனு பார்ப்போம். இந்த வித்தியாசம் புரியலைனா, data இழந்துடலாம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.2a",
+        "Launching EC2",
+        "Ticket FQ-171 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Stop vs Terminate — Not the Same Thing",
+      "ava_speaks": "EC2 instance-ஐ 'Stop' பண்றது, ஒரு computer-ஐ shutdown பண்றது மாதிரி - instance நிக்கும், ஆனா அதோட root EBS volume அப்படியே இருக்கும், நாம மறுபடி 'Start' பண்ணா, அதே data-கூட திரும்ப வரும். 'Terminate' பண்றது completely வேற - instance permanently delete ஆகிடும், root EBS volume-மும் (default settings-ல) delete ஆகிடும் - இது reverse பண்ண முடியாது. Instance store volumes (சில instance types-ல மட்டும் இருக்கும்) இன்னும் fragile - அது Stop பண்ணினாலே data இழந்துடும், Terminate வரைக்கும் காத்திருக்க வேண்டாம்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Stop vs Terminate — Data Implications"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Action",
+            "What Happens to Root EBS Volume",
+            "What Happens to Instance Store"
+          ],
+          "rows": [
+            [
+              "Stop",
+              "Preserved — data intact when restarted",
+              "LOST immediately — instance store is ephemeral"
+            ],
+            [
+              "Terminate",
+              "Deleted by default (unless 'Delete on Termination' is unchecked)",
+              "LOST (was already lost at stop, if ever stopped)"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Instance store volumes are physically attached to the underlying host hardware — when your instance stops, you're no longer guaranteed the same physical host, so that storage is gone immediately, not just on termination."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு EC2 instance-ஐ Stop பண்ணி, மறுபடி Start பண்றோம். Root EBS volume-ல இருந்த data என்ன ஆகும்?",
+          "options": [
+            "A) Completely delete ஆகிடும்",
+            "B) அப்படியே preserved ஆகி இருக்கும்",
+            "C) Instance store-க்கு move ஆகும்",
+            "D) Backup-ஆ S3-க்கு move ஆகும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Stop பண்றது terminate இல்ல - root EBS volume preserved-ஆ இருக்கும், மறுபடி start பண்ணும்போது அதே data கிடைக்கும்.",
+          "ava_wrong": "இல்ல, Stop terminate இல்ல - root EBS volume preserved-ஆ இருக்கும். Data delete ஆவது Terminate பண்ணும்போது தான், அதுவும் default settings-ல மட்டும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Instance store volume-ல data வெச்சிருக்கோம். Instance-ஐ Stop பண்றோம் (Terminate இல்ல). Data என்ன ஆகும்?",
+          "options": [
+            "A) Preserved-ஆ இருக்கும், EBS மாதிரி",
+            "B) Immediately lost ஆயிடும் - Stop பண்ணின உடனேயே",
+            "C) Terminate பண்ணும் வரைக்கும் safe-ஆ இருக்கும்",
+            "D) Automatic-ஆ EBS-க்கு migrate ஆகும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Instance store EBS மாதிரி இல்ல - அது underlying physical host-கூட directly attach ஆயிருக்கும். Stop பண்ணின உடனே, அந்த data immediately lost ஆயிடும்.",
+          "ava_wrong": "இல்ல, இது ஒரு common misconception - instance store, EBS மாதிரி persistent இல்ல. Stop பண்ணின உடனேயே அது lost ஆயிடும், Terminate வரைக்கும் காத்திருக்க வேண்டாம்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Why 'Stop to Save Cost' Is a Trap for Instance Store Workloads",
+      "ava_speaks": "Cost save பண்ண, dev/test instances-ஐ night-time-ல stop பண்றது ஒரு common, good practice தான். ஆனா ஒரு early-stage startup, ஒரு data-processing job-ஐ instance store-ல temporary files write பண்ணி run பண்ணிட்டு, cost save பண்ண instance-ஐ overnight stop பண்ணிட்டாங்க - காலையில start பண்ணும்போது, முழு processing progress-மும் காலியா இருந்துச்சு, 6 மணி நேர வேலை மறுபடி பண்ணி இருக்கணும். இந்த mistake, 'cost optimization' practices apply பண்ணும்போது, workload-ஓட storage type-ஐ கவனிக்காம பண்றதால ஏற்படுது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Cost-Saving Stop Gone Wrong"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Assumption",
+            "Reality"
+          ],
+          "rows": [
+            [
+              "'Stopping overnight saves cost with no downside'",
+              "True for EBS-backed data, FALSE for instance store data"
+            ],
+            [
+              "6 hours of processing progress stored on instance store",
+              "Lost entirely the moment the instance was stopped"
+            ],
+            [
+              "Team's cost-saving practice",
+              "Needed a workload-specific exception for instance-store-dependent jobs"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Launching an EC2 Instance and Connecting via Session Manager",
+      "ava_speaks": "karthik-dev இப்போ ஒரு புது EC2 instance launch பண்றான், அப்புறம் SSH key பண்ணாம, Systems Manager Session Manager வழியா connect பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "EC2 Console-ல 'Launch instance' click பண்றோம், name 'foodquick-app-server-3'nu கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Launch instance wizard",
+              "field": "Name",
+              "value": "foodquick-app-server-3",
+              "highlight": "Name input field",
+              "result": "The instance naming step is complete"
+            }
+          },
+          {
+            "ava_narration": "AMI-ஆ Amazon Linux 2023 select பண்றோம், instance type-ஆ m5.large தேர்ந்தெடுக்கிறோம் - last lesson-ல கத்துக்கிட்டது படி.",
+            "console_action": {
+              "type": "select",
+              "path": "Launch instance wizard → Application and OS Images, Instance type",
+              "field": "AMI, Instance type",
+              "value": "Amazon Linux 2023, m5.large",
+              "highlight": "AMI selection and instance type dropdown",
+              "result": "Instance specifications are set"
+            }
+          },
+          {
+            "ava_narration": "Key pair-க்கு 'Proceed without a key pair'nu select பண்றோம் - SSH key manage பண்றதுக்கு பதிலா, Session Manager use பண்ணப் போறோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Launch instance wizard → Key pair (login)",
+              "field": "Key pair",
+              "value": "Proceed without a key pair",
+              "highlight": "Key pair dropdown",
+              "result": "No SSH key is generated — access will go through Systems Manager instead"
+            }
+          },
+          {
+            "ava_narration": "Network settings-ல foodquick-private-1a subnet select பண்றோம், existing foodquick-app-sg security group attach பண்றோம். Advanced Details-ல IAM instance profile-ஆ, Session Manager-க்கான permissions இருக்கற role select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Launch instance wizard → Network settings, Advanced details",
+              "field": "Subnet, Security group, IAM instance profile",
+              "value": "foodquick-private-1a, foodquick-app-sg, foodquick-ssm-instance-role",
+              "highlight": "IAM instance profile dropdown",
+              "result": "The instance is configured to be manageable via Session Manager once launched"
+            }
+          },
+          {
+            "ava_narration": "'Launch instance' click பண்றோம். Instance running ஆனப்புறம், Session Manager-க்கு போய், 'Connect' click பண்றோம் - browser-லேயே ஒரு terminal open ஆகும், SSH key எதுவும் தேவை இல்லாம.",
+            "console_action": {
+              "type": "click",
+              "path": "Systems Manager → Session Manager → Start session → foodquick-app-server-3",
+              "highlight": "Start session button",
+              "result": "A browser-based terminal opens with a shell session directly on the instance, no SSH key or open port 22 required"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The instance is launched without any SSH key pair, and karthik-dev connects to it directly through Session Manager in the browser, with no need for port 22 to be open at all.",
+          "what_to_notice": "Port 22 இந்த instance-க்கு security group-ல open-ஆ இருக்கவே தேவை இல்ல - Session Manager AWS-ஓட own infrastructure வழியா connect ஆகும், அதனால attack surface ரொம்ப குறையும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "SSH vs Session Manager — Different Access Paths",
+      "ava_speaks": "இந்த diagram பாரு - ரெண்டு வழிகளுக்கும் உள்ள வித்தியாசம்.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Traditional SSH:",
+            "  Your laptop --port 22 open--> EC2 instance (needs a key pair, needs port 22 exposed)",
+            "",
+            "Systems Manager Session Manager:",
+            "  Your laptop --browser/CLI--> AWS Systems Manager service --> EC2 instance",
+            "  (No port 22 needed, no key pair needed, all access logged in CloudTrail)"
+          ]
+        },
+        "ava_narration": "Session Manager-ல connection AWS-ஓட infrastructure வழியா போகுது, அதனால instance-ல எந்த inbound port-மும் open-ஆ வெச்சிருக்க வேண்டிய அவசியமே இல்ல."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Decide Stop or Terminate for Three Instances",
+      "instruction": "கீழ இருக்கற 3 situations-க்கு, Stop சரியா, Terminate சரியான்னு தேர்ந்தெடு.",
+      "scenario": "Ravi 3 different instances flag பண்ணி இருக்காங்க, decommission பண்றதுக்கு முன்னாடி correct action தேர்ந்தெடுக்கணும்: 1) A dev/test instance used only on weekdays, expected to be reused next Monday. 2) An old proof-of-concept instance from 8 months ago that's confirmed no longer needed by anyone. 3) A batch-processing instance currently mid-job, using instance store for temporary working files, that needs a brief pause for a scheduled maintenance window.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Instances list showing all 3 flagged instances",
+        "current_configuration": "None of the 3 instances have an action applied yet"
+      },
+      "requirements": [
+        "Choose Stop for the weekday dev/test instance",
+        "Choose Terminate for the confirmed-unneeded proof-of-concept instance",
+        "For the batch-processing instance using instance store, identify that Stop would destroy its temporary working data and that the job's data should be moved to persistent storage (or the job should be allowed to complete) before any pause"
+      ],
+      "hints": [
+        "Reused next Monday-nு தெரிஞ்சா, Stop தான் correct - Terminate பண்ணா, முழு setup-ஐயும் மறுபடி build பண்ணனும்",
+        "'Confirmed no longer needed' இருந்தா, Stop பண்ணி வெறுமனே billing குறைக்கறதை விட, Terminate பண்ணி முழுசா clean பண்றது நல்லது",
+        "Instance store data, Stop பண்ணின உடனே lost ஆகும்னு நினைவு வெச்சுக்கோ - இந்த batch job-க்கு Stop பண்றது option இல்லவே இல்ல, working files EBS-க்கோ S3-க்கோ move பண்ணனும் முதல்ல"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Instance 1: Stop. Instance 2: Terminate. Instance 3: not stopped as-is — data must be moved off instance store first, or the job must complete before any pause.",
+        "ava_correct": "Correct! இந்த 3 decisions-மும் data implications-ஐ சரியா கணக்கில் எடுத்துக்கிருக்கு.",
+        "ava_wrong": "ஒரு decision தப்பா இருக்கு போல - ஒவ்வொரு instance-ஓட data situation-ஐயும், அது Stop-ஐ safely handle பண்ணுமான்னு திரும்ப யோசி."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Six Hours of Processing Gone After a 'Safe' Stop",
+      "ava_speaks": "ananya-analyst ஒரு large data-processing batch job run பண்றாங்க, ஒரு EC2 instance-ல, temporary intermediate files instance store-ல write பண்ணி. Job நடுவுல, ஒரு scheduled cost-optimization script, idle-ஆ தோணற instances-ஐ automatic-ஆ Stop பண்றது - இது unintentionally அவங்க instance-ஐயும் stop பண்ணிடுச்சு.",
+      "setup": "ananya-analyst runs a 6-hour data-processing job on an EC2 instance, writing large intermediate files to the instance's local instance store for speed, planning to upload the final results to S3 only at the end.",
+      "what_happened": "An automated cost-optimization script, designed to stop instances showing low CPU utilization overnight, detects a brief lull in the job's CPU usage and stops the instance as part of its routine cleanup — not realizing a job is mid-execution.",
+      "broken_config": "Instance: foodquick-batch-processor-temp\nStorage used for intermediate files: instance store (ephemeral)\nAutomated stop script: stops any instance with CPUUtilization below 5% for 30 minutes, no exceptions configured for in-progress jobs",
+      "error_shown": "Job log (after restart): FileNotFoundError: /mnt/instance-store/intermediate/batch_step_4.tmp not found. All intermediate files from the instance store are gone — the automated stop script terminated the compute session, and instance store data does not survive a stop.",
+      "the_real_problem": "Instance store 'fast, local storage'nு தேர்ந்தெடுக்கப்பட்டது, ஆனா அதோட ephemeral nature-ஐ, cost-optimization automation-கூட combine பண்ணும்போது, யாரும் கணக்கில் எடுக்கல. Automation 'idle instance'nு நினைச்சு stop பண்ணிடுச்சு - ஆனா அது உண்மையில் ஒரு critical job mid-execution-ல இருந்துச்சு, அதோட data instance store-ல ஆயிருந்ததால, stop ஆனதுமே எல்லாம் lost ஆயிடுச்சு.",
+      "fix": {
+        "corrected_config": "1. Move intermediate files to EBS (persistent) or upload checkpoints to S3 periodically during the job, not just at the end.\n2. Add an exception tag (e.g. job-in-progress=true) to the automated stop script's exclusion list.\n3. Re-run the job with checkpointing so a future interruption only loses the most recent checkpoint, not all 6 hours.",
+        "result": "Future interruptions — whether from automation, maintenance, or actual failures — lose at most a few minutes of progress instead of the entire job."
+      },
+      "lesson": "Instance store speed-க்காக தேர்ந்தெடுக்கும்போது, அது ephemeral-nு நினைவு வெச்சுக்கணும் - automation, maintenance, அல்லது simple human error எதுவானாலும், ஒரு Stop event அந்த data-ஐ முழுசா அழிச்சிடும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Instance Lifecycle Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "An engineer wants to change an instance's instance type (say, from t3.medium to m5.large). Does this require Stop or Terminate?",
+          "answer": "Stop. Changing the instance type is done while the instance is stopped (not terminated) — the root EBS volume and its data are preserved, and when you start it back up, it launches as the new instance type."
+        },
+        {
+          "question": "A team wants to preserve an exact snapshot of a working instance's configuration before making a risky change, in case they need to roll back. Should they rely on being able to just 'Stop' if something goes wrong, or take an action beforehand?",
+          "answer": "Take an action beforehand — specifically, create an AMI or an EBS snapshot before the change. Stop alone doesn't protect against a risky change made to the running configuration; if the change itself corrupts something, stopping and starting won't undo it. A snapshot captures a specific point-in-time state to roll back to."
+        },
+        {
+          "question": "An instance has 'Delete on Termination' unchecked for its root EBS volume. If someone terminates this instance, what happens to the root volume?",
+          "answer": "The root EBS volume survives the termination and becomes an unattached volume in the account, rather than being deleted. This is sometimes done deliberately to preserve data even through a termination, though the orphaned volume still incurs storage costs until it's cleaned up or reattached."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Standardize Safe Instance Access and Lifecycle Practices",
+      "ava_speaks": "Real companies-ல, individual engineers-ஐ 'stop-ஆ terminate-ஆ, SSH-ஆ Session Manager-ஆ'nு ஒவ்வொரு தடவையும் தனியா decide பண்ண விடாம, standard practices வெச்சிருப்பாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Default all new EC2 launches to Session Manager access, disabling SSH key pair creation by policy",
+          "detail": "இது port 22 exposure-ஐ முழுசா அகற்றி, access-ஐ IAM policies வழியா centrally control பண்ண உதவும்"
+        },
+        {
+          "step": 2,
+          "action": "Tag long-running or job-critical instances with a clear 'do-not-auto-stop' marker that automation scripts respect",
+          "detail": "இது FoodQuick-ஓட batch-processing mistake மாதிரி automation-caused data loss-ஐ தடுக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Require any workload using instance store to implement periodic checkpointing to persistent storage",
+          "detail": "இது ephemeral storage-ஓட speed benefit-ஐ இழக்காம, data loss risk-ஐ கட்டுப்படுத்தும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Systems Manager Session Manager",
+          "use": "SSH keys, open port 22 இல்லாம, IAM-controlled, audit-logged shell access கொடுக்கும்"
+        },
+        {
+          "tool": "CloudTrail",
+          "use": "எந்த automation, எந்த user, எப்போ ஒரு instance-ஐ Stop அல்லது Terminate பண்ணுச்சுனு exact history காட்டும் - debugging-க்கு critical"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம EC2 launch wizard-ஐ walk through பண்ணோம், Stop-க்கும் Terminate-க்கும் உள்ள data implications கத்துக்கிட்டோம், Session Manager வழியா SSH key இல்லாம connect பண்றது எப்படினு பார்த்தோம். மிக முக்கியமா, instance store data Stop பண்ணின உடனேயே lost ஆகும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம instance metadata, user data scripts, அப்புறம் Session Manager-ஐ deeper-ஆ பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.2a — Summary",
+      "points": [
+        "✓ Stopping an instance preserves the root EBS volume; Terminating deletes it by default",
+        "✓ Instance store data is lost the moment an instance is stopped, not just terminated",
+        "✓ Systems Manager Session Manager provides shell access without SSH keys or an open port 22",
+        "✓ Automated cost-optimization scripts can accidentally stop instances mid-critical-job if there's no exclusion mechanism",
+        "✓ Workloads relying on instance store need periodic checkpointing to persistent storage to survive an unexpected stop"
+      ],
+      "coming_next": "Lesson C4.2b: Managing EC2"
+    }
+  }
+}

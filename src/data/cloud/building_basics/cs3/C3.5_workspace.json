@@ -1,0 +1,225 @@
+{
+  "lesson_id": "C3.5",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nTime to actually close this out. We know a peering connection used to exist where that 10.50.0.0/16 route points, and we know notification-worker is still weekly trying to reach a specific address inside it. Before we touch anything on the AWS side, I want you to go straight to the source — check notification-worker's own scheduled jobs directly. Whatever's making that weekly call is going to explain the rest of this.\n\nWhile you're at it — we're also finally ready to set up real peering, for real reasons this time. ananya-analyst's analytics VPC needs a private connection to pull order data without going over the public internet. Let's do that one properly, so you see what 'done right' actually looks like next to what we're about to find.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nAnd there it is. Eight months of a dead cron job, a route nobody removed, and a TODO comment that just... sat there. Not a breach, not anything sinister — just exactly the pattern this whole ticket has been about since C3.1. Someone did the responsible thing when QuickCourier ended (deleted the peering connection), and then the less-visible cleanup — the route, the script, the scheduled job — just never got finished. That's the real story of this entire VPC, not just this one route.\n\nGood work getting the analytics peering done properly on the first try, too — you clearly understood what 'update both route tables' actually means, not just the concept.\n\nNext: Route 53. We've built the network. Now let's make sure people can actually find it by name, not just by IP.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.5-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.5",
+      "scenario": "Priya's instruction is specific: check notification-worker's own scheduled jobs directly, rather than starting from the AWS console side again.",
+      "question": "Why start with the instance's own crontab/scheduled jobs instead of continuing to investigate from the AWS networking side (route tables, flow logs, etc.)?",
+      "options": [
+        "A) It doesn't matter which side you start from — both will give identical information",
+        "B) The AWS side (flow logs, route tables) can only show THAT something is trying to reach 10.50.13.4 and WHEN — it can't show WHY, or what the code/job actually thinks it's doing. Only the instance's own configuration can explain the actual intent behind the calls",
+        "C) AWS flow logs are unreliable and shouldn't be trusted for investigation purposes",
+        "D) Checking the instance directly is required by AWS's terms of service before checking network logs"
+      ],
+      "correct_index": 1,
+      "explanation": "Network-level evidence (flow logs, route tables) sollum 'anything try does, when try does' — but 'yean try does' — sollathu. That 'yean' — real intent, real context — instance's own config/scheduled in jobs only will be. This investigation's next logical step.",
+      "ren_correct": "Correct — network evidence WHAT and WHEN kaatum, instance config WHY-ai kaatum.",
+      "ren_wrong": "A bit think again — flow logs 'anything try does' — kaatum, but 'yean' — ARIYanum — instance's own config paakkanum."
+    },
+    {
+      "id": "C3.5-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.5",
+      "question": "FoodQuick's VPC peers directly with ananya-analyst's analytics VPC. What does a VPC Peering connection actually establish?",
+      "options": [
+        "A) A shared, merged network — the two VPCs effectively become one, with fully shared route tables and security groups",
+        "B) A direct, point-to-point private network connection between exactly those two VPCs — each VPC still manages its own route tables and security groups, and must explicitly add routes pointing traffic toward the other VPC's CIDR range",
+        "C) A public internet tunnel between the two VPCs, encrypted but still routed through the public internet",
+        "D) An automatic connection that requires no route table changes on either side"
+      ],
+      "correct_index": 1,
+      "explanation": "Peering — 'merge' doing not — two VPCs independent will be, each VPC also that oda own route in table explicit edhirsub VPC's CIDR point must do. Public internet-ai also use do not do — private AWS in backbone only traffic poagum.",
+      "ren_correct": "Correct — peering direct private connection, but both still independent, explicit route entries needed.",
+      "ren_wrong": "Peering-ai 'automatic merge' — you thought. Two VPCs independent will be, explicit route entries two side-laum is needed."
+    },
+    {
+      "id": "C3.5-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.5",
+      "question": "FoodQuick's VPC peers with the analytics VPC. If the analytics VPC ALSO separately peers with a third, unrelated VPC (say, a partner's data warehouse), can FoodQuick's VPC automatically reach that third VPC through the analytics VPC?",
+      "options": [
+        "A) Yes — peering is transitive, so FoodQuick can reach anything the analytics VPC can reach",
+        "B) No — VPC Peering is explicitly NOT transitive. FoodQuick would need its OWN direct peering connection (or a Transit Gateway) to reach the third VPC — going through the analytics VPC as a hop does not work, no matter how the route tables are configured",
+        "C) Yes, but only if all three VPCs are in the same AWS account",
+        "D) It depends on whether the third VPC is in the same region"
+      ],
+      "correct_index": 1,
+      "explanation": "Peering NOT transitive — this real, commonly-missed rule. A-B peer if we had donelum, B-C peer if we had donelum, A neradiyaga C-ai reach to do cannot B moolama. A-kku C-ai reach must do —, A-C direct peering Needed (if not Transit Gateway). This yen scale will happen pothu Transit Gateway better fit will happen, adhai in next let us lookam.",
+      "ren_correct": "Correct — peering transitive not, this real gotcha many teams miss do.",
+      "ren_wrong": "Peering transitive — you thought — that wrong. A-B, B-C peering even if, A neradiyaga C-ai reach to do cannot."
+    },
+    {
+      "id": "C3.5-T4",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.5",
+      "scenario": "You SSH into notification-worker (via the bastion, using the properly-scoped access from C3.4) and check its crontab directly.",
+      "error_shown": "$ crontab -l\n14 3 * * * /opt/foodquick/scripts/check_courier_status.sh --endpoint=10.50.13.4 --partner=quickcourier >> /var/log/courier_check.log 2>&1\n\n$ tail -20 /var/log/courier_check.log\n... [entries from 8 months ago showing successful 200 OK responses] ...\n[last successful entry, dated ~8 months ago]: 200 OK courier_status=active\n[every entry since, weekly, for 8 months]: connection timed out\n\n$ cat /opt/foodquick/scripts/check_courier_status.sh | head -5\n#!/bin/bash\n# QuickCourier pilot integration — hyperlocal delivery partner, peered via pcx-0e4a9f2b1c8d3a1f2\n# Pilot ended, partner account decommissioned — 2025 (8 months ago)\n# TODO: remove this cron job once pilot is confirmed fully wound down\n# — never removed",
+      "diagnosis": "Eight months ago, FoodQuick ran a short pilot integration with a hyperlocal delivery partner called QuickCourier, connected via a direct VPC peering connection (pcx-0e4a9f2b1c8d3a1f2) to QuickCourier's own VPC (10.50.0.0/16), so notification-worker could privately check courier status at 10.50.13.4 without going over the public internet. The pilot ended and QuickCourier's AWS account was decommissioned — someone correctly deleted the peering connection at that point. But three related cleanup items were left behind: the now-dangling static route in rtb-main (found in C3.1), the weekly cron job on notification-worker that keeps trying the now-nonexistent endpoint (found here), and a TODO comment in the script itself that explicitly says to remove it — written 8 months ago, never acted on.",
+      "fix": "This is not a security incident — the peering connection was correctly deleted when the partnership ended. The remaining cleanup is: (1) disable and remove the cron job on notification-worker, (2) remove the now-fully-understood dangling static route from rtb-main, (3) delete or archive the check_courier_status.sh script, (4) document in the decommissioning runbook that partner integrations need route table AND scheduled-job cleanup, not just the peering connection itself.",
+      "explanation": "This whole CS3 session's real theme — 'set up once in a rush, never fully cleaned up.' This a breach not, a attack not — a TODO comment 8 months ignore do, that real story. in Engineering this very common — one person nalla intention's delete do (peering connection), but related cleanup items across different systems (route table, cron job, script file) easily miss will happen."
+    },
+    {
+      "id": "C3.5-T5",
+      "type": "order_task",
+      "difficulty": "medium",
+      "environment": "sequence_card",
+      "source_lesson": "C3.5",
+      "question": "Arrange the correct order to safely retire the QuickCourier remnants, now that the full picture is understood.",
+      "items": [
+        "Disable the cron job on notification-worker (comment it out or remove the crontab entry) and monitor for a few days to confirm nothing else depends on it",
+        "Remove the now-fully-understood dangling static route (10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2) from rtb-main",
+        "Archive or delete the check_courier_status.sh script and its log file",
+        "Document the full incident (what QuickCourier was, why the route/job existed, what was cleaned up) in the decommissioning runbook for future partner integrations"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "Cron job first disable must do (safest, most reversible step), a bit naal wait after doing anything break aagala — confirm must do. Then route remove must do (ippo fully understand we have done, so safe). Then script/log cleanup must do. Last-ah, for future useful will be like document must do — this structural fix, CS2's SCP fix like.",
+      "ren_correct": "Nice sequencing — most reversible step first, permanent cleanup last, documentation to close the loop.",
+      "ren_wrong": "Order again paaru — reversible that is there step (cron disable) first must do, then permanent cleanup (route delete) must do."
+    },
+    {
+      "id": "C3.5-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.5",
+      "scenario": "Separately from the QuickCourier cleanup, you're setting up the NEW, legitimate peering connection with ananya-analyst's analytics VPC (10.90.0.0/16). You create the peering connection in the console and it shows status: Active.",
+      "question": "Is the peering connection showing 'Active' enough to confirm the two VPCs can actually communicate?",
+      "options": [
+        "A) Yes — an 'Active' status means full connectivity is already working in both directions",
+        "B) No — 'Active' only means the peering relationship itself has been accepted by both sides. Each VPC's route table still needs an explicit route added pointing to the other VPC's CIDR range through the peering connection ID — without that, traffic still has no path and will fail even though the connection shows Active",
+        "C) Yes, but only for traffic initiated from the analytics VPC's side, not FoodQuick's side",
+        "D) No — 'Active' status requires waiting 24 hours before any traffic can flow"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact spec mistake — 'peering created but route tables never updated so traffic still fails.' 'Active' status peering RELATIONSHIP accept aagiruchu — say only, route in table anything automatic update aagathu. Two VPCs-leyum explicit route add must do — not — for traffic vazhi theriyaathu, Active status even if also.",
+      "ren_correct": "Correct — Active status um actual connectivity um two different topic. Route tables explicit update must do.",
+      "ren_wrong": "Active status-ai connectivity's proof you thought. Route tables two side-laum explicit update without doing, traffic velai do."
+    },
+    {
+      "id": "C3.5-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.5",
+      "scenario": "You add the route to FoodQuick's route table (10.90.0.0/16 → pcx-new-analytics-id) and test connectivity from ananya-analyst's side — it still fails.",
+      "question": "Given peering requires explicit routes on BOTH sides, what's the most likely remaining gap?",
+      "options": [
+        "A) The peering connection needs to be recreated from scratch",
+        "B) The analytics VPC's OWN route table also needs a route added (172.31.0.0/16 → the same peering connection ID) pointing back toward FoodQuick's VPC — a route added on only one side lets traffic go one direction but not complete the round trip",
+        "C) Peering connections only ever work in one direction by design, this is expected behavior",
+        "D) The security group on the analytics side must be misconfigured — route tables aren't the issue if one side already has a route"
+      ],
+      "correct_index": 1,
+      "explanation": "for Peering two VPCs-leyum route is needed — one side only add did, that direction only velai does, return for traffic that in side route without poidum. This exact 'both sides' rule — we in T6 we saw concept's direct application.",
+      "ren_correct": "Correct — two VPCs-leyum route is needed, one-sided fix half velai does only.",
+      "ren_wrong": "SG issue — jump do — route table two side-laum to be — first confirm must do, that most common gap."
+    },
+    {
+      "id": "C3.5-T8",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.5",
+      "scenario": "Connectivity across the new analytics peering works fine using IP addresses. But ananya-analyst reports that using the internal hostname (foodquick-orders-db.internal) from the analytics VPC still fails to resolve to anything.",
+      "question": "Given IP-based connectivity already works correctly, what's the most likely missing piece?",
+      "options": [
+        "A) The peering connection itself needs to be recreated from scratch",
+        "B) DNS resolution support wasn't enabled on the peering connection — by default, a VPC peering connection does NOT automatically resolve private DNS hostnames across it. This must be explicitly enabled (on both sides) as a separate setting from the peering connection and route tables themselves",
+        "C) DNS can never work across a peering connection under any circumstances — only raw IP addresses are ever usable",
+        "D) The analytics VPC needs its own separate Route 53 hosted zone before any DNS will work"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, easy-to-miss peering setting — route table um security group um correct even if, DNS resolution support explicit a separate checkbox/setting enable must do, peering in connection. This without, IP address velai does, but hostname resolve aagathu. This Route 53's public hosted zones's different topic — that next lesson's topic, this peering-specific setting only.",
+      "ren_correct": "Correct — this peering's a specific, easy-to-miss setting, route table's different topic.",
+      "ren_wrong": "A bit off track. Route table correct even if, DNS resolution support separate enable must do peering in connection."
+    },
+    {
+      "id": "C3.5-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.5",
+      "scenario": "Both cleanup threads are now complete. You run a final audit before reporting back to Priya.",
+      "broken_config": "rtb-main:\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n├── 10.90.0.0/16 → pcx-new-analytics-id (NEW — analytics VPC peering)\n└── (10.50.0.0/16 route: REMOVED)\n\nAnalytics VPC route table:\n└── 172.31.0.0/16 → pcx-new-analytics-id (confirmed present)\n\nnotification-worker:\n├── crontab: (QuickCourier entry removed)\n└── check_courier_status.sh: archived, no longer present on the instance\n\nDecommissioning runbook: updated with a new checklist item — \"partner integration teardown must include: peering connection, BOTH route tables, any scheduled jobs referencing the partner endpoint, and related scripts/configs\"",
+      "what_to_find": [
+        "The dangling 10.50.0.0/16 route is gone — the original mystery from C3.1 is fully resolved",
+        "The new analytics peering has routes on BOTH sides (FoodQuick's rtb-main AND the analytics VPC's own route table) — connectivity should now work in both directions",
+        "The cron job and script are fully removed from notification-worker — the weekly failed attempts will stop",
+        "The runbook update is the real structural fix — it prevents this exact pattern (partial teardown leaving orphaned artifacts) from happening again with the NEXT partner integration, not just this one"
+      ],
+      "correct_fix": "No further changes needed — verify the analytics VPC's data pull actually completes successfully end-to-end as final confirmation, then this piece of FQ-156 is closed.",
+      "explanation": "This CS2's SCP structural fix's parallel — we just ONE symptom (that route) fix did not do, PROCESS-ai fix do, so next partner integration teardown doespothu this like artifacts left over aagathu. This real 'structural, not just manual' fix."
+    },
+    {
+      "id": "C3.5-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.5",
+      "scenario": "FoodQuick now has 3 VPCs that need to talk to each other: the main production VPC, the analytics VPC, and soon a new payments-reconciliation VPC. Priya asks whether to keep adding individual peering connections as more VPCs join, or switch to a Transit Gateway now.",
+      "options": [
+        "A) Keep adding individual peering connections — with only 3 VPCs it's simple, and peering connections never need to be reconsidered regardless of how many more VPCs get added later",
+        "B) Switch to Transit Gateway now — with 3 VPCs, full-mesh peering needs 3 connections (3×2/2), which is still manageable, but every additional VPC increases that count non-linearly (6 VPCs would need 15 individual connections). Transit Gateway turns this into one hub each VPC connects to once, regardless of how many VPCs eventually join",
+        "C) Transit Gateway is only useful for VPCs in different AWS accounts — for VPCs in the same account, peering is always sufficient no matter the count",
+        "D) There's no real difference in complexity between peering and Transit Gateway as VPC count grows — pick whichever has better console UI"
+      ],
+      "correct_index": 1,
+      "explanation": "Full-mesh peering's connection count formula: N(N-1)/2. 3 for VPCs 3 connections (still manageable), but 6 for VPCs 15 connections, 10 for VPCs 45 connections — exponential if notlum quadratic scale will happen. Transit Gateway hub-and-spoke — each VPC ONE connection only for TGW, VPC count anything even then that linear remain will happen. FoodQuick ippo 3 for VPCs 'simple' — thonalam, but growth trajectory-ai already earlier thinking decide doing real architecture thinking.",
+      "ren_correct": "Correct — N(N-1)/2 math ai already earlier thinking, growth for trajectory plan do.",
+      "ren_wrong": "3 VPCs 'simple' — current state only paathiya. Growth trajectory-ai think — connection count quadratic scale will happen, TGW adhai linear aakkum."
+    },
+    {
+      "id": "C3.5-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C3.5",
+      "scenario": "Ravi asks for the numbers before approving the Transit Gateway migration: VPC Peering itself has no hourly charge (only data transfer costs apply, same as peering). Transit Gateway costs roughly ₹2.90/hour per attachment (~₹2,100/month per VPC attached) PLUS a small per-GB data processing charge, similar in structure to NAT Gateway's pricing.",
+      "question": "For FoodQuick's near-term plan (3 VPCs now, expecting 5-6 within a year), how should the cost trade-off be framed?",
+      "solution": "At 3 VPCs, Transit Gateway costs roughly 3 × ₹2,100 ≈ ₹6,300/month in attachment fees alone, versus effectively free peering connections (data transfer costs are comparable either way) — peering looks cheaper today. But full-mesh peering at 6 VPCs would need 15 separate connections to manage, each with its own route table entries on both sides, versus Transit Gateway staying at a flat per-VPC attachment cost with ONE central route table to manage. The ₹6,300/month is best framed as paying for reduced operational complexity and fewer chances of a repeat of the exact kind of partial-cleanup mistake just found with QuickCourier — not as a raw peering-vs-TGW price comparison.",
+      "explanation": "This cost analysis's real point — cheapest option ippo only looking at not, GROWTH trajectory's operational complexity cost-ai think. TGW's real value — fewer moving parts, fewer places anything miss aaga chance."
+    },
+    {
+      "id": "C3.5-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.5",
+      "scenario": "Time for the final report on this piece of FQ-156 — the one that finally explains where the mystery route came from.",
+      "question": "Which report should you send to Priya?",
+      "options": [
+        "A) \"Found and fixed the mystery route. It was nothing important, deleted it.\"",
+        "B) \"Root cause found: an 8-month-old leftover from FoodQuick's QuickCourier pilot integration (peered VPC 10.50.0.0/16, connection pcx-0e4a9f2b1c8d3a1f2). The peering connection itself was correctly deleted when the pilot ended, but the static route, notification-worker's weekly cron job, and the script itself were all left behind — including a TODO comment in the script that was never acted on. All three cleaned up and removed. Also set up the new analytics VPC peering correctly, with routes confirmed on both sides, and updated the decommissioning runbook so future partner integrations get fully torn down, not just the peering connection.\"",
+        "C) \"Deleted the old route and the cron job. Not sure what it was originally for, but it's gone now.\"",
+        "D) \"This turned out to be a security incident — recommend a full audit of all past partner integrations immediately.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — complete root cause explain must do — what, yean, how much naala, what cleanup we did, AND for future structural fix (runbook) what we did, all must be stated clearly. 'Not sure what it was' — says investigation incomplete say. 'Security incident' — overclaim doing wrong — this a cleanup gap, attack not, that correctly frame do professional judgment.",
+      "ren_correct": "This correct report — complete root cause, cleanup, AND the structural fix, correctly scoped as what it actually was.",
+      "ren_wrong": "This report either incomplete is there (\"not sure what it was\") or overclaim does (\"security incident\") — investigation's actual finding-ai accurately reflect do not do."
+    }
+  ],
+  "act_number": 6,
+  "act_title": "The Ghost Peering Route",
+  "builds_layer": "Cross-VPC Trust Layer"
+}

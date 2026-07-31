@@ -1,0 +1,327 @@
+{
+  "lesson_id": "C3.1",
+  "lesson_title": "VPC Fundamentals",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C2.5 — MFA, Password Policies, and AWS Organizations",
+  "student_will_learn": [
+    "Explain what a VPC is and why it isolates one network from every other AWS customer's network",
+    "Read and write CIDR notation to describe the size and range of a network",
+    "Explain the difference between the account's default VPC and a purpose-built custom VPC",
+    "Explain why a VPC is scoped to a single AWS region and never spans regions",
+    "Identify why leaving a production resource in the default VPC's default security group is a risk"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "New ticket வந்திருக்கு - FQ-156, Priya Nair-கிட்ட இருந்து. அவங்க FoodQuick-ஓட புது Cloud Architect. Message படிச்சா, 'FoodQuick-ஓட VPC-ஐ யாரோ Series A funding round-க்கு முன்னாடி, ஒரே afternoon-ல, default settings வெச்சு set பண்ணிட்டாங்க. அப்புறம் யாரும் அதை திரும்பி பார்க்கவே இல்ல' -nu சொல்றாங்க. இப்போ company scale ஆகும்போது, அந்த rushed decision எல்லா problems-க்கும் foundation-ஆ இருக்குனு கண்டுபிடிச்சிருக்காங்க. நாம இன்னைக்கு அந்த VPC-ஐ properly புரிஞ்சுக்கிறோம் - அப்புறம்தான் அதை சரி பண்ண முடியும்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.1",
+        "VPC Fundamentals",
+        "Ticket FQ-156 — Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "A VPC Is Your Own Private Slice of AWS",
+      "ava_speaks": "VPC (Virtual Private Cloud) ஐ ஒரு தனி, walled-off apartment building மாதிரி நினைச்சுக்கோங்க - அதுக்குள்ள இருக்கற resources வேற எந்த AWS customer-ஓட network-ஓடயும் connect ஆகாது, நாம explicit-ஆ allow பண்றது தவிர. ஒவ்வொரு VPC-க்கும் ஒரு IP address range இருக்கும், அது CIDR notation-ல எழுதப்படும் - example: 10.0.0.0/16. இந்த '/16' இருக்கே, அது எவ்ளோ IP addresses அந்த network-ல இருக்குனு சொல்லுது - /16 = 65,536 addresses, /24 = 256 addresses. Number எவ்ளோ சின்னதா இருக்கோ, network அவ்ளோ பெரிசா இருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "CIDR Notation — Reading the Slash"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "CIDR Block",
+            "Total IP Addresses"
+          ],
+          "rows": [
+            [
+              "10.0.0.0/16",
+              "65,536 addresses"
+            ],
+            [
+              "10.0.0.0/24",
+              "256 addresses"
+            ],
+            [
+              "10.0.0.0/28",
+              "16 addresses"
+            ]
+          ]
+        },
+        {
+          "type": "write_definition_box",
+          "text": "VPC (Virtual Private Cloud): a logically isolated network within AWS, defined by a CIDR block, where you control subnets, routing, and connectivity to the internet or other networks."
+        },
+        {
+          "type": "write_important_note",
+          "text": "Nothing inside a VPC can reach or be reached from outside it unless you explicitly configure a path — an Internet Gateway, a peering connection, a VPN, and so on."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "10.0.0.0/24 CIDR block-ல எவ்ளோ IP addresses இருக்கும்?",
+          "options": [
+            "A) 65,536",
+            "B) 256",
+            "C) 16",
+            "D) Unlimited"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! /24 = 256 addresses. Number பெரிசா ஆக ஆக, network சின்னதா ஆகும் - இது தலைகீழா தோணும், ஆனா அதுதான் rule.",
+          "ava_wrong": "இல்ல, /24 = 256 addresses. Trick என்னனா, slash number பெரிசா இருந்தா network சின்னதா இருக்கும் - /16 பெரிய network, /24 சின்ன network."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு VPC-க்குள்ள இருக்கற resource, வேற ஒரு AWS customer-ஓட VPC-ல இருக்கற resource-ஐ automatic-ஆ access பண்ண முடியுமா?",
+          "options": [
+            "A) ஆமா, எல்லா VPCs-மும் default-ஆ connected",
+            "B) இல்ல, explicit-ஆ ஒரு connection method configure பண்ணாம முடியாது",
+            "C) ஆமா, ஆனா same region-ல இருந்தா மட்டும்",
+            "D) ஆமா, ஆனா same account-ல இருந்தா மட்டும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! VPC isolation-ஓட முழு point இதுதான் - default-ஆ ஒண்ணும் connect ஆகாது. Peering-ஆவது, Transit Gateway-ஆவது explicit-ஆ set பண்ணனும்.",
+          "ava_wrong": "இல்ல, VPC isolation-ஓட முழு purpose என்னனா, யாரும் automatic-ஆ access பண்ண முடியாது. Same account-ஆ இருந்தாலும் கூட, தனி VPCs-ஆ இருந்தா, explicit-ஆ connect பண்ணனும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The VPC That Was Never Meant to Last",
+      "ava_speaks": "FoodQuick-ஓட VPC history-ஐ பாரு. Series A funding round நெருங்கிட்டப்போ, ஒரே afternoon-ல ஒரு engineer default settings வெச்சு VPC set பண்ணிட்டான் - ஏன்னா demo-ஐ time-க்கு ready பண்ணனும். அது 18 மாசம் ஆச்சு, யாரும் அதை review பண்ணவே இல்ல. இதே pattern - 'launch date நெருங்கிடுச்சு, temporary-ஆ செய்யலாம்' - Freshworks மாதிரி SaaS companies-ஓட early engineering blogs-லயும் common-ஆ பேசப்படற ஒரு mistake. Temporary decisions, business scale ஆனப்புறம் structural problems-ஆ மாறும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "FoodQuick's VPC — Built in an Afternoon, Untouched for 18 Months"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "What Happened"
+          ],
+          "rows": [
+            [
+              "Day -3 (before Series A demo)",
+              "Default VPC used as-is, single engineer, no design review"
+            ],
+            [
+              "Month 1-18",
+              "Every new resource added into the same default VPC, no plan, no documentation"
+            ],
+            [
+              "Today (this ticket)",
+              "Priya Nair, new Cloud Architect, flags it as the root cause behind several networking incidents"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Inspecting the Default VPC, Then Creating a Custom One",
+      "ava_speaks": "karthik-dev முதல்ல existing default VPC-ஐ பாரு, அப்புறம் அதுக்கு பதிலா ஒரு properly planned custom VPC create பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல VPC Console-ல, Your VPCs list-க்கு போய், existing default VPC-ஐ பாக்கிறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "VPC Console → Your VPCs",
+              "highlight": "The VPC marked 'Default VPC = Yes' in the list",
+              "result": "The default VPC's details panel opens, showing CIDR block 172.31.0.0/16"
+            }
+          },
+          {
+            "ava_narration": "பாரு, இந்த default VPC 172.31.0.0/16 CIDR block வெச்சிருக்கு - இது AWS automatic-ஆ ஒவ்வொரு region-லயும் create பண்ணிடும், நாம ஒண்ணும் design பண்ணலை.",
+            "console_action": {
+              "type": "click",
+              "path": "Default VPC details",
+              "highlight": "CIDR block field showing 172.31.0.0/16",
+              "result": "Confirms this VPC was auto-generated with no custom planning"
+            }
+          },
+          {
+            "ava_narration": "இப்போ 'Create VPC' click பண்ணி, ஒரு புது custom VPC ஆரம்பிக்கிறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "VPC Console → Your VPCs → Create VPC",
+              "highlight": "Create VPC button",
+              "result": "VPC creation form opens"
+            }
+          },
+          {
+            "ava_narration": "IPv4 CIDR block-ல 10.0.0.0/16 கொடுக்கிறோம் - இது default VPC-ஓட 172.31.0.0/16-ஓட overlap ஆகாது, future-ல peering பண்ணனும்னா இது முக்கியம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create VPC form",
+              "field": "IPv4 CIDR block",
+              "value": "10.0.0.0/16",
+              "highlight": "IPv4 CIDR block input field",
+              "result": "The custom VPC is scoped to a clean, non-overlapping 65,536-address range"
+            }
+          },
+          {
+            "ava_narration": "VPC name-ல 'foodquick-prod-vpc'nu கொடுத்து, create பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create VPC form",
+              "field": "Name tag",
+              "value": "foodquick-prod-vpc",
+              "highlight": "Name tag input field",
+              "result": "A clearly named, purpose-built VPC now exists, separate from the untouched default VPC"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "FoodQuick now has a properly named, deliberately sized custom VPC (10.0.0.0/16) that future subnets, route tables, and security groups will be built inside, instead of continuing to add resources into the unplanned default VPC.",
+          "what_to_notice": "Default VPC-ஐ delete பண்ணலை - அது இருக்கட்டும், ஆனா production resources எல்லாம் இனிமே இந்த புது custom VPC-க்குள்ள தான் போகும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Default VPC vs Custom VPC, Side by Side",
+      "ava_speaks": "இந்த diagram பாரு - இடது பக்கம் இருக்கறது default VPC, வலது பக்கம் இருக்கறது நாம இப்போ create பண்ணின custom VPC. ரெண்டும் தனி தனி, ஒரே region-ல இருந்தாலும் ஒண்ணு இன்னொண்ணுக்கு தெரியாது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Region: ap-south-1",
+            "",
+            "  [ Default VPC ]              [ foodquick-prod-vpc ]",
+            "  CIDR: 172.31.0.0.0/16        CIDR: 10.0.0.0/16",
+            "  Auto-created by AWS          Created deliberately",
+            "  All subnets public           Subnets planned per tier",
+            "  Default security group       Security groups scoped per app",
+            "",
+            "  These two VPCs cannot reach each other unless explicitly peered."
+          ]
+        },
+        "ava_narration": "ஒரு முக்கிய point கவனி - VPC region-க்குள்ள மட்டும்தான் இருக்கும். ap-south-1-ல create பண்ண VPC, us-east-1-ல தெரியவே தெரியாது - VPC ஒரு region-ஐ cross பண்ண முடியாது."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Size a Custom VPC for FoodQuick's Analytics Team",
+      "instruction": "ananya-analyst-ஓட analytics team-க்கு, ஒரு தனி VPC create பண்ணு, future-ல 4 environments (dev/staging/prod/sandbox) இதுக்குள்ள subnet-ஆ போட முடியற அளவுக்கு CIDR block வெச்சு.",
+      "scenario": "Analytics team FoodQuick-ஓட main production VPC-ல இருந்து தனியா இருக்கணும்nu, Priya Nair request பண்ணி இருக்காங்க. இந்த VPC-ல future-ல 4 separate environments subnet-ஆ போடப் போறாங்க.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "VPC Console → Your VPCs → Create VPC",
+        "current_configuration": "No VPC exists yet for the analytics team"
+      },
+      "requirements": [
+        "Choose a CIDR block large enough to comfortably fit 4 separate environment subnets later",
+        "Make sure the CIDR block does not overlap with foodquick-prod-vpc's 10.0.0.0/16 range",
+        "Name the VPC foodquick-analytics-vpc",
+        "Confirm the VPC is created in the same region as the rest of FoodQuick's infrastructure"
+      ],
+      "hints": [
+        "/16 ஒரு safe, generous starting size - அது 65,536 addresses குடுக்கும், 4 environments-க்கு easy-ஆ போதும்",
+        "Overlap தவிர்க்க, foodquick-prod-vpc 10.0.0.0/16 use பண்றதால, analytics-க்கு 10.1.0.0/16 மாதிரி வேற second octet use பண்ணு",
+        "Region VPC create பண்றப்போ console-ல மேல right corner-ல தெரியும் - அதே region-ஐ மாத்தாம வெச்சிருக்கணும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A VPC named foodquick-analytics-vpc exists with a CIDR block like 10.1.0.0/16 that does not overlap with 10.0.0.0/16, in the same region as the rest of FoodQuick's infrastructure",
+        "ava_correct": "Perfect! இந்த VPC future-ல prod VPC-கூட peer பண்ணனும்னா, CIDR overlap இல்லாததால, problem வராது.",
+        "ava_wrong": "CIDR block-ஐ ஒரு தடவை check பண்ணு - prod VPC-ஓட 10.0.0.0/16-கூட overlap ஆகக் கூடாது, இல்லனா future peering முடியாது."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Production Database Sitting in the Default VPC",
+      "ava_speaks": "Priya Nair-ஓட audit-ல ஒரு scary finding வந்துச்சு. FoodQuick-ஓட main production RDS database, launch பண்ணினப்போ யாரும் VPC தேர்ந்தெடுக்கல - அது automatic-ஆ default VPC-ல, default security group-கூட போயிடுச்சு. இதோட real risk என்னனு பாருங்க.",
+      "setup": "Months ago, an engineer launched FoodQuick's production PostgreSQL RDS instance without explicitly choosing a VPC or security group. AWS defaulted it into the account's default VPC, attached to the default security group.",
+      "what_happened": "During a security review, Priya Nair discovers that over a dozen unrelated EC2 instances — including a few personal test instances other engineers spun up — are also in the default VPC using the same default security group, and can all reach the production database on port 5432.",
+      "broken_config": "RDS instance: foodquick-orders-db\nVPC: default (172.31.0.0/16)\nSecurity group: default\n\nDefault security group inbound rule:\n{\n  \"Type\": \"All traffic\",\n  \"Source\": \"the security group itself (sg-xxxxxxxx)\"\n}\n\nProblem: every instance anyone has ever launched into the default VPC without specifying a security group also uses this same default security group — so all of them are automatically 'trusted' sources.",
+      "error_shown": "Security scan finding: Port 5432 (PostgreSQL) on foodquick-orders-db is reachable from 14 unrelated EC2 instances, including 3 personal test instances with no relation to the production application.",
+      "the_real_problem": "Default security group-ஓட rule 'itself' ஐ source-ஆ வெச்சிருக்கும் - அதாவது அதே security group-ஐ use பண்ற எந்த instance-மும் ஒண்ணுக்கொண்ணு trust பண்ணும். Production DB அந்த group-ல இருக்கறதால, அதே group-ல இருக்கற எந்த random test instance-மும் DB-ஐ reach பண்ண முடியும் - business logic எதுவும் இல்லாம.",
+      "fix": {
+        "corrected_config": "1. Migrate foodquick-orders-db into foodquick-prod-vpc's private subnet.\n2. Create a dedicated security group foodquick-db-sg with a single inbound rule:\n{\n  \"Type\": \"PostgreSQL (5432)\",\n  \"Source\": \"foodquick-app-sg\" (only the application tier's security group, not the whole default group)\n}\n3. Remove the RDS instance from the default security group entirely.",
+        "result": "Only the specific application servers that legitimately need database access can reach it — unrelated test instances and anything else in the default VPC no longer have a path to the production database."
+      },
+      "lesson": "Default settings-ஐ 'default' nu convenient-ஆ use பண்றது ரொம்ப risky - production resources எப்போவும் purpose-built VPC-க்குள்ள, specific-ஆ scope பண்ண security group-ல தான் இருக்கணும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — VPC Design Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "FoodQuick is planning to expand into a second AWS region for lower latency in North India vs South India users. Should they extend the existing ap-south-1 VPC to also cover the new region, or create a separate VPC?",
+          "answer": "Create a separate VPC in the new region. A VPC is always scoped to a single region — it's not possible to extend one VPC across two regions. Each region needs its own VPC, sized and CIDR-planned to avoid overlap if they'll ever be connected."
+        },
+        {
+          "question": "A new intern accidentally launches a test EC2 instance without picking a VPC. Where does it end up, and is that a problem by itself?",
+          "answer": "It lands in the account's default VPC with the default security group. By itself, a harmless test instance there isn't catastrophic — but it becomes a real problem the moment anything sensitive (like a production database) also sits in that same default VPC and security group, since they'd implicitly trust each other."
+        },
+        {
+          "question": "Priya Nair is planning FoodQuick's future multi-region setup. Should each region's VPC use the exact same CIDR block (e.g. 10.0.0.0/16 everywhere) for consistency, or should each region get a distinct, non-overlapping range?",
+          "answer": "Distinct, non-overlapping ranges. If two VPCs ever need to be peered or connected through a Transit Gateway, identical CIDR blocks make that impossible — routing can't tell the two networks apart. Planning non-overlapping ranges from day one avoids a painful re-architecture later."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Cloud Architects Plan a CIDR Strategy",
+      "ava_speaks": "Priya Nair மாதிரி Cloud Architects-ஓட வேலை, ஒவ்வொரு VPC create பண்ணும் முன்னாடியும் ஒரு company-wide CIDR plan வெச்சிருக்கறது - இல்லனா FoodQuick-ஓட பழைய VPC மாதிரி, பிற்பாடு peering, multi-region expansion எல்லாம் கஷ்டமாயிடும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Maintain a company-wide CIDR allocation sheet — which range belongs to which VPC, region, and environment",
+          "detail": "இது ஒரு simple spreadsheet-ஆ இருந்தாலும், இது இல்லாம 5+ VPCs இருக்கும்போது overlap தவிர்க்க முடியாது"
+        },
+        {
+          "step": 2,
+          "action": "Reserve larger CIDR blocks upfront (/16) even if the initial need is small",
+          "detail": "பிற்பாடு subnets, environments சேர்க்கும்போது, room இல்லாம resize பண்ண வேண்டி வராது"
+        },
+        {
+          "step": 3,
+          "action": "Review every new VPC request against the existing allocation sheet before approving it",
+          "detail": "இது தான் FoodQuick-ஓட பழைய afternoon-VPC மாதிரி mistake-ஐ இனி repeat ஆகாம தடுக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS IP Address Manager (IPAM)",
+          "use": "Multiple VPCs, accounts, regions-ல CIDR allocation-ஐ centrally track பண்ணி, overlap risk-ஐ automatic-ஆ flag பண்ணும்"
+        },
+        {
+          "tool": "VPC Console CIDR reservations",
+          "use": "ஒரு VPC-க்குள்ளயே future subnets-க்கு CIDR ranges reserve பண்ணி, தேவைப்படும்போது use பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம VPC என்னனு, CIDR notation எப்படி படிக்கறதுனு, default VPC-க்கும் custom VPC-க்கும் என்ன வித்தியாசம்னு, VPC ஏன் region-க்குள்ளயே இருக்குமுனு கத்துக்கிட்டோம். Priya Nair-ஓட ticket FQ-156-க்கு இதுதான் first step - அடுத்த lesson-ல நாம subnets-க்குள்ள போகப் போறோம், public-ஆவும் private-ஆவும் எது எங்க போகணும்nu பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.1 — Summary",
+      "points": [
+        "✓ A VPC is a logically isolated network that nothing outside it can reach without explicit configuration",
+        "✓ CIDR notation defines a network's size — a smaller slash number means a larger network",
+        "✓ The default VPC is auto-created by AWS with no custom planning; a custom VPC is deliberately sized and named",
+        "✓ A VPC always lives inside a single AWS region and never spans regions",
+        "✓ Leaving production resources in the default VPC's default security group implicitly trusts every other resource that shares it"
+      ],
+      "coming_next": "Lesson C3.2a: Subnets — Public vs Private"
+    }
+  }
+}

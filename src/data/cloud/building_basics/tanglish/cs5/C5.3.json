@@ -1,0 +1,319 @@
+{
+  "lesson_id": "C5.3",
+  "lesson_title": "EBS Volumes",
+  "section_id": "CS5",
+  "section_name": "Storage",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C5.2 — S3 Security",
+  "student_will_learn": [
+    "Explain the EBS volume types (gp3, io2, st1, sc1) and their intended use cases",
+    "Explain the relationship between an EBS volume and the EC2 instance it attaches to",
+    "Resize an EBS volume in the console",
+    "Explain why a console-level volume resize does not automatically resize the filesystem",
+    "Complete a full resize including growpart and resize2fs so the OS sees the new space"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "S3 object storage பார்த்தோம், இப்போ CFO-ஓட FQ-189 ticket-ல அடுத்த கேள்வி - EC2 instances-கூட attach பண்ணி இருக்கற EBS volumes பத்தி. 'ஒரு volume resize பண்ணிட்டோம்-ன்னு console சொல்லுது, ஆனா server-ல இன்னும் old size தான் காட்டுது - ஏன்?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற EBS Volumes.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS5 · Lesson C5.3",
+        "EBS Volumes",
+        "Ticket FQ-189 — continuing with CFO's Office"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "EBS Volume Types — Matching Performance to Workload",
+      "ava_speaks": "EBS (Elastic Block Store), EC2 instance-கூட attach ஆகும் ஒரு network-attached disk - இது instance store மாதிரி ephemeral இல்ல, instance stop ஆனாலும் data preserved-ஆ இருக்கும் (C4.2a-ல கத்துக்கிட்டது நினைவிருக்கா?). Volume types: gp3 (general purpose SSD) - most workloads-க்கு balanced, cost-effective default. io2 (provisioned IOPS SSD) - extremely high, consistent IOPS தேவைப்படற databases-க்கு. st1 (throughput-optimized HDD) - large sequential reads/writes-க்கு, big data processing. sc1 (cold HDD) - infrequent access, cheapest, cold storage workloads-க்கு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "EBS Volume Types"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Type",
+            "Best For"
+          ],
+          "rows": [
+            [
+              "gp3 (general purpose SSD)",
+              "Most workloads — boot volumes, general application storage"
+            ],
+            [
+              "io2 (provisioned IOPS SSD)",
+              "High-performance databases needing consistent, guaranteed IOPS"
+            ],
+            [
+              "st1 (throughput-optimized HDD)",
+              "Big data, log processing — large sequential I/O"
+            ],
+            [
+              "sc1 (cold HDD)",
+              "Infrequently accessed data where cost matters more than speed"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "gp3 is the right default for the vast majority of workloads — reach for io2 only when a database genuinely needs guaranteed high IOPS beyond what gp3 provides."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு high-transaction-volume production database, consistent, guaranteed high IOPS தேவைப்படுது. எந்த EBS type பொருந்தும்?",
+          "options": [
+            "A) sc1, cheapest option",
+            "B) io2, guaranteed high IOPS-க்காக design பண்ணப்பட்டது",
+            "C) st1, sequential throughput-க்கு நல்லது",
+            "D) எல்லா types-மும் ஒரே performance தரும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! io2, provisioned IOPS SSD - guaranteed, consistent high IOPS தேவைப்படற demanding databases-க்கு specifically design பண்ணப்பட்டது.",
+          "ava_wrong": "இல்ல, sc1 மற்றும் st1 ரெண்டுமே high, consistent IOPS-க்கு design பண்ணப்படல - io2 தான் guaranteed provisioned IOPS தரும், demanding database workloads-க்கு correct choice."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "EBS volume-க்கும், instance store-க்கும் (C4.2a-ல பார்த்தது) உள்ள fundamental difference என்ன?",
+          "options": [
+            "A) ரெண்டுமே ஒரே மாதிரி persistence behavior வெச்சிருக்கும்",
+            "B) EBS network-attached, instance stop ஆனாலும் data preserved; instance store physically attached to host, stop ஆனா data lost",
+            "C) EBS ஆனது cheaper, ஆனா குறைவான features",
+            "D) Instance store மட்டும் resize பண்ண முடியும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! EBS, instance-ஐ விட independent-ஆ இருக்கும் network-attached storage - stop பண்ணினாலும் data safe. Instance store, physical host-கூட directly tied-ஆ இருக்கும் - stop பண்ணின உடனே data lost.",
+          "ava_wrong": "இல்ல, இது C4.2a-ல கத்துக்கிட்ட முக்கியமான difference - EBS persist ஆகும் instance stop பண்ணினாலும், instance store stop பண்ணின உடனேயே data lose பண்ணும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Choosing the Right Volume Type Saves Real Money",
+      "ava_speaks": "FoodQuick-ஓட analytics team, log processing jobs-க்கு gp3 volumes use பண்ணிட்டாங்க ஆரம்பத்துல - ஆனா அந்த workload, பெரிய sequential files-ஐ read/write பண்றது, IOPS தேவை இல்ல, throughput தான் முக்கியம். st1-க்கு switch பண்ணின பிறகு, அதே performance-ஐ கிட்டத்தட்ட 50% கம்மி cost-ல பெற்றாங்க. Zoho மாதிரி companies-ஓட infrastructure blogs-லயும், 'volume type-ஐ workload-ஓட actual I/O pattern-கூட match பண்றது' ஒரு standard cost-optimization practice-ஆ பேசப்படும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Volume Type Mismatch vs Match"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Before (gp3 for sequential log processing)",
+            "After (st1 for sequential log processing)"
+          ],
+          "rows": [
+            [
+              "Paying for SSD performance not being used effectively",
+              "Paying for throughput-optimized performance that matches the actual workload"
+            ],
+            [
+              "Higher cost per GB for this specific access pattern",
+              "~50% lower cost for equivalent real-world performance"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Resizing an EBS Volume — Console AND Filesystem",
+      "ava_speaks": "karthik-dev-ஓட app server-ல disk space குறைஞ்சிடுச்சு. அவன் இப்போ EBS volume-ஐ resize பண்றான் - console-லயும், OS-லயும் ரெண்டு layers-லயும்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "EC2 Console-ல Volumes-க்கு போய், foodquick-app-server-3-ஓட root volume select பண்றோம். Current size 20 GiB-ஆ இருக்கு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Volumes → vol-0abc123 (attached to foodquick-app-server-3)",
+              "highlight": "Volume size showing 20 GiB",
+              "result": "The volume details panel opens, confirming the current 20 GiB size"
+            }
+          },
+          {
+            "ava_narration": "'Actions' -> 'Modify volume' click பண்ணி, new size-ஆ 50 GiB கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Actions → Modify volume",
+              "field": "New size",
+              "value": "50 GiB",
+              "highlight": "New size input field",
+              "result": "AWS begins the volume modification — this typically completes within minutes without requiring a stop"
+            }
+          },
+          {
+            "ava_narration": "Console-ல volume state 'optimizing' காட்டி, அப்புறம் 'completed'nு மாறுது. ஆனா instance-க்குள்ள போய், 'df -h' run பண்ணா, root filesystem இன்னும் old 20 GiB-ஐ தான் காட்டுது!",
+            "console_action": {
+              "type": "click",
+              "path": "Terminal (inside instance, via Session Manager) → df -h",
+              "highlight": "Output showing root filesystem still at 20 GiB despite the volume being 50 GiB",
+              "result": "Confirms the console-level resize does not automatically extend the OS-level filesystem"
+            }
+          },
+          {
+            "ava_narration": "முதல்ல, partition-ஐ extend பண்ணனும் - 'sudo growpart /dev/xvda 1' run பண்றோம், இது partition-ஐ புது disk size-க்கு grow பண்ணும்.",
+            "console_action": {
+              "type": "click",
+              "path": "Terminal → sudo growpart /dev/xvda 1",
+              "highlight": "growpart command output confirming partition resize",
+              "result": "The partition now spans the full 50 GiB, but the filesystem inside it still reports the old size"
+            }
+          },
+          {
+            "ava_narration": "இறுதியா, 'sudo resize2fs /dev/xvda1' (அல்லது XFS filesystem-க்கு 'sudo xfs_growfs /') run பண்றோம் - இது filesystem-ஐ, extended partition-ஐ முழுசா use பண்ண resize பண்ணும்.",
+            "console_action": {
+              "type": "click",
+              "path": "Terminal → sudo resize2fs /dev/xvda1",
+              "highlight": "resize2fs command output",
+              "result": "The root filesystem now correctly reports 50 GiB — df -h confirms the full space is usable"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The EBS volume is resized from 20 GiB to 50 GiB at the console level, and the partition and filesystem are extended to match, so the OS finally sees and can use the full new capacity.",
+          "what_to_notice": "Console resize, growpart, resize2fs - இது 3 தனி தனி steps. முதல் step மட்டும் பண்ணி நிறுத்திட்டா, disk space கூட்டிட்டோம்னு நினைச்சு, actual OS-ல எந்த extra space-மும் கிடைக்காது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Why Three Layers Need to Agree",
+      "ava_speaks": "இந்த diagram பாரு - EBS volume, partition, filesystem மூணும் தனி தனி layers, ஒவ்வொண்ணும் தனியா 'இது தான் என் size'nு track பண்ணும்.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Layer 1 — EBS Volume (AWS-managed): 20 GiB -> resized to 50 GiB via console",
+            "        |",
+            "Layer 2 — Partition (/dev/xvda1): still thinks it's sized for the OLD 20 GiB, until 'growpart' runs",
+            "        |",
+            "Layer 3 — Filesystem (ext4/xfs): still reports the OLD 20 GiB usable space, until 'resize2fs'/'xfs_growfs' runs",
+            "",
+            "df -h only reflects Layer 3 — that's why it shows the old size even after the EBS console says 50 GiB"
+          ]
+        },
+        "ava_narration": "Console-ல volume size மாறினாலும், OS-க்கு அது தெரியாது - OS partition table-ஐயும் filesystem metadata-ஐயும் தான் நம்பும், அது manually update பண்ணும் வரைக்கும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Complete a Full Volume Resize",
+      "instruction": "FoodQuick-ஓட ஒரு database server-ல disk space full ஆகிட்டு இருக்கு. EBS volume-ஐ 100 GiB-ல இருந்து 250 GiB-க்கு முழுசா resize பண்ணு.",
+      "scenario": "ananya-analyst, foodquick-orders-db-instance-ஓட attached EBS volume-ல disk usage 92%-ஐ கடந்திருக்குனு flag பண்ணி இருக்காங்க. Immediate action தேவை, ஆனா correct steps follow பண்ணனும் - console resize மட்டும் பண்ணி நிறுத்தக் கூடாது.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Volumes → vol-0def456 (attached to foodquick-orders-db-instance), currently 100 GiB",
+        "current_configuration": "Root filesystem currently reports 100 GiB total, 92% used"
+      },
+      "requirements": [
+        "Modify the EBS volume in the console from 100 GiB to 250 GiB",
+        "Wait for the volume modification state to show 'completed', not just 'optimizing'",
+        "Run growpart on the correct partition to extend it to the new volume size",
+        "Run resize2fs (or xfs_growfs, depending on filesystem type) to extend the filesystem to use the full new space"
+      ],
+      "hints": [
+        "Volume state 'optimizing' இருந்தாலும், resize technically apply ஆகி இருக்கும் - ஆனா 'completed' ஆகற வரைக்கும் காத்திருந்து அப்புறம் proceed பண்றது safer",
+        "growpart command-ல device name-ஐயும், partition number-ஐயும் exact-ஆ கொடுக்கணும் - தப்பான partition-ஐ target பண்ணினா வேலை செய்யாது",
+        "df -T command use பண்ணி, filesystem type ext4-ஆ இருக்கானு xfs-ஆ இருக்கானு confirm பண்ணிட்டு, correct resize command (resize2fs அல்லது xfs_growfs) தேர்ந்தெடு"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "df -h inside the instance shows the root (or data) filesystem at 250 GiB total, not 100 GiB, confirming all three layers (volume, partition, filesystem) are now aligned",
+        "ava_correct": "Correct! Database-க்கு இப்போ முழு 250 GiB-ம் usable-ஆ இருக்கு - console resize மட்டும் இல்ல, filesystem வரைக்கும் complete-ஆ பண்ணி இருக்க.",
+        "ava_wrong": "df -h output-ஐ ஒரு தடவை check பண்ணு - இன்னும் old size காட்டுதுனா, growpart அல்லது resize2fs step மறந்திருக்கலாம்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Resize That Didn't Actually Resize Anything (From the App's View)",
+      "ava_speaks": "priya-dev, ஒரு urgent 'disk full' alert வந்தப்போ, EBS console-ல volume size-ஐ 20 GiB-ல இருந்து 100 GiB-க்கு உடனே மாத்திட்டா, alert clear ஆகும்னு நினைச்சு. ஆனா application இன்னும் 'disk full' errors-ஐ throw பண்ணிட்டே இருந்துச்சு.",
+      "setup": "priya-dev, responding to an urgent low-disk-space page, quickly modifies the EBS volume size from 20 GiB to 100 GiB in the console, assuming this alone resolves the issue since the console confirms the change completed.",
+      "what_happened": "The application continues writing to disk and hits the exact same 'disk full' error within minutes, because the filesystem inside the instance was never extended — it's still capped at the old 20 GiB, unaware that the underlying volume has more room.",
+      "broken_config": "EBS volume: vol-0abc123 — 100 GiB (console confirms this)\ndf -h output inside instance: /dev/xvda1 20G 19G 0G 100% / (filesystem still thinks it's 20 GiB)\n\nNo growpart or resize2fs command was ever run after the console resize",
+      "error_shown": "Application error log: No space left on device (errno 28) — write failed while the console-reported EBS volume shows 80 GiB of completely unused space.",
+      "the_real_problem": "priya, console resize-ஐ முழு solution-ஆ நினைச்சா, ஆனா அது ஒரு தேவையான முதல் step மட்டும் - filesystem-ஐ extend பண்றது, ஒரு தனி, manual, in-instance step. இது ஒரு common misunderstanding - AWS console 'success' காட்டறது, application-ஓட perspective-ல அது முழுசா complete ஆகல.",
+      "fix": {
+        "corrected_config": "Connect to the instance (via Session Manager) and run:\nsudo growpart /dev/xvda 1\nsudo resize2fs /dev/xvda1\n\nThen verify with df -h that the filesystem now correctly shows 100 GiB.",
+        "result": "The application immediately regains write access to the full disk space, and the 'disk full' errors stop."
+      },
+      "lesson": "EBS console resize, ஒரு three-step process-ஓட முதல் step மட்டும் - volume resize, partition extend (growpart), filesystem extend (resize2fs/xfs_growfs). மூணும் பண்ணாத வரைக்கும், application-க்கு extra space கிடைக்காது."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — EBS Volume Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team notices that df -h inside an instance still shows the old, smaller size, even 20 minutes after a console volume resize showed 'completed'. What's the most likely explanation?",
+          "answer": "The partition and filesystem were never extended (growpart and resize2fs/xfs_growfs weren't run) — the console-level EBS resize completing doesn't automatically propagate to the OS layers. This is expected behavior, not a delay or a bug."
+        },
+        {
+          "question": "Can EBS volumes be shrunk (reduced in size) the same way they can be grown, directly via a console 'Modify volume' action?",
+          "answer": "No — EBS volumes can only be increased in size via Modify volume, never decreased. To effectively shrink storage, you'd need to create a new, smaller volume and migrate the data over (e.g. via snapshot + new volume + copy), not a direct in-place shrink."
+        },
+        {
+          "question": "A workload does small, random reads/writes with unpredictable IOPS demand, not sequential throughput. Between st1 and gp3, which is the better starting point?",
+          "answer": "gp3 — st1 is optimized for large sequential throughput (like log processing or big data scans), while gp3's general-purpose SSD profile handles random, unpredictable I/O patterns far better. st1 would likely underperform for this access pattern despite being cheaper per GB."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Handle Disk Resize as a Complete, Practiced Procedure",
+      "ava_speaks": "Real companies-ல, 'disk full' emergency response, ஒரு practiced runbook-ஆ இருக்கும் - individual engineers, panic-ல partial steps பண்ணி விடாம.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Maintain a documented runbook for EBS resize that explicitly lists all three steps: console resize, growpart, and filesystem extend",
+          "detail": "இது priya-dev-ஓட mistake மாதிரி, ஒரு urgent moment-ல ஒரு step மறந்துடறதை தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Set up CloudWatch disk usage alarms at 70-80% threshold, well before hitting 90%+, giving time for a calm, complete resize instead of a rushed one",
+          "detail": "இது emergency response-ஐ ஒரு routine maintenance task-ஆ மாற்றும்"
+        },
+        {
+          "step": 3,
+          "action": "For workloads with predictable growth, consider automating the resize+extend sequence via a script or Systems Manager Automation document",
+          "detail": "இது manual steps-ஐ முழுசா நீக்கி, consistent, repeatable execution உறுதி பண்ணும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "CloudWatch disk usage metrics (via CloudWatch Agent)",
+          "use": "Instance-level disk usage-ஐ proactive-ஆ track பண்ணி, 90%+ ஆவதுக்கு முன்னாடியே alert பண்ணும் - emergency resize-ஐ தவிர்க்க உதவும்"
+        },
+        {
+          "tool": "AWS Systems Manager Automation documents",
+          "use": "Volume resize + growpart + resize2fs sequence-ஐ ஒரு single automated runbook-ஆ define பண்ணி, manual step-missing risk-ஐ நீக்கும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம EBS volume types (gp3, io2, st1, sc1), resize process-ஓட மூணு layers - console, partition, filesystem எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, console resize மட்டும் பண்ணி நிறுத்திட்டா, application-க்கு extra space கிடைக்காதுனு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம EFS மற்றும் Glacier Vault Lock பார்ப்போம் - CS5-ஓட கடைசி lesson.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C5.3 — Summary",
+      "points": [
+        "✓ gp3, io2, st1, and sc1 EBS types trade off performance, IOPS, and cost for different workload shapes",
+        "✓ EBS volumes are network-attached and persist independently of the instance, unlike instance store",
+        "✓ A console-level volume resize is only the first of three steps needed for the OS to actually use the new space",
+        "✓ growpart extends the partition; resize2fs (or xfs_growfs) extends the filesystem to match",
+        "✓ Skipping the partition and filesystem extension leaves the application seeing the old size, even though the console shows the resize as complete"
+      ],
+      "coming_next": "Lesson C5.4: EFS and Glacier Vault Lock"
+    }
+  }
+}

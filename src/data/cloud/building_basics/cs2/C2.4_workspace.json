@@ -1,0 +1,199 @@
+{
+  "lesson_id": "C2.4",
+  "act_number": 5,
+  "act_title": "Extending Trust Safely",
+  "builds_layer": "Service Integration Layer",
+  "total_tasks": 10,
+  "arc_intro": "The mystery is solved. Four layers are secured. Ravi greenlights two projects that had been on hold: a real CI/CD pipeline connecting FoodQuick's dev and prod AWS accounts, and a new external logistics vendor integration. After everything you just uncovered, nobody wants to build new trust the sloppy way. This time, every new connection gets built carefully from day one.",
+  "tasks": [
+    {
+      "id": "C2.4-T1",
+      "sequence": 1,
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "Ravi kicks off the meeting: 'Before Vikram's mess, I would have just said go build the pipeline, we'll clean it up later if there's a problem. Not anymore. What's different about how we approach this now?'",
+      "question": "What should actually be different this time, based on everything found in this investigation?",
+      "options": [
+        "A) Nothing structural — just be more careful and remember to double-check things",
+        "B) Every new permission or trust relationship gets scoped correctly and documented from the moment it's created, not granted broadly with a plan to 'fix it later' — because 'later' is exactly how Vikram's leftover access sat unnoticed for 8 months",
+        "C) Avoid building any new integrations at all, since they're inherently risky",
+        "D) Only Ravi personally should be allowed to create any new IAM roles going forward"
+      ],
+      "correct_index": 1,
+      "explanation": "'Remember to be careful' — is not a process, Vikram case- fail. Scope correctly, document, do — 'fix it later' without.",
+      "ren_correct": "Exactly the right takeaway from everything you just found.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.4-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "question": "Quick refresher before building the new pipeline: what does a Role's Trust Policy control?",
+      "options": [
+        "A) What actions the role can perform once assumed",
+        "B) Who or what is allowed to assume the role in the first place",
+        "C) How long credentials stay valid",
+        "D) Which region the role works in"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: Who or what is allowed to assume the role in the first place",
+      "ren_correct": "Good, locked in.",
+      "ren_wrong": "Not quite — Permission Policy. Trust Policy = who can enter."
+    },
+    {
+      "id": "C2.4-T3",
+      "sequence": 3,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "question": "A Role's temporary credentials — does anyone need to manually refresh them?",
+      "options": [
+        "A) Yes, manually every hour",
+        "B) No — AWS STS automatically issues fresh credentials before the old ones expire",
+        "C) Yes, the instance needs a reboot",
+        "D) No, but they never expire at all"
+      ],
+      "correct_index": 1,
+      "explanation": "STS automatic- handle do. Manual refresh, reboot.",
+      "ren_correct": "Correct, STS handles it silently.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.4-T4",
+      "sequence": 4,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "karthik-dev starts on a new EC2-based image-processing service that needs to read raw images from one S3 bucket and write processed thumbnails to another.",
+      "question": "Design his role setup correctly, scoped from the start — no 'will tighten it later.'",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "IAM Role attached via instance profile, not access keys",
+        "Trust policy allows only EC2 as the trusted service",
+        "Permission policy scoped to exactly two actions on exactly two specific bucket ARNs — s3:GetObject on the source bucket, s3:PutObject on the destination bucket — nothing broader"
+      ],
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    },
+    {
+      "id": "C2.4-T5",
+      "sequence": 5,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "priya-dev deploys a new Lambda function meant to publish an SNS alert whenever a large order is placed. The role is attached, the function deploys cleanly, but the alert never arrives.",
+      "error_shown": "[ERROR] 2026-07-24T10:03:41Z\nAccessDeniedException: User: arn:aws:sts::123456789012:assumed-role/foodquick-order-alert-role/LargeOrderNotifier is not authorized to perform: sns:Publish on resource: arn:aws:sns:ap-south-1:123456789012:foodquick-oncall-alerts because no identity-based policy allows the sns:Publish action",
+      "diagnosis": "The role exists and is correctly attached — but its policy only includes the default CloudWatch Logs write permission from the Lambda template. Nobody added sns:Publish when the function's real requirement (sending notifications) was defined.",
+      "fix": "Add sns:Publish scoped to the specific topic ARN — not sns:* on all topics.",
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    },
+    {
+      "id": "C2.4-T6",
+      "sequence": 6,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "Now the real project: the dev-to-prod CI/CD pipeline. karthik-dev drafts the trust policy for the prod-side deploy role. Given everything from this investigation, review it carefully before it goes anywhere near production.",
+      "broken_config": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"AWS\": \"arn:aws:iam::987654321000:root\"\n      },\n      \"Action\": \"sts:AssumeRole\"\n    }\n  ]\n}",
+      "what_to_find": [
+        "Principal correctly restricts which account can attempt to assume this role — but that alone isn't enough",
+        "No Condition block, no ExternalId — missing the extra layer that prevents a 'confused deputy' scenario",
+        "Given everything just learned about how single missing safeguards compound into real incidents, this gap should not ship as-is"
+      ],
+      "correct_fix": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"AWS\": \"arn:aws:iam::987654321000:root\"\n      },\n      \"Action\": \"sts:AssumeRole\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"sts:ExternalId\": \"foodquick-deploy-2026\"\n        }\n      }\n    }\n  ]\n}",
+      "explanation": "Map every finding before you change anything — missing one leaves a hole in the investigation."
+    },
+    {
+      "id": "C2.4-T7",
+      "sequence": 7,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "The second project: an external logistics vendor needs read-only access to one S3 bucket of delivery manifests. The vendor has their own separate AWS account.",
+      "question": "Design the access approach, and explain what you would have missed before this investigation but won't miss now.",
+      "options": [
+        "A) Share an IAM user's access keys with the vendor over email",
+        "B) Cross-account IAM Role, trust policy scoped to the vendor's account with an ExternalId condition, permission policy scoped to read-only on exactly one bucket — and this time, a calendar reminder to review this access at the contract renewal date",
+        "C) Make the bucket public since it's just delivery manifests",
+        "D) Give the vendor a permanent set of root-equivalent credentials for convenience"
+      ],
+      "correct_index": 1,
+      "explanation": "Cross-account role, ExternalId, scoped to one bucket — technically correct. extra step: calendar reminder to review — Vikram case- 'review do ' root cause.",
+      "ren_correct": "The calendar reminder detail — that's the investigation talking. Good instinct.",
+      "ren_wrong": "Not quite — risky options. Cross-account role + ExternalId + review reminder — This is correct, complete approach."
+    },
+    {
+      "id": "C2.4-T8",
+      "sequence": 8,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "iam_console",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "Before closing this piece, run one more check — habit now — on every role created in this session, checking specifically for anything that resembles the pattern found in Vikram's case.",
+      "broken_config": "New Roles Created This Session — Pattern Check:\n├── foodquick-image-processor-role — scoped correctly, 2 actions, 2 buckets ✓\n├── foodquick-order-alert-role — scoped correctly after T5 fix ✓\n├── foodquick-prod-deploy-role — ExternalId added ✓\n├── foodquick-vendor-readonly-role — scoped, ExternalId added, review reminder set ✓\n└── No permissions granted with 'will scope later' comments anywhere in this session's changes ✓",
+      "what_to_find": [
+        "Everything created this session is actually clean — no findings",
+        "This is itself worth confirming explicitly rather than assuming, given the investigation this session followed"
+      ],
+      "correct_fix": "No fix needed. Document that this session's new access was built correctly the first time, as confirmation the new process (scope precisely, document immediately, no 'later') is actually working — not just a policy on paper.",
+      "explanation": "Map every finding before you change anything — missing one leaves a hole in the investigation."
+    },
+    {
+      "id": "C2.4-T9",
+      "sequence": 9,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "Three more integration requests come in this week. Decide the correct trust pattern for each.",
+      "cases": {
+        "case_1": "FoodQuick's data pipeline, running as tasks on ECS containers (ECS runs each container workload as a 'task'), needs S3 and DynamoDB access.",
+        "case_2": "A third-party analytics SaaS tool, hosted entirely outside AWS, needs read-only access to order data.",
+        "case_3": "FoodQuick's own mobile backend, on EC2, needs to send push notifications via SNS."
+      },
+      "correct_answers": {
+        "case_1": "A Role the service assumes — on ECS that's a Task Role, scoped per-task so the container gets exactly what it needs. Same 'service assumes a Role, never static keys' principle as the EC2 instance role.",
+        "case_2": "Cross-account Role with ExternalId — genuinely external SaaS tools use this pattern, never static access keys.",
+        "case_3": "Standard EC2 instance role, scoped to sns:Publish on the specific topics needed — same pattern used throughout this whole session."
+      },
+      "explanation": "'service needs access' scenario, trusted entity — Task Role (ECS- instance role- equivalent, per-task scoped), cross-account Role, instance Role. Principle: service assumes a Role, static keys. This is second nature decision."
+    },
+    {
+      "id": "C2.4-T10",
+      "sequence": 10,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.4",
+      "max_attempts": 3,
+      "scenario": "Time to report to Ravi and close this piece.",
+      "question": "Write your status update: what was built, and how this session's approach differed from before the investigation.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "New EC2 role, Lambda role fix, cross-account CI/CD deploy role with ExternalId, and vendor access role all built and scoped correctly",
+        "A final pattern-check confirmed nothing created this session repeats Vikram's leftover-access pattern",
+        "Going forward, new access includes review reminders at natural checkpoints, not just at creation"
+      ],
+      "explanation": "Service Integration Layer resolved — first time session-. This is real progress — investigation-, default habit."
+    }
+  ],
+  "arc_outro": "Service Integration Layer: secured — and for the first time this session, cleanly, on the first pass. Ravi notices too. 'No surprises this time. That's new.' Three days to the audit. One layer left — the final seal, the one that makes sure none of this can quietly slip again."
+}

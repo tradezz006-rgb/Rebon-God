@@ -1,0 +1,313 @@
+{
+  "lesson_id": "C3.2a",
+  "lesson_title": "Subnets — Public vs Private",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C3.1 — VPC Fundamentals",
+  "student_will_learn": [
+    "Explain what a subnet is and how it divides a VPC's CIDR block into smaller ranges",
+    "Identify what a subnet being 'public' or 'private' actually depends on",
+    "List which resources belong in a public subnet and which belong in a private subnet",
+    "Explain why a database should never sit in a public subnet, even temporarily",
+    "Design a basic public/private subnet layout for a two-tier application"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "FQ-156 ticket-ல Priya Nair அடுத்த கேள்வி கேட்டிருக்காங்க - 'VPC create பண்ணிட்டோம், ஆனா அதுக்குள்ள resources எல்லாம் எங்க போகணும்?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற subnets. ஒரு VPC ஒரு பெரிய apartment building-னா, subnet ஒவ்வொரு floor மாதிரி - சில floors road-ஐ face பண்ணி இருக்கும் (public), சில floors உள்ள, protected-ஆ இருக்கும் (private).",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.2a",
+        "Subnets — Public vs Private",
+        "Ticket FQ-156 — continuing with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "A Subnet Is a Slice of the VPC's CIDR Block",
+      "ava_speaks": "VPC-க்கு ஒரு பெரிய CIDR block இருக்கும் - example 10.0.0.0/16. இதை நாம சின்ன சின்ன pieces-ஆ பிரிக்கறோம், அதுதான் subnets. Example: 10.0.1.0/24, 10.0.2.0/24 - இது ரெண்டும் தனி subnets, ஆனா ரெண்டும் ஒரே VPC-க்குள்ளதான். ஒரு subnet 'public' ஆவதுக்கு ஒரே ஒரு காரணம் - அதோட route table-ல ஒரு Internet Gateway-க்கு route இருக்கணும். Route இல்லைனா, அது எவ்ளோ 'internet facing' மாதிரி தோணினாலும், அது private தான்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "What Actually Makes a Subnet 'Public'"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "A subnet is public ONLY if its route table has a route sending 0.0.0.0/0 traffic to an Internet Gateway. Nothing else about the subnet — not its name, not the resources in it — makes it public."
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Public Subnet",
+            "Private Subnet"
+          ],
+          "rows": [
+            [
+              "Route table has a route to an Internet Gateway",
+              "No route to an Internet Gateway"
+            ],
+            [
+              "Resources can have a public IP reachable from the internet",
+              "Resources have no direct path to or from the internet"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Naming a subnet 'private-subnet-1' in the console does not make it private — only the route table decides that."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு subnet-ஐ 'public' ஆக்குறது எது?",
+          "options": [
+            "A) Console-ல அதுக்கு 'public'nu பேரு வெச்சிருக்கறது",
+            "B) அதோட route table-ல Internet Gateway-க்கு route இருக்கறது",
+            "C) அதுல ஒரு load balancer இருக்கறது",
+            "D) அது VPC-ஓட முதல் subnet-ஆ இருக்கறது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Route table தான் decide பண்ணும். IGW-க்கு route இருந்தா public, இல்லனா private - பேரு எதுவா இருந்தாலும் matter பண்ணாது.",
+          "ava_wrong": "இல்ல, பேரு matter பண்ணாது. Route table-ல Internet Gateway-க்கு route இருக்கறதுதான் ஒரு subnet-ஐ technically public ஆக்குது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "10.0.0.0/16 VPC-ஐ 10.0.1.0/24 மற்றும் 10.0.2.0/24nu ரெண்டு subnets-ஆ பிரிச்சிருக்கோம். இது என்ன operation?",
+          "options": [
+            "A) ரெண்டு தனி VPCs create பண்றது",
+            "B) VPC-ஓட ஒரே CIDR block-ஐ சின்ன ranges-ஆ divide பண்றது",
+            "C) VPC peering",
+            "D) VPC-ஐ delete பண்ணி மறுபடி create பண்றது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Subnets VPC-ஓட CIDR block-ஐ divide பண்ணுது - ஒரே network-ஓட subset தான், தனி networks இல்ல.",
+          "ava_wrong": "இல்ல, subnets புது VPC இல்ல - அது existing VPC-ஓட CIDR block-ஐ சின்ன பீஸ்-ஆ பிரிக்கறது மட்டும்தான்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "What Goes Where — The Standard Two-Tier Layout",
+      "ava_speaks": "Real companies-ல, almost எல்லாருமே ஒரே pattern follow பண்றாங்க - internet-ஐ direct-ஆ face பண்ணணும்ன்னு தேவைப்படற resources மட்டும் public subnet-ல, மீதி எல்லாம் private subnet-ல. FoodQuick-ஓட design review-ல, Priya Nair இதே standard பரிந்துரைச்சாங்க - Load Balancer, NAT Gateway, bastion host public subnet-ல; application servers, database private subnet-ல. Freshworks, Zoho மாதிரி Indian SaaS companies-ஓட architecture blogs-லயும் இதே pattern common-ஆ காணப்படும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Standard Two-Tier Subnet Layout"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Public Subnet",
+            "Private Subnet"
+          ],
+          "rows": [
+            [
+              "Application Load Balancer (ALB)",
+              "Application servers (EC2)"
+            ],
+            [
+              "NAT Gateway",
+              "Database (RDS)"
+            ],
+            [
+              "Bastion host (for admin SSH access)",
+              "Internal caching layer (Redis, etc.)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Creating Public and Private Subnets in foodquick-prod-vpc",
+      "ava_speaks": "karthik-dev இப்போ foodquick-prod-vpc-க்குள்ள ஒரு public subnet-மும் ஒரு private subnet-மும் create பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "VPC Console-ல Subnets-க்கு போய், 'Create subnet' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "VPC Console → Subnets → Create subnet",
+              "highlight": "Create subnet button",
+              "result": "Subnet creation form opens, VPC ID pre-filled as foodquick-prod-vpc"
+            }
+          },
+          {
+            "ava_narration": "முதல் subnet-க்கு 10.0.1.0/24 CIDR block கொடுத்து, பேரு 'foodquick-public-1a'nu வெச்சு, ap-south-1a Availability Zone select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create subnet form",
+              "field": "Subnet name, IPv4 CIDR block, Availability Zone",
+              "value": "foodquick-public-1a, 10.0.1.0/24, ap-south-1a",
+              "highlight": "CIDR block and AZ fields",
+              "result": "A subnet with 256 addresses is created inside ap-south-1a"
+            }
+          },
+          {
+            "ava_narration": "இரண்டாவது subnet-க்கு 10.0.2.0/24 கொடுத்து, பேரு 'foodquick-private-1a'nu வெச்சு, அதே Availability Zone select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create subnet form",
+              "field": "Subnet name, IPv4 CIDR block, Availability Zone",
+              "value": "foodquick-private-1a, 10.0.2.0/24, ap-south-1a",
+              "highlight": "CIDR block and AZ fields",
+              "result": "A second subnet is created, same AZ, different CIDR range"
+            }
+          },
+          {
+            "ava_narration": "இப்போ இது ரெண்டுமே 'private' தான் - ஏன்னா இதுவரைக்கும் யாருக்கும் route table-ல Internet Gateway route கொடுக்கல. அடுத்த lesson-ல தான் நாம IGW attach பண்ணி, முதல் subnet-ஐ உண்மையிலேயே public ஆக்குவோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Subnets list",
+              "highlight": "Both new subnets, both currently associated with the VPC's main route table (no IGW route yet)",
+              "result": "Confirms neither subnet is truly public until a route table change happens"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Two subnets exist inside foodquick-prod-vpc — foodquick-public-1a (10.0.1.0/24) and foodquick-private-1a (10.0.2.0/24) — but both are functionally private until an Internet Gateway route is added, which is next lesson's job.",
+          "what_to_notice": "Subnet பேரு 'public'nu இருந்தாலும், route table update பண்ணாத வரைக்கும் அது technically private தான் - இதுதான் இன்னைக்கு நாம concept_intro-ல பேசினது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Where Each FoodQuick Resource Should Live",
+      "ava_speaks": "இந்த diagram பாரு - FoodQuick-ஓட full two-tier layout எப்படி இருக்கும்nு காட்டுது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "VPC: foodquick-prod-vpc (10.0.0.0/16)",
+            "",
+            "  PUBLIC SUBNET (10.0.1.0/24)          PRIVATE SUBNET (10.0.2.0/24)",
+            "  - Application Load Balancer            - EC2 app servers",
+            "  - NAT Gateway                          - RDS database",
+            "  - Bastion host                         - Internal Redis cache",
+            "",
+            "  Internet <--> Public Subnet <--> Private Subnet (via NAT for outbound only)"
+          ]
+        },
+        "ava_narration": "Database private subnet-ல இருக்கறதால, internet-ல இருந்து யாரும் direct-ஆ அதை touch பண்ண முடியாது - application server வழியா மட்டும்தான் access பண்ண முடியும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Place FoodQuick's Resources Correctly",
+      "instruction": "கீழ இருக்கற 4 resources-ஐ, அது public subnet-க்கு போகணுமா private subnet-க்கு போகணுமான்னு correct-ஆ assign பண்ணு.",
+      "scenario": "FoodQuick-ஓட new payment service launch பண்ண, 4 resources deploy பண்ணப் போறாங்க: an Application Load Balancer, a fleet of EC2 app servers running the payment logic, an RDS database storing payment records, and a NAT Gateway for outbound updates.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "VPC Console → Subnets, showing foodquick-public-1a and foodquick-private-1a already created",
+        "current_configuration": "Neither subnet has any resources placed in it yet"
+      },
+      "requirements": [
+        "Place the Application Load Balancer in the public subnet",
+        "Place the NAT Gateway in the public subnet",
+        "Place the EC2 app servers in the private subnet",
+        "Place the RDS database in the private subnet"
+      ],
+      "hints": [
+        "எது internet-ஐ directly face பண்ணணும்nu யோசி - அதுதான் public subnet-க்கு போகணும்",
+        "Payment records வெச்சிருக்கற database, internet-ல இருந்து direct access தேவையே இல்ல - அது எப்போவும் private",
+        "NAT Gateway confuse பண்ணக்கூடிய ஒண்ணு - அது private resources-க்கு outbound internet கொடுக்கறதுதான் வேலை, ஆனா அதே NAT Gateway public subnet-ல தான் இருக்கணும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "ALB and NAT Gateway are placed in foodquick-public-1a; EC2 app servers and RDS database are placed in foodquick-private-1a",
+        "ava_correct": "Correct! இதுதான் standard two-tier layout - internet-ஐ face பண்ணணும்ன்னு தேவைப்படறது public-ல, மீதி எல்லாம் private-ல.",
+        "ava_wrong": "ஒரு resource தப்பு subnet-ல இருக்கு போல - database public subnet-ல இருந்தா, அது internet-ல இருந்து reach ஆகக்கூடிய risk இருக்கு, திரும்ப check பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Database That Never Left the Public Subnet",
+      "ava_speaks": "FoodQuick launch பண்ணின early days-ல, priya-dev ஒரு quick prototype build பண்றப்போ, time save பண்ண, database-ஐ public subnet-ல ஆரம்பிச்சிட்டா - 'launch பண்ணிட்டு பிற்பாடு private-க்கு move பண்ணலாம்'nu நினைச்சா. ஆனா launch date நெருங்கிடுச்சு, அந்த move ஒரு நாளும் நடக்கவே இல்ல.",
+      "setup": "priya-dev launches FoodQuick's early production PostgreSQL RDS instance directly in the public subnet during initial development, intending to move it to the private subnet before the real launch, to save setup time under a tight deadline.",
+      "what_happened": "The launch deadline arrives, the move never happens, and the database goes live with a publicly routable subnet and (initially) a public IP address, reachable directly from the internet on port 5432.",
+      "broken_config": "RDS instance: foodquick-orders-db\nSubnet: foodquick-public-1a (has a route to the Internet Gateway)\nPublicly accessible: Yes\nSecurity group inbound rule: PostgreSQL (5432) from 0.0.0.0/0 — left open during early testing for convenience",
+      "error_shown": "Security scan finding: foodquick-orders-db is directly reachable from the public internet on port 5432. Automated port-scanning bots detected 200+ connection attempts against this database within the last 24 hours.",
+      "the_real_problem": "'பிற்பாடு move பண்ணலாம்' nu நினைச்ச decisions, launch deadline pressure-ல almost எப்போவும் மறந்துடும். Database public subnet-ல இருக்கறதே ஒரு risk, அதோட மேல port 5432 0.0.0.0/0-க்கு open-ஆ இருந்தது, இது ரெண்டு layers-மும் ஒரே சமயத்துல fail ஆயிடுச்சு.",
+      "fix": {
+        "corrected_config": "1. Take a snapshot of foodquick-orders-db.\n2. Restore it into foodquick-private-1a (no IGW route).\n3. Set 'Publicly accessible' to No.\n4. Update the security group to only allow 5432 from the application tier's security group, not 0.0.0.0/0.",
+        "result": "The database is no longer reachable from the internet at all — only the application servers in the private subnet can connect to it, and only on the database port."
+      },
+      "lesson": "'Temporary' setup decisions எப்போவும் deadline pressure-ல permanent ஆயிடும் - database launch பண்றதுக்கு முன்னாடியே private subnet-ல வெச்சு, correct-ஆ ஆரம்பிக்கணும், பிற்பாடு fix பண்றேன்னு plan பண்ண கூடாது."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Public or Private?",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "FoodQuick needs a bastion host so on-call engineers can SSH in during an emergency to debug a private-subnet EC2 instance. Should the bastion host be in the public or private subnet?",
+          "answer": "Public subnet. The bastion host is the one deliberate, tightly-controlled entry point that needs to be reachable from the internet (usually locked down to specific IPs) — everything it connects onward to stays in the private subnet."
+        },
+        {
+          "question": "A Redis cache is used only by the application servers to speed up repeated queries — nothing outside the VPC ever needs to talk to it. Where does it belong?",
+          "answer": "Private subnet. It has no reason to be reachable from the internet at all — placing it in the public subnet would be an unnecessary exposure with zero benefit."
+        },
+        {
+          "question": "An engineer says 'let's just put everything in the public subnet for now, it's simpler, we'll fix the security groups later.' Is subnet placement alone a sufficient security boundary if the security groups are locked down tightly?",
+          "answer": "No — this is exactly the FoodQuick mistake pattern. Relying only on security groups while sitting in a public subnet means one misconfigured or forgotten rule (which happens under deadline pressure) exposes the resource directly. Private subnet placement is a structural safeguard that doesn't depend on remembering to lock down a rule correctly."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Architects Plan Subnet Layouts Before Building Anything",
+      "ava_speaks": "Priya Nair மாதிரி Cloud Architects, எந்த resource-மும் launch பண்றதுக்கு முன்னாடியே ஒரு subnet plan வரைஞ்சிடுவாங்க - எது public, எது private, எந்த AZ-ல, என்ன CIDR range-nu எல்லாம் முன்னாடியே decide பண்ணிடுவாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Draw the subnet layout on an architecture diagram before creating any subnet in the console",
+          "detail": "இது design review-ல முன்னாடியே பிழைகள் கண்டுபிடிக்க உதவும் - console-ல போய் trial-and-error பண்றதுக்கு பதிலா"
+        },
+        {
+          "step": 2,
+          "action": "Assign each planned resource to a specific subnet tier at design time, not at deploy time",
+          "detail": "இது தான் FoodQuick-ஓட database mistake-ஐ தடுக்கும் - 'பிற்பாடு move பண்ணலாம்' முடிவே எடுக்க வேண்டிய அவசியம் இருக்காது"
+        },
+        {
+          "step": 3,
+          "action": "Review the plan against a checklist: does anything with sensitive data have a route to an Internet Gateway?",
+          "detail": "இது ஒரு simple, repeatable check - security review-ல இதை கேட்டா, public subnet-ல database இருக்கறது உடனே தெரிஞ்சிடும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Well-Architected Tool",
+          "use": "VPC design-ஐ AWS-ஓட security best practices-கூட compare பண்ணி, gaps flag பண்ணும்"
+        },
+        {
+          "tool": "draw.io / Lucidchart architecture diagrams",
+          "use": "Subnet layout-ஐ code எழுதற முன்னாடியே visually plan பண்ண, team-கூட review பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம subnets என்னனு, என்ன ஒரு subnet-ஐ public ஆக்குதுன்னு, எது எங்க போகணும்ன்னு கத்துக்கிட்டோம். மிக முக்கியமா, database ஒரு போதும் public subnet-ல இருக்க கூடாதுன்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம multi-AZ design பார்ப்போம் - ஒரே AZ-ல எல்லாம் வெச்சிருக்கறது ஏன் risky-nu.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.2a — Summary",
+      "points": [
+        "✓ A subnet is a slice of the VPC's CIDR block, not a separate network",
+        "✓ A subnet is public only if its route table routes internet traffic through an Internet Gateway",
+        "✓ Public subnets hold ALBs, NAT Gateways, and bastion hosts — resources that need internet reachability",
+        "✓ Private subnets hold app servers and databases — resources that should never be directly internet-reachable",
+        "✓ A database launched 'temporarily' in a public subnet almost always stays there under deadline pressure — plan the correct placement from the start"
+      ],
+      "coming_next": "Lesson C3.2b: Multi-AZ Design"
+    }
+  }
+}

@@ -1,0 +1,391 @@
+{
+  "lesson_id": "C1.4",
+  "id": "C1.4",
+  "lesson_title": "Billing, Cost Explorer & Budget Alerts",
+  "section_id": "CS1",
+  "section_name": "Cloud Foundations",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C1.3",
+  "student_will_learn": [
+    "What AWS actually charges for (Compute, Storage, Data Transfer)",
+    "The trap of Stopped vs Terminated instances",
+    "How to read the Cost Explorer",
+    "Setting up Budget Alerts (The most important tool)"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Welcome back! Cloud-ல கத்துக்க வேண்டிய most dangerous விஷயம் ஒன்னு இருக்குனா, அது Billing தான். Cloud ரொம்ப cheap, ஆனா நீங்க கவனிக்காம விட்டா overnight-ல thousands of rupees bill வந்துடும். Today, AWS எதுக்கெல்லாம் charge பண்றாங்க, நம்ம account-ஐ protect பண்ண Budget Alerts எப்படி set பண்றதுன்னு பார்க்க போறோம். Lesson 1.4. Let's build your safety net.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Pace · Session 1 · Lesson 1.4",
+        "Cloud Billing & FinOps",
+        "Cost Explorer and Budget Alerts"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "What AWS Charges For",
+      "ava_speaks": "AWS-ல பல்லாயிரக்கணக்கான resources இருந்தாலும், basically 4 விஷயங்களுக்கு தான் அவங்க காசு வாங்குறாங்க.\n\n1. Compute: நீங்க server run பண்ற time (per second billing).\n2. Storage: நீங்க எவ்ளோ GB data-வை save பண்ணி வெச்சிருக்கீங்க (per GB/month).\n3. Data Transfer OUT: உங்க server-ல் இருந்து internet-க்கு போகும் data. (உள்ளே வரும் Data Transfer IN எப்பவும் Free).\n4. Requests: Database-க்கு எவ்ளோ queries அனுப்புறீங்க.\n\nஇதுல ஒரு பெரிய trap இருக்கு. ஒரு EC2 server-ஐ 'Stop' பண்ணிட்டா, Compute-க்கு charge ஆகாது. ஆனா அந்த server-ல attach ஆகி இருக்குற hard drive (EBS Storage)-க்கு நீங்க charge பண்ணிட்டே தான் இருப்பீங்க. 'Terminated' பண்ணா மட்டும் தான் full billing stop ஆகும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The 4 Pillars of AWS Billing"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Component",
+            "How it is billed",
+            "Example"
+          ],
+          "rows": [
+            [
+              "Compute",
+              "Per Second",
+              "EC2 running time"
+            ],
+            [
+              "Storage",
+              "Per GB per Month",
+              "EBS volumes, S3"
+            ],
+            [
+              "Data Transfer",
+              "Per GB (OUTBOUND ONLY)",
+              "Video streamed to users"
+            ],
+            [
+              "Requests",
+              "Per 1 Million Requests",
+              "API or DB calls"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "WARNING: Stopped ≠ Free. \nStopped EC2 instances stop compute charges, but STILL charge for EBS Storage!"
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "நீங்கள் உங்கள் EC2 server-ஐ 'Stop' (Not terminate) செய்துவிட்டு ஒரு மாதம் விட்டுவிடுகிறீர்கள். உங்களுக்கு Bill வருமா?",
+          "options": [
+            "A) வராது. Server off-ல் இருந்தால் எல்லாமே Free.",
+            "B) வரும். Compute (CPU) charge வராது, ஆனால் அதனுடன் இணைக்கப்பட்ட Storage-க்கு (EBS) bill வரும்."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! Server-ஐ stop பண்ணாலும், உங்களோட files அந்த hard drive-ல safe-ஆ இருக்கு இல்லையா? அந்த space-க்காக AWS மாசம் மாசம் charge பண்ணுவாங்க.",
+          "ava_wrong": "தவறு! Server-ஐ stop பண்ணால் compute charge தான் நிற்கும். அதில் attach ஆகியிருக்கும் Hard drive (EBS storage)-க்கு charge வந்துகொண்டே இருக்கும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு user 100GB videos-ஐ உங்கள் AWS server-ல் upload செய்கிறார் (Data IN). பிறகு மற்ற users அதை 100GB download செய்கிறார்கள் (Data OUT). எதற்கு Charge ஆகும்?",
+          "options": [
+            "A) Upload செய்த Data IN-க்கு மட்டும்.",
+            "B) Download செய்யப்பட்ட Data OUT-க்கு மட்டும்.",
+            "C) இரண்டுக்கும்."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Spot on! Cloud-குள்ள data உள்ளே கொண்டு வர (IN) charge கிடையாது. ஆனா Cloud-ல் இருந்து வெளியே (OUT) அனுப்பும் data-வுக்கு charge உண்டு.",
+          "ava_wrong": "இல்லை! AWS-ல் Data Transfer IN எப்பொழுதும் Free. Data Transfer OUT-க்கு மட்டுமே charge செய்வார்கள்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The ₹4.7 Lakh First-Month Bill",
+      "ava_speaks": "Bengaluru-ல இருக்குற ஒரு early-stage startup-க்கு நடந்த உண்மை சம்பவம் இது.\n\nஅவங்க product launch பண்ண முதல் மாசத்துல, அவங்க AWS Bill ₹4.7 Lakhs வந்திருக்கு! அதிர்ச்சியாகி அவங்க Cost Explorer-ஐ செக் பண்ணி பார்த்தாங்க.\n\nBreakdown: 3 Regions-ல மறந்து விட்டுட்டு வந்த EC2 servers (₹2.1L), video streaming-னால வந்த Data Transfer OUT charges (₹1.8L), testing-காக create பண்ணிட்டு stop பண்ணாத RDS Database (₹0.8L). யாருமே Budget Alerts set பண்ணவே இல்லை. அடுத்த மாசம், தேவையற்ற resources-ஐ அழித்துவிட்டு, Alerts set பண்ணதுக்கு அப்புறம், அதே product-க்கு bill வெறும் ₹12,000 தான் வந்துச்சு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Startup Bill Breakdown (Without Alerts)"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "Month 1 (Blind Flying):\n- Forgotten EC2s: ₹2.1 Lakhs\n- Data Transfer Out: ₹1.8 Lakhs\n- Idle RDS Database: ₹0.8 Lakhs\nTOTAL: ₹4.7 Lakhs (Loss)\n\nMonth 2 (With FinOps & Alerts):\nTOTAL: ₹12,000 (Optimized)"
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Live: Cost Explorer & Budget Setup",
+      "ava_speaks": "இப்போ நாம AWS Console-ல போய், நம்ம bill-ஐ எப்படி break down பண்ணி பாக்குறதுன்னும், Budget Alert எப்படி set பண்றதுன்னும் live-ஆ பார்ப்போம்.",
+      "editor_session": {
+        "language": "browser",
+        "filename": "AWS Billing Console",
+        "environment": "visual_ui",
+        "steps": [
+          {
+            "ava_narration": "First, Billing Dashboard-குள்ள போறோம். இங்க Cost Explorer-ஐ click பண்ணா, எந்த service-க்கு எவ்ளோ செலவாகுதுன்னு graph-ல காட்டும்.",
+            "code": "Billing -> Cost Explorer\nFilter By: Service\nFilter By: Region",
+            "highlight_lines": [
+              2,
+              3
+            ]
+          },
+          {
+            "ava_narration": "அடுத்து மிக முக்கியமானது: Budgets. 'Create Budget'-ஐ click பண்ணி, Monthly ₹1,000-க்கு ஒரு budget போடுறேன்.",
+            "code": "Budgets -> Create Budget\nBudget Type: Cost Budget\nAmount: ₹1,000 / Monthly",
+            "highlight_lines": [
+              2,
+              3
+            ]
+          },
+          {
+            "ava_narration": "இந்த ₹1000-ல 80% (அதாவது ₹800) reach ஆனதும், எனக்கு email alert வர மாதிரி 'Alert Threshold' set பண்றேன்.",
+            "code": "Alert Thresholds:\nTrigger at: 80% of actual amount\nAction: Send email to admin@startup.com",
+            "highlight_lines": [
+              2,
+              3
+            ]
+          }
+        ],
+        "expected_output": {
+          "mumbai": "Budget successfully created. Status: OK.",
+          "what_to_notice": "இதுதான் உங்க safety net. Bill ₹800-ஐ தொட்ட அடுத்த செகண்ட் உங்களுக்கு email வந்துடும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The FinOps Dashboard",
+      "ava_speaks": "இந்த Budget Alerts setup பண்ணதுக்கு அப்புறம், நீங்க நிம்மதியா தூங்கலாம். ஒருவேளை யாராவது ஒரு பெரிய server-ஐ on பண்ணி மறந்துட்டாலும், உங்களுக்கு உடனே தெரிஞ்சிடும்.",
+      "output_preview": {
+        "type": "concept_board",
+        "title": "AWS Budget Alert Email",
+        "what_to_look_for": [
+          "Subject: AWS Budget Alert: Monthly-1000 has exceeded 80%",
+          "Current Spend: ₹815.00",
+          "Forecasted Spend: ₹2,400.00"
+        ],
+        "ava_narration": "Forecasted spend-ஐ பாருங்க. மாச கடைசில bill எவ்ளோ வரும்னு AWS predict பண்ணி சொல்லிடும். So problem பெருசாகும் முன்னே தடுக்கலாம்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "உங்க Turn — FinOps Analysis",
+      "instruction": "நீங்கள் ஒரு startup-ல் Cloud Engineer ஆக சேருகிறீர்கள். முந்தைய engineer எந்த documentation-ம் விட்டு செல்லவில்லை. Cost Explorer-ஐ பயன்படுத்தி இதை solve பண்ணுங்க.",
+      "requirements": [
+        "1. கடந்த மாதம் அதிக செலவு செய்த Top 3 services-ஐ எப்படி கண்டுபிடிப்பீர்கள்?",
+        "2. எந்த Region-ல் வீணாக பணம் செலவாகிறது என்பதை எப்படி filter செய்வீர்கள்?",
+        "3. ₹5,000-க்கு ஒரு Budget alert setup பண்ணுங்க (Alert at 100%)."
+      ],
+      "starter_code": "Action Plan:\n1. Top 3 Services: ________________\n2. Filter Region: ________________\n3. Budget Alert: ________________",
+      "hints": [
+        "Cost explorer-ல் 'Group By' option-ஐ use பண்ணுங்க.",
+        "Budgets menu-ல் 'Cost Budget' create பண்ணனும்."
+      ],
+      "ava_solution": {
+        "explanation": "1. Cost Explorer-ல் 'Group By: Service' செட் பண்ணனும். 2. 'Group By: Region' செட் பண்ணா எந்த ஊர்ல காசு போகுதுனு தெரியும். 3. Budgets -> Create Cost Budget -> Amount 5000 -> Threshold 100%."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The USD vs INR Budget Trap",
+      "ava_speaks": "இது நிறைய இந்திய developers பண்ற ஒரு silly ஆனா dangerous mistake.",
+      "setup": "Developer அவரோட personal account-க்கு ஒரு Budget alert set பண்றார். 500 ரூபாய்-கு மேல போனா alert வரணும்னு நினைச்சு, Amount: 500 அப்படின்னு type பண்ணி save பண்றார்.",
+      "what_happened": "அடுத்த மாசம் ₹41,600 பில் வருது! Alert வரவே இல்லை. ஏன்?",
+      "the_real_problem": "அவரோட AWS Account currency USD-ல (Dollars) இருந்திருக்கு. அவர் ₹500 நினைச்சு type பண்ணது, $500 (₹41,600) ஆக set ஆகிடுச்சு.",
+      "fix": {
+        "code": "1. Always check the Currency symbol ($ vs ₹) in the Budget Console.\n2. Change your AWS Billing Preferences to INR if you are in India.",
+        "result": "Currency-ஐ சரிபார்த்து ₹500 என்று set செய்திருந்தால், ₹400-லேயே alert வந்திருக்கும்."
+      },
+      "lesson": "Numbers in cloud are dangerous without units. Always verify the currency."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "3 Quick Questions",
+      "ava_speaks": "உங்க Cloud Billing knowledge-ஐ செக் பண்ண 3 scenarios.",
+      "challenges": [
+        {
+          "question": "Cost Explorer-ல் 'Data Transfer' bill போன மாதம் ₹800, இந்த மாதம் திடீரென ₹8,000 ஆகிவிட்டது. Code எதுவும் மாறவில்லை. என்ன காரணமாக இருக்கும்?",
+          "answer": "Users அதிகமாக app-ஐ use பண்ணி Data Download (Data OUT) செய்திருப்பார்கள். அல்லது ஒரு Hacker பெரிய files-ஐ download பண்ணி இருக்கலாம்."
+        },
+        {
+          "question": "உங்களுடைய CTO, 'AWS Bill எந்த காரணத்திற்கொண்டும் ₹20,000-ஐ தாண்டக்கூடாது' என்கிறார். என்ன exact step எடுப்பீர்கள்?",
+          "answer": "Billing console-ல் ₹20,000-க்கு ஒரு Cost Budget create செய்து, 80% மற்றும் 100% threshold-ல் CTO-க்கு email alert போகும் படி செட் செய்வேன்."
+        },
+        {
+          "question": "ஒரு EC2 server 45 நாட்களாக 'Stopped' state-ல் உள்ளது. நீங்கள் பாதுகாப்பாக இருக்கிறீர்களா?",
+          "answer": "இல்லை! Stopped server-ன் CPU-க்கு charge வராது, ஆனால் அதனுடன் இணைக்கப்பட்ட EBS Storage-க்கு 45 நாட்களாக bill வந்துகொண்டே இருக்கும்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Real Development-ல எப்படி நடக்கும்",
+      "ava_speaks": "ஒரு professional team, Cloud-ல் project ஆரம்பிக்கும்போது பண்ற FinOps routine இதுதான்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Set Budgets on Day 1",
+          "detail": "Account create பண்ண உடனே, எந்த server-ம் launch பண்றதுக்கு முன்னாடி Budget alert set பண்ணுவாங்க."
+        },
+        {
+          "step": 2,
+          "action": "Tag Everything",
+          "detail": "ஒவ்வொரு resource create பண்ணும்போதும் 'Project: Payment' என்று Tag பண்ணுவாங்க. அப்போதான் Cost Explorer-ல் எந்த project அதிக செலவு பண்ணுதுன்னு பிரிக்க முடியும்."
+        },
+        {
+          "step": 3,
+          "action": "Weekly Cost Review",
+          "detail": "ஒவ்வொரு Monday காலையிலும் Cost Explorer-ஐ check பண்ணி, idle resources எதாவது இருக்கானு பார்த்து அழிப்பாங்க."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "Cost Explorer",
+          "use": "செலவுகளை Graph-ல் analyze செய்து Resource waste-ஐ கண்டுபிடிக்க."
+        },
+        {
+          "tool": "AWS Budgets",
+          "use": "Limit-ஐ தாண்டும்போது email/SMS Alerts பெற."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "AWS-ல் Compute, Storage, மற்றும் Data Transfer OUT-க்கு தான் அதிக செலவு ஆகும். EC2-ஐ stop பண்ணாலும் storage-க்கு charge வந்துட்டே இருக்கும், use பண்ணலனா terminate பண்ணிடுங்க. Cloud-ல நீங்க first கத்துக்க வேண்டியது resources create பண்றது இல்ல, உங்க காசை காப்பாத்த Budget Alerts செட் பண்றது தான்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson 1.4 — Summary",
+      "points": [
+        "✓ Billing Core: Compute (Time) + Storage (Size) + Data Transfer OUT.",
+        "✓ Warning: Stopped EC2 instances STILL charge for EBS Storage.",
+        "✓ Cost Explorer: Best tool to break down costs by Service and Region.",
+        "✓ Golden Rule: NEVER launch a resource before setting up a Budget Alert."
+      ],
+      "coming_next": "Lesson 1.5: The Shared Responsibility Model"
+    }
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "C1.4-T1",
+      "task_number": 1,
+      "type": "cost_analysis",
+      "ui_component": "CostAnalysisComponent",
+      "difficulty": "fresher",
+      "topic": "The Stopped Instance Trap",
+      "scenario_text": "MedGo's weekend on-call 'Stops' two staging EC2 boxes Friday night to save money. They stay Stopped for 40 days. Month-end still shows charges tied to those boxes. Why?",
+      "options": [
+        "AWS fines teams that leave servers idle past 30 days.",
+        "CPU/compute billing stopped, but attached EBS volumes still store the disks and keep billing.",
+        "Stopped state is ignored by a billing bug."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Stop ≠ free. Disk (EBS) still exists, so storage charge continues. Need zero bill → Terminate (and accept data loss) or delete volumes deliberately.",
+      "ava_feedback_wrong": "Compute stops; EBS keeps the data and the meter. Terminate/delete volumes if you truly don't need them.",
+      "whiteboard_heading": "MedGo Stopped ≠ Free",
+      "whiteboard_points": [
+        "Stopped = No Compute Charges",
+        "Stopped = STILL PAYS for EBS Storage",
+        "Terminate = Stops all charges"
+      ]
+    },
+    {
+      "task_id": "C1.4-T2",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Data Transfer In vs Out",
+      "scenario_text": "Clinics upload 200GB of X-ray DICOMs into MedGo's AWS account (Data IN). Later patients download 200GB of reports from the portal (Data OUT). How does AWS typically charge transfer here?",
+      "options": [
+        "Charge only the 200GB upload (IN).",
+        "Charge only the 200GB download (OUT).",
+        "Charge the full 400GB (IN + OUT)."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "IN is free; OUT to the internet is billed. MedGo's patient downloads drive transfer cost.",
+      "ava_feedback_wrong": "Remember: Data IN free, Data OUT charged. Uploads don't create that transfer bill — downloads do.",
+      "whiteboard_heading": "MedGo Transfer Pricing",
+      "whiteboard_points": [
+        "Data Transfer IN = Always FREE",
+        "Data Transfer OUT = Charged per GB"
+      ]
+    },
+    {
+      "task_id": "C1.4-T3",
+      "task_number": 3,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "The USD vs INR Budget Mistake",
+      "scenario_text": "MedGo's intern sets a Budget amount of '800' thinking ₹800. No alert fires until the bill hits ~₹66,000. What most likely went wrong?",
+      "options": [
+        "Budgets always lag by a full month.",
+        "Account currency was USD, so the limit was $800 (~₹66k), not ₹800.",
+        "Budgets never cover EC2."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Currency mismatch. $800 ≠ ₹800. Always confirm $ vs ₹ before saving MedGo's safety net.",
+      "ava_feedback_wrong": "Alerts work; units matter. Check Billing currency — USD 800 is huge in INR terms.",
+      "whiteboard_heading": "MedGo Currency Check",
+      "whiteboard_points": [
+        "Check currency symbol ($ vs ₹) before saving",
+        "Numbers without units are dangerous"
+      ]
+    },
+    {
+      "task_id": "C1.4-T4",
+      "task_number": 4,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Cost Explorer Usage",
+      "scenario_text": "MedGo's CFO screenshots last month's invoice: +40% vs prior month. She asks you in standup: 'Which service and which Region blew up?' Which tool do you open to answer with a graph in five minutes?",
+      "options": [
+        "AWS Pricing Calculator (future estimates only)",
+        "AWS Trusted Advisor alone",
+        "AWS Cost Explorer grouped by Service and Region"
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Cost Explorer = historical breakdown. Group by Service / Region and show the CFO the spike.",
+      "ava_feedback_wrong": "Pricing Calculator estimates the future. Past bill forensics = Cost Explorer.",
+      "whiteboard_heading": "MedGo Bill Forensics",
+      "whiteboard_points": [
+        "Visualizes historical spending",
+        "Filter/Group by Service",
+        "Filter/Group by Region"
+      ]
+    },
+    {
+      "task_id": "C1.4-T5",
+      "task_number": 5,
+      "type": "order_task",
+      "ui_component": "OrderComponent",
+      "difficulty": "fresher",
+      "topic": "Setting up a Budget Alert",
+      "question": "Day-1 at MedGo AWS: order the steps to set a monthly Budget Alert before anyone launches paid resources.",
+      "items": [
+        "Open Billing and Cost Management",
+        "Budgets → Create Budget",
+        "Choose Cost Budget and enter the monthly amount (e.g. ₹2000)",
+        "Set an alert threshold (e.g. 80%) and MedGo admin email"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ava_feedback_correct": "Safety net first, then servers. MedGo's money guardrail is in place.",
+      "ava_feedback_wrong": "Billing → Budgets → amount → threshold + email. Don't launch resources first.",
+      "whiteboard_heading": "MedGo Budget Alert Setup",
+      "whiteboard_points": [
+        "1. Open Billing Dashboard",
+        "2. Create Cost Budget",
+        "3. Define Maximum Amount",
+        "4. Set % Threshold + Email"
+      ]
+    }
+  ],
+  "content_status": "live"
+}

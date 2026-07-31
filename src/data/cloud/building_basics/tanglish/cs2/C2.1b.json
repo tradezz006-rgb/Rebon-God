@@ -1,0 +1,329 @@
+{
+  "lesson_id": "C2.1b",
+  "lesson_title": "IAM Policies and Roles — Writing Real Permissions",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C2.1a — Creating IAM Users and Groups",
+  "student_will_learn": [
+    "The structure of an IAM policy JSON document",
+    "The difference between an IAM User and an IAM Role",
+    "Why IAM Roles are safer than hardcoded access keys",
+    "How to attach a role to an EC2 instance so it can access other AWS services",
+    "How to create a Lambda execution role with the correct permissions"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "கடைசி lesson-ல priya-dev-க்கu group-மூலமா S3 access கொடுத்தோம். ஆனா அது behind-the-scenes-ல ஒரு policy JSON தான். இன்னைக்கu அந்த JSON structure-ஐ deep-ஆ பாப்போம். அதுமட்டுமில்ல — services (EC2, Lambda) எப்படி access பண்றது-ன்னu பாப்போம். Users வேற, Roles வேற. இந்த வித்தியாசம் புரிஞ்சா, real production systems எப்படி design பண்றாங்கன்னu தெரியும்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.1b",
+        "IAM Policies and Roles",
+        "Writing Real Permissions"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "The Anatomy of an IAM Policy",
+      "ava_speaks": "ஒரு IAM policy-ங்குறது ஒரு JSON document. அதுக்குள்ள 4 முக்கிய parts இருக்கும். Version — always '2012-10-17', இது AWS-ன் standard policy language version, மாத்த வேண்டாம். Statement — ஒரு array, permission rules இருக்கும். Effect — Allow அல்லது Deny. Action — enna operation, s3:GetObject மாதிரி service:operation format-ல. Resource — எந்த specific resource-ஐ இது affect பண்ணும், ARN format-ல. Ella parts சேர்ந்து ஒரு sentence மாதிரி read பண்ணலாம்: 'Allow this action on this resource.' இப்போ Role பத்தி பேசலாம். EC2 instance ஒரு service, அது AWS console-ல login பண்ணாது, password இல்ல. அதுக்கu access வேணும்னா, IAM Role assign பண்றோம். Role-ன்னா, temporary credentials — every hour automatic-ஆ refresh ஆகும். Access keys-ஐ code-ல hardcode பண்றதை விட ரொம்ப safe.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "IAM Policy JSON Structure"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "Version: 2012-10-17 (always this exact string)\nStatement: [ array of permission rules ]\nEffect: Allow | Deny\nAction: service:operation (e.g. s3:GetObject)\nResource: ARN specifying exactly what this applies to"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "IAM User",
+            "IAM Role"
+          ],
+          "rows": [
+            [
+              "For humans",
+              "For AWS services (EC2, Lambda, etc.)"
+            ],
+            [
+              "Static credentials (password/keys)",
+              "Temporary credentials, auto-refresh hourly"
+            ],
+            [
+              "You log in with it",
+              "A service 'assumes' it"
+            ],
+            [
+              "Keys can be stolen and reused forever",
+              "Nothing to steal — credentials expire automatically"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Rule: If a service needs AWS access, use a Role. Never hardcode access keys in application code."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "An IAM policy has both an Allow statement and a Deny statement that match the same action. What is the result?",
+          "options": [
+            "A) Allow wins — it was evaluated first",
+            "B) Deny wins — explicit Deny always overrides Allow",
+            "C) The more specific statement wins",
+            "D) The most recently attached policy wins"
+          ],
+          "correct_index": 1,
+          "ava_correct": "சரியா சொன்னீங்க! Deny எப்போவுமே win பண்ணும். No exceptions. இது IAM-ன் core evaluation rule.",
+          "ava_wrong": "இல்ல. IAM-ல ஒரு fixed rule இருக்கu — explicit Deny இருந்தா, அதுவே final answer. Allow எத்தனை policy-ல இருந்தாலும் sax."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Your EC2 instance needs to write logs to CloudWatch and read configuration from S3. You should give it access by:",
+          "options": [
+            "A) Creating an IAM user, generating access keys, and hardcoding them in the application code",
+            "B) Creating an IAM user, generating access keys, and storing them in environment variables",
+            "C) Creating an IAM Role with the required permissions and attaching it to the EC2 instance",
+            "D) Making the S3 bucket public so the EC2 instance can access it without credentials"
+          ],
+          "correct_index": 2,
+          "ava_correct": "Perfect! IAM Role + instance profile. Credentials expire every hour automatic-ஆ, SDK fresh credentials fetch பண்ணிக்கும். Code-ல எந்த key-யும் இல்லாம.",
+          "ava_wrong": "இல்ல, யோசிங்க. Access keys code-ல வெச்சா — leak ஆனா, forever valid-ஆ இருக்கும் manual rotate பண்ணும் வரைக்கும். Role use பண்ணா, credentials automatic-ஆ hourly refresh ஆகும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Node.js App That Leaked Everything",
+      "ava_speaks": "ஒரு startup, Bengaluru-ல, EC2-ல ஒரு Node.js application run பண்ணிக்கிட்டு இருந்தாங்க. அவங்க application code-ல directly access keys hardcode பண்ணி இருந்தாங்க — accessKeyId, secretAccessKey, இரண்டையும் code-ல. அந்த code accidentally public GitHub repo-க்கu போச்சu. Keys 8 மாசமா valid-ஆ இருந்துச்சu, ஒரு தடவையும் rotate பண்ணல. இந்த 8 மாசத்துக்குள்ள, attacker அந்த keys use பண்ணி S3-ல இருந்த customer data முழுசையும் download பண்ணிட்டாரu. இப்போ இதே company IAM Role use பண்ணி இருந்தா? Code-ல எந்த key-யும் இருக்காது. SDK automatic-ஆ instance metadata-லிருந்தu credentials எடுத்துக்கும், அதுவும் hourly refresh ஆகும். Leak பண்ண எதுவும் இல்ல.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Hardcoded Keys vs IAM Role — The Real Cost"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Scenario",
+            "Hardcoded Keys",
+            "IAM Role"
+          ],
+          "rows": [
+            [
+              "Code pushed to public GitHub",
+              "Keys immediately exposed and usable",
+              "No keys exist to expose"
+            ],
+            [
+              "Time credentials stay valid",
+              "Until manually rotated (often months)",
+              "1 hour, then auto-refreshed"
+            ],
+            [
+              "What attacker gets",
+              "Full access until noticed",
+              "Nothing — no static secret exists"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Creating an IAM Role for EC2",
+      "ava_speaks": "இப்போ real-ஆ ஒரு IAM Role create பண்ணி, EC2 instance-க்கu attach பண்ணப் போறோம். Console-க்கu போவோம்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "IAM",
+        "steps": [
+          {
+            "ava_narration": "IAM → Roles → Create role. Trusted entity type-ல 'AWS service' select பண்ணுங்க, use case-ல EC2 select பண்ணுங்க.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM → Roles → Create role",
+              "highlight": "Trusted entity type: AWS service, Use case: EC2",
+              "result": "Role creation wizard shows EC2 as the trusted service"
+            }
+          },
+          {
+            "ava_narration": "அடுத்ததா, AmazonS3ReadOnlyAccess managed policy attach பண்ணுங்க. இந்த role-க்கu name கொடுங்க: foodquick-ec2-s3-read.",
+            "console_action": {
+              "type": "select",
+              "field": "Attach permissions policies",
+              "value": "AmazonS3ReadOnlyAccess",
+              "result": "Role created with name 'foodquick-ec2-s3-read' and S3 read permission attached"
+            }
+          },
+          {
+            "ava_narration": "இப்போ EC2 console-க்கu போய், instance select பண்ணி, Actions → Security → Modify IAM role கிளிக் பண்ணுங்க.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 → Instances → select instance → Actions → Security → Modify IAM role",
+              "highlight": "IAM role dropdown",
+              "result": "IAM role modification panel opens for the selected instance"
+            }
+          },
+          {
+            "ava_narration": "foodquick-ec2-s3-read role-ஐ select பண்ணி Update IAM role கிளிக் பண்ணுங்க. இப்போ இந்த EC2 instance S3-ஐ read பண்ணும், code-ல எந்த key-யும் இல்லாம.",
+            "console_action": {
+              "type": "select",
+              "field": "IAM role",
+              "value": "foodquick-ec2-s3-read",
+              "result": "Role successfully attached. Instance can now call S3 APIs using temporary credentials from instance metadata."
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "EC2 instance now has an IAM role attached, granting S3 read access without any stored credentials",
+          "what_to_notice": "The instance metadata URL (169.254.169.254) now returns temporary AWS credentials that refresh automatically every hour."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Where the Credentials Actually Live",
+      "ava_speaks": "இப்போ பாருங்க, இது எப்படி work பண்றுதுன்னu. Code-ல எந்த key-யும் இல்ல. EC2 instance-ன் internal metadata service-ல இருந்தu AWS SDK automatic-ஆ temporary credentials எடுத்துக்கும்.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Application Code (no keys hardcoded)",
+            "        ↓ calls AWS SDK",
+            "AWS SDK checks instance metadata",
+            "        ↓",
+            "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+            "        ↓",
+            "Returns temporary credentials (expire in 1 hour)",
+            "        ↓",
+            "SDK uses these to call S3 successfully",
+            "        ↓",
+            "1 hour later: SDK automatically fetches fresh credentials"
+          ]
+        },
+        "ava_narration": "இந்த முழு process-உம் automatic. Developer எதுவும் manual-ஆ பண்ண வேண்டாம். Code deploy பண்ணிட்டா, role attach பண்ணிருந்தா — automatic-ஆ work ஆகும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Fix FoodQuick's Leaked Credentials",
+      "instruction": "FoodQuick's payment processing Lambda function currently has AWS access keys hardcoded in the code. Migrate it to use an IAM Role instead.",
+      "scenario": "The Lambda function 'process-payment' needs to: read from the 'foodquick-orders' DynamoDB table, write to the 'foodquick-payment-logs' S3 bucket, and publish notifications to an SNS topic called 'payment-alerts'. Currently it has hardcoded access keys that were found in a security audit.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "IAM → Roles",
+        "current_configuration": "No execution role exists yet for this Lambda function. The function currently authenticates using hardcoded access keys (flagged in security audit)."
+      },
+      "requirements": [
+        "Create an IAM Role with Lambda as the trusted service",
+        "Attach a custom policy allowing: dynamodb:GetItem on foodquick-orders table, s3:PutObject on foodquick-payment-logs bucket, sns:Publish on payment-alerts topic",
+        "Attach this role as the Lambda function's execution role",
+        "Confirm the hardcoded access keys can now be removed from the code"
+      ],
+      "hints": [
+        "The trust policy for a Lambda execution role always specifies lambda.amazonaws.com as the trusted service",
+        "Use specific resource ARNs, not wildcards — the policy should only cover these 3 exact resources",
+        "Once the role works, the access keys in the code become completely unnecessary and should be deleted"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A new IAM role exists with a custom policy scoped to exactly the 3 required permissions, attached as the Lambda execution role",
+        "ava_correct": "அருமை! Migration complete. இப்போ code-ல access keys தேவையே இல்ல. Role automatic-ஆ credentials handle பண்ணிக்கும். Security audit-ல next time இது pass ஆகும்.",
+        "ava_wrong": "கொஞ்சம் பாருங்க — policy-ல dynamodb:*, s3:*, sns:* மாதிரி wildcard use பண்ணாதீங்க. Specific actions மட்டும் கொடுங்க — GetItem, PutObject, Publish. Least privilege."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "AccessDenied After the Security Audit",
+      "ava_speaks": "இது ஒரு real debugging scenario. FoodQuick-ல நடந்த ஒண்ணu.",
+      "setup": "A Lambda function called 'order-processor' has been running successfully for 3 months, writing orders to DynamoDB. Last week, the security team ran an IAM audit and 'cleaned up' permissions across the account to remove unused access.",
+      "what_happened": "Since the audit, the order-processor Lambda has been failing every single invocation with an AccessDenied error when trying to write to DynamoDB.",
+      "broken_config": "Lambda execution role 'lambda-order-processor-role' — after audit cleanup, this role's policy no longer includes dynamodb:PutItem",
+      "error_shown": "[ERROR] AccessDeniedException: User: arn:aws:sts::123456789012:assumed-role/lambda-order-processor-role/OrderProcessorFunction is not authorized to perform: dynamodb:PutItem on resource: arn:aws:dynamodb:ap-south-1:123456789012:table/foodquick-orders because no identity-based policy allows the dynamodb:PutItem action",
+      "the_real_problem": "Security audit team, unused permissions clean பண்ணும்போது, இந்த Lambda role-ல இருந்த dynamodb:PutItem permission-ஐ 'unused'-ன்னu நினைச்சu remove பண்ணிட்டாங்க. ஆனா அது unused இல்ல — Lambda actively அத use பண்ணிக்கிட்டu இருந்துச்சu. Audit tool logs correct-ஆ பாக்கல.",
+      "fix": {
+        "corrected_config": "Add back to the role's policy: { \"Effect\": \"Allow\", \"Action\": [\"dynamodb:PutItem\", \"dynamodb:GetItem\", \"dynamodb:UpdateItem\"], \"Resource\": \"arn:aws:dynamodb:ap-south-1:123456789012:table/foodquick-orders\" }",
+        "result": "Lambda function resumes writing to DynamoDB successfully"
+      },
+      "lesson": "AccessDenied error message-ல assumed-role தெரிஞ்சா, அது IAM role permission problem-ன்னu உடனே தெரிஞ்சிக்கணும். Security audits பண்ணும்போது, production services active-ஆ use பண்றது-ஐ verify பண்ணிட்டu தான் permissions remove பண்ணணும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Users or Roles — Quick Decisions",
+      "ava_speaks": "3 scenarios. User-ஆ Role-ஆ, ஒரே second-ல decide பண்ணுங்க.",
+      "challenges": [
+        {
+          "question": "A Node.js application running on EC2 needs to read from S3. Should this use an IAM User with access keys, or an IAM Role?",
+          "answer": "IAM Role. EC2 natively roles support பண்றது. Static keys code-ல வைக்க வேண்டியதே இல்ல."
+        },
+        {
+          "question": "A data scientist's personal laptop runs Python scripts that need to query AWS Athena. Should this use a User or a Role?",
+          "answer": "IAM User with access keys — ஆனா MFA கட்டாயம். Human laptop-ல run பண்றதால, static credentials தேவை. But MFA condition கண்டிப்பா add பண்ணணும்."
+        },
+        {
+          "question": "A GitHub Actions CI/CD pipeline needs to deploy Lambda functions to AWS. What is the modern best practice — access keys stored as GitHub secrets, or something else?",
+          "answer": "IAM Role via OIDC (OpenID Connect). GitHub-ஐ ஒரு trusted identity provider-ஆ configure பண்ணி, role assume பண்ண அனுமதிக்கிறது. Static keys GitHub secrets-ல store பண்றது — leak risk அதிகம், rotation கஷ்டம்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Production Teams Handle Credentials",
+      "ava_speaks": "Real cloud engineering teams-ல, credentials handle பண்றது ஒரு strict process. இது தான் அந்த workflow.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Every new service or application starts with 'does this need a Role or a User?'",
+          "detail": "Default assumption: if it's a service (EC2, Lambda, ECS) — Role. If it's a human — User with MFA."
+        },
+        {
+          "step": 2,
+          "action": "Roles are created with the minimum policy needed for that specific function",
+          "detail": "Never copy-paste a broad policy from another role. Design each role for its exact job."
+        },
+        {
+          "step": 3,
+          "action": "Automated scanning tools check for hardcoded credentials in every code commit",
+          "detail": "Tools like git-secrets or TruffleHog block commits that contain AWS access key patterns."
+        },
+        {
+          "step": 4,
+          "action": "Quarterly reviews check for unused roles and overly broad permissions",
+          "detail": "Roles created for a one-time migration project often get forgotten — cleanup prevents accumulation."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS IAM Access Analyzer",
+          "use": "Role-க்கu தேவையில்லாத permissions இருக்கானu automatically detect பண்ணும்."
+        },
+        {
+          "tool": "git-secrets",
+          "use": "Code commit பண்ணும்போதே, accidentally access keys இருக்கானu scan பண்ணி block பண்ணும்."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "இன்னைக்கu policy JSON structure புரிஞ்சிருக்கும் — Version, Statement, Effect, Action, Resource. Role vs User difference clear-ஆ இருக்கும். EC2-க்கu role attach பண்றது, Lambda-க்கu execution role கொடுக்கறது — இதெல்லாம் practice பண்ணீங்க. அடுத்த lesson-ல, actual complex policies எழுதப் போறோம் — conditions, multiple statements, real-world permission design.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.1b — Summary",
+      "points": [
+        "✓ IAM policy = JSON with Version, Statement, Effect, Action, Resource",
+        "✓ Deny always overrides Allow — no exceptions",
+        "✓ IAM Role = for services. Temporary credentials, hourly auto-refresh.",
+        "✓ Never hardcode access keys in application code — use roles instead",
+        "✓ Instance metadata service supplies role credentials automatically to EC2"
+      ],
+      "coming_next": "Lesson C2.2: Writing IAM Policies — advanced JSON, conditions, and precision permissions"
+    }
+  }
+}

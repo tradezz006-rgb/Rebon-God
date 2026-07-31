@@ -1,0 +1,327 @@
+{
+  "lesson_id": "C6.2",
+  "lesson_title": "CloudWatch Alarms and SNS",
+  "section_id": "CS6",
+  "section_name": "Monitoring",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C6.1 — CloudWatch Metrics and Logs",
+  "student_will_learn": [
+    "Explain the three CloudWatch alarm states and what triggers each",
+    "Connect an alarm to an SNS topic to deliver notifications",
+    "Explain what a composite alarm is and why it reduces noise",
+    "Configure a consecutive-datapoint threshold to avoid alerting on a single blip",
+    "Identify why overly sensitive alarms lead to alert fatigue and ignored alerts"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம metrics, logs, dashboards பார்த்தோம் - இப்போ team-க்கு system health தெரியும். ஆனா Deepak Menon-ஓட FQ-203 ticket-ல அடுத்த கேள்வி - 'Dashboard-ஐ யாராவது 24/7 வெறுங்க பார்த்துண்டே இருக்க முடியுமா? ஏதாவது problem வந்தா, automatic-ஆ team-க்கு தெரியப்படுத்த முடியுமா?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற CloudWatch Alarms மற்றும் SNS.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS6 · Lesson C6.2",
+        "CloudWatch Alarms and SNS",
+        "Ticket FQ-203 — continuing with Deepak Menon"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Alarm States and How They Trigger Actions",
+      "ava_speaks": "CloudWatch Alarm-ல 3 states இருக்கும் - OK (metric threshold-க்குள்ள இருக்கு, எல்லாம் நல்லா இருக்கு), ALARM (metric threshold-ஐ மீறிடுச்சு, problem இருக்கு), INSUFFICIENT_DATA (alarm-ஐ evaluate பண்ண போதுமான data இல்ல, example: instance புது-ஆ launch ஆனது). Alarm state மாறும்போது (OK -> ALARM), அது ஒரு action trigger பண்ணலாம் - பொதுவா SNS (Simple Notification Service) topic-க்கு ஒரு message publish பண்றது, அது email, SMS, அல்லது Slack integration வழியா team-க்கு notification அனுப்பும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Three Alarm States"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "State",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "OK",
+              "Metric is within the defined threshold — everything is normal"
+            ],
+            [
+              "ALARM",
+              "Metric has breached the threshold — action triggers here"
+            ],
+            [
+              "INSUFFICIENT_DATA",
+              "Not enough data points yet to evaluate the alarm (e.g. a brand-new instance)"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "An alarm's transition INTO the ALARM state is what typically triggers an SNS notification — not every evaluation, just the state change."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு EC2 instance, இப்போதுதான் launch ஆச்சு, இன்னும் metrics report பண்ணல. அதோட CPUUtilization alarm என்ன state-ல இருக்கும்?",
+          "options": [
+            "A) OK",
+            "B) ALARM",
+            "C) INSUFFICIENT_DATA",
+            "D) Alarm state assign ஆகவே ஆகாது"
+          ],
+          "correct_index": 2,
+          "ava_correct": "Correct! Metrics இன்னும் report ஆகாததால, alarm-க்கு evaluate பண்ண போதுமான data இல்ல - இது INSUFFICIENT_DATA state-ல இருக்கும், OK-லோ ALARM-லோ இல்ல.",
+          "ava_wrong": "இல்ல, data இல்லாத நிலையில், alarm 'OK'nு assume பண்ணாது - அது INSUFFICIENT_DATA state-ல இருக்கும், அதாவது evaluate பண்ண போதுமான information இன்னும் வரல."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Alarm state OK-ல இருந்து ALARM-க்கு மாறுது. Typically என்ன நடக்கும்?",
+          "options": [
+            "A) ஒண்ணுமே நடக்காது, manual-ஆ யாராவது check பண்ணனும்",
+            "B) SNS topic-க்கு ஒரு message publish ஆகும், அது configured subscribers-க்கு notification அனுப்பும்",
+            "C) Instance automatic-ஆ terminate ஆயிடும்",
+            "D) Metric collection stop ஆயிடும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Alarm state change (OK -> ALARM), configured action-ஐ trigger பண்ணும் - பொதுவா SNS topic-க்கு publish பண்றது, அது team-க்கு notification (email/SMS/Slack) அனுப்பும்.",
+          "ava_wrong": "இல்ல, alarm state change ஒரு action trigger பண்ணும் - manual checking-ஐ மட்டும் நம்பாம, SNS topic-க்கு automatic-ஆ publish பண்ணி, team-க்கு proactive-ஆ notify பண்ணும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Composite Alarms — Reducing Noise by Combining Signals",
+      "ava_speaks": "ஒரு single metric-ஐ மட்டும் வெச்சு alarm பண்றது, பல false positives கொடுக்கும் - example, high CPU மட்டும் ஒரு issue இல்லாம இருக்கலாம் (batch job run ஆகுது). Composite Alarms, multiple individual alarms-ஐ combine பண்ணி, ஒரு single, more meaningful alert தரும் - example: 'High CPU AND High Error Rate AND Low Healthy Host Count' மூணும் ஒரே சமயத்துல true ஆனா மட்டும் ஒரு real incident-nு treat பண்ணு. Freshworks மாதிரி companies, composite alarms use பண்ணி, individual noisy alarms-ஐ, ஒரு clean, actionable signal-ஆ மாத்துறாங்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Single Alarm vs Composite Alarm"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Single Metric Alarm",
+            "Composite Alarm"
+          ],
+          "rows": [
+            [
+              "Fires on one condition alone — CPU high (could be a batch job, not an incident)",
+              "Fires only when multiple conditions align — CPU high AND error rate high AND healthy hosts low"
+            ],
+            [
+              "Higher false-positive rate",
+              "Much more likely to represent a genuine incident"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up an Alarm With SNS Notification and a Consecutive-Datapoint Threshold",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட app servers-க்கு ஒரு high-error-rate alarm configure பண்றான், SNS notification-கூட, single-blip false alerts தவிர்க்க consecutive-datapoint threshold-கூட.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "CloudWatch",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல SNS Console-ல ஒரு topic create பண்றோம் - 'foodquick-oncall-alerts'nு பேரு வெச்சு.",
+            "console_action": {
+              "type": "fill",
+              "path": "SNS Console → Topics → Create topic",
+              "field": "Topic name",
+              "value": "foodquick-oncall-alerts",
+              "highlight": "Topic name field",
+              "result": "An SNS topic is created, ready to have subscribers added"
+            }
+          },
+          {
+            "ava_narration": "இந்த topic-க்கு, on-call team-ஓட email address-ஐ subscribe பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "SNS Console → foodquick-oncall-alerts → Create subscription",
+              "field": "Protocol, Endpoint",
+              "value": "Email, oncall@foodquick.in",
+              "highlight": "Subscription protocol and endpoint fields",
+              "result": "The on-call team will now receive an email whenever a message is published to this topic"
+            }
+          },
+          {
+            "ava_narration": "CloudWatch Console-ல, 'Create alarm' click பண்ணி, metric-ஆ ALB-ஓட HTTPCode_Target_5XX_Count select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "CloudWatch Console → Alarms → Create alarm",
+              "field": "Metric",
+              "value": "HTTPCode_Target_5XX_Count",
+              "highlight": "Metric selection",
+              "result": "The alarm will monitor 5xx error responses from the ALB's target servers"
+            }
+          },
+          {
+            "ava_narration": "Threshold-ஆ, 'greater than 10' கொடுக்கிறோம், ஆனா முக்கியமா - 'Datapoints to alarm' 3 out of 3-ஆ set பண்றோம். இதுன்னா, consecutive-ஆ 3 மணி நேர periods-லயும் threshold மீறினா தான் alarm trigger ஆகும், ஒரு single spike-க்கு அல்ல.",
+            "console_action": {
+              "type": "fill",
+              "path": "Alarm configuration",
+              "field": "Threshold, Datapoints to alarm",
+              "value": "> 10, 3 out of 3",
+              "highlight": "Datapoints to alarm field",
+              "result": "The alarm will only fire after 3 consecutive evaluation periods breach the threshold, filtering out single, brief spikes"
+            }
+          },
+          {
+            "ava_narration": "Notification action-ஆ, foodquick-oncall-alerts SNS topic-ஐ select பண்றோம். Alarm create பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Alarm actions",
+              "field": "SNS topic",
+              "value": "foodquick-oncall-alerts",
+              "highlight": "SNS topic selection for alarm action",
+              "result": "The alarm is now live — a sustained error spike will notify the on-call team automatically, while a brief single blip will not"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The on-call team is now automatically notified via SNS when 5xx errors sustain above threshold for 3 consecutive periods, without being paged for a single momentary spike.",
+          "what_to_notice": "Datapoints to alarm '3 out of 3' setting, இதுதான் single-blip false alerts-ஐ தடுக்கும் key setting - இது இல்லாம இருந்தா, ஒரே ஒரு momentary spike-கு கூட alarm fire ஆயிடும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How the Consecutive-Datapoint Threshold Filters Noise",
+      "ava_speaks": "இந்த diagram பாரு - ஒரே ஒரு blip, ஏன் alarm trigger பண்ணாதுனு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Alarm setting: threshold > 10 errors, Datapoints to alarm: 3 out of 3",
+            "",
+            "Period 1: 15 errors (breach) -> alarm state: still evaluating, not yet ALARM",
+            "Period 2: 3 errors (no breach) -> counter resets, still OK",
+            "Period 3: 12 errors (breach) -> only 1 consecutive breach so far, still OK",
+            "",
+            "vs.",
+            "",
+            "Period 1: 15 errors (breach)",
+            "Period 2: 18 errors (breach)",
+            "Period 3: 20 errors (breach) -> 3 CONSECUTIVE breaches -> alarm fires, SNS notification sent"
+          ]
+        },
+        "ava_narration": "ஒரே ஒரு momentary spike, alarm-ஐ trigger பண்ணாது - consecutive-ஆ 3 periods-லயும் threshold மீறினா தான் real signal-nு treat ஆகும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Build a Composite Alarm for a Genuine Incident Signal",
+      "instruction": "FoodQuick-ஓட payment service-க்கு, ஒரு composite alarm design பண்ணு - individual metric noise-ஐ தவிர்த்து, genuine incidents-ஐ மட்டும் catch பண்ண.",
+      "scenario": "Deepak Menon, தனித்தனி alarms (high CPU, high error rate, low healthy hosts) ஒவ்வொண்ணும் தனியா false-positive alerts கொடுத்திட்டு இருக்குனு flag பண்ணி இருக்காங்க. அவங்க ஒரு composite alarm வேணும் - மூணு conditions-மும் ஒரே சமயத்துல true ஆனா மட்டும் trigger ஆகணும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "CloudWatch Console → Alarms → Create composite alarm",
+        "current_configuration": "Three individual alarms already exist: foodquick-payment-high-cpu, foodquick-payment-high-error-rate, foodquick-payment-low-healthy-hosts. No composite alarm has been created yet."
+      },
+      "requirements": [
+        "Create a composite alarm combining all three individual alarms",
+        "Use AND logic so the composite alarm only fires when ALL THREE individual alarms are in ALARM state simultaneously",
+        "Connect the composite alarm's action to the foodquick-oncall-alerts SNS topic",
+        "Leave the three individual alarms as they are — they still exist independently, just no longer each independently paging the team"
+      ],
+      "hints": [
+        "Composite alarm rule expression AND operator use பண்ணி, மூணு alarm names-ஐயும் combine பண்ணு - example: ALARM(foodquick-payment-high-cpu) AND ALARM(foodquick-payment-high-error-rate) AND ALARM(foodquick-payment-low-healthy-hosts)",
+        "SNS action-ஐ, individual alarms-ல இருந்து அல்ல, composite alarm-ல தான் attach பண்ணு - இதுதான் noise reduce பண்ணும் core idea",
+        "Individual alarms delete பண்ண வேண்டாம் - composite alarm அவற்றை reference பண்ணும், அவை exist பண்ணனும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A composite alarm exists with an AND expression referencing all three individual alarms, with SNS notification action attached only to the composite alarm",
+        "ava_correct": "Correct! இப்போ team, மூணு conditions-மும் align ஆகும்போது மட்டும் notify ஆவாங்க - இது genuine incident-க்கான signal, single noisy metric இல்ல.",
+        "ava_wrong": "Composite alarm expression-ஐ ஒரு தடவை check பண்ணு - AND logic use பண்ணியிருக்கானு, மூணு alarms-ஐயும் reference பண்ணியிருக்கானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The 3am Page for a Momentary CPU Spike",
+      "ava_speaks": "priya-dev, ஒரு CPU alarm set பண்றப்போ, Datapoints to alarm-ஐ default '1 out of 1'-ஆ விட்டுட்டா - அதாவது ஒரே ஒரு evaluation period threshold மீறினாலும், உடனே alarm fire ஆகும். என்ன ஆச்சுனு பாருங்க.",
+      "setup": "priya-dev sets up a CPU utilization alarm on the production database, leaving the default 'Datapoints to alarm' at 1 out of 1, meaning any single momentary CPU spike above the threshold immediately triggers the alarm.",
+      "what_happened": "A brief, harmless CPU spike (caused by a routine scheduled backup job that lasts about 90 seconds) triggers the alarm at 3am, paging the on-call engineer for something that resolved itself before they even opened their laptop. This happens repeatedly, several nights a week.",
+      "broken_config": "Alarm: foodquick-db-cpu-alarm\nThreshold: > 80% CPU\nDatapoints to alarm: 1 out of 1 (fires on a single breach, no consecutive requirement)\nActual pattern: brief nightly backup job routinely spikes CPU above 80% for under 2 minutes, then returns to normal",
+      "error_shown": "PagerDuty history: foodquick-db-cpu-alarm has fired 14 times in the last 3 weeks, all between 2:45-3:15am, all auto-resolved within 3 minutes with no manual intervention needed. On-call engineer has started muting notifications from this alarm on their phone.",
+      "the_real_problem": "'1 out of 1' setting, ஒரே ஒரு momentary spike-க்கும், ஒரு real sustained problem-க்கும் இடையே வித்தியாசம் பார்க்காது. Repeated false alerts-ஓட real danger என்னனா, engineers eventually notifications-ஐ mute பண்ணி விடுவாங்க - இது 'alert fatigue' - ஒரு real incident வந்தாலும், அதை miss பண்ணும் risk உருவாகும்.",
+      "fix": {
+        "corrected_config": "Change Datapoints to alarm from '1 out of 1' to '3 out of 3' (or similar), so only a SUSTAINED high-CPU period triggers the page, not a brief, expected spike from a known routine job.",
+        "result": "The nightly backup job no longer triggers false pages, on-call engineers stop muting this alarm, and the alarm becomes trustworthy again — meaning a real page is taken seriously."
+      },
+      "lesson": "Alarm sensitivity default settings ('1 out of 1'), ஒரு single momentary blip-ஐயும், ஒரு real sustained problem-ஐயும் ஒரே மாதிரி treat பண்ணும் - இது repeated false alerts-க்கு வழிவகுக்கும், engineers eventually alarms-ஐ mute பண்ணி, real incidents-ஐ miss பண்ண ஆரம்பிப்பாங்க."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Alarm Design Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A payment processing failure alarm needs to page the on-call team IMMEDIATELY, even for a single failed transaction, since every failure has real financial impact. Should this alarm use a high 'Datapoints to alarm' setting like the CPU example?",
+          "answer": "No — the consecutive-datapoint pattern that prevents alert fatigue on noisy metrics like CPU isn't universally correct. For a metric where even one occurrence is genuinely significant and actionable (like a payment failure), '1 out of 1' can be the RIGHT choice. The datapoints setting should match the actual severity and noise profile of what's being measured, not be applied as a blanket rule everywhere."
+        },
+        {
+          "question": "A team has 5 separate alarms all related to the same underlying database, each independently paging the on-call engineer during an outage, resulting in 5 near-simultaneous pages for one incident. What CloudWatch feature directly addresses this?",
+          "answer": "A composite alarm — combining the 5 individual alarms into one composite alarm (with appropriate logic, likely OR since any of the 5 conditions indicates the same underlying database problem) means the team gets ONE clear notification representing the incident, instead of 5 separate, confusing pages."
+        },
+        {
+          "question": "An SNS topic has 8 email subscribers but no SMS or Slack integration. During a critical 3am incident, is email alone likely to reliably wake someone up?",
+          "answer": "Probably not reliably — email notifications are easy to miss, especially overnight, since most phones don't have urgent-priority alerting for email by default. For critical on-call pages, SMS or a dedicated paging integration (like PagerDuty or Opsgenie via SNS) is much more likely to actually reach someone in time."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Tune Alarms to Stay Trustworthy Over Time",
+      "ava_speaks": "Real companies-ல, alarm configuration ஒரு 'set once' task இல்ல - Deepak Menon மாதிரி DevOps leads, alarm effectiveness-ஐ தொடர்ந்து review பண்றாங்க, false-positive rate high-ஆ இருக்கறதா-ன்னு.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Track each alarm's false-positive rate over time — how often it fires without a corresponding real, actionable issue",
+          "detail": "இது priya-dev-ஓட 3am mistake மாதிரி noisy alarms-ஐ, patterns-ஆ ஆவதுக்கு முன்னாடியே கண்டுபிடிக்க உதவும்"
+        },
+        {
+          "step": 2,
+          "action": "Regularly review which alarms team members have muted or snoozed, treating that as a signal the alarm needs re-tuning, not that it's safe to ignore",
+          "detail": "Muted notifications, unresolved alarm design problems-ஐ hide பண்ணிடும் - இதை proactively கண்டுபிடிக்கணும்"
+        },
+        {
+          "step": 3,
+          "action": "Use composite alarms deliberately for any incident pattern that genuinely involves multiple correlated conditions, rather than accumulating many independent single-metric alarms",
+          "detail": "இது alert volume-ஐ overall கம்மி பண்ணி, ஒவ்வொரு page-மும் meaningful-ஆ இருக்கறதை உறுதி பண்ணும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "CloudWatch Alarm history",
+          "use": "ஒவ்வொரு alarm-ஓட state transitions history-ஐ காட்டி, false-positive patterns identify பண்ண உதவும்"
+        },
+        {
+          "tool": "SNS + PagerDuty/Opsgenie integration",
+          "use": "Critical alarms-க்கு, email-ஐ விட reliable-ஆ, escalation policies-கூட urgent paging தரும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம alarm states, SNS notification setup, composite alarms, consecutive-datapoint thresholds எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, overly sensitive alarms, alert fatigue-க்கு வழிவகுத்து, engineers real incidents-ஐயும் miss பண்ண ஆரம்பிப்பாங்க-னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம CloudTrail Audit பார்ப்போம் - every API call எப்படி track ஆகும்னு.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C6.2 — Summary",
+      "points": [
+        "✓ CloudWatch alarms have three states: OK, ALARM, and INSUFFICIENT_DATA",
+        "✓ SNS delivers alarm notifications via email, SMS, or integrations like PagerDuty",
+        "✓ Composite alarms combine multiple conditions into one meaningful signal, reducing noise",
+        "✓ A consecutive-datapoint threshold prevents a single momentary blip from triggering a full alert",
+        "✓ Overly sensitive alarms cause alert fatigue — engineers start muting notifications, risking missed real incidents"
+      ],
+      "coming_next": "Lesson C6.3: CloudTrail Audit"
+    }
+  }
+}

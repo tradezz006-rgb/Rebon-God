@@ -1,0 +1,201 @@
+{
+  "lesson_id": "C2.1b",
+  "act_number": 2,
+  "act_title": "Trust No Static Secret",
+  "builds_layer": "Service Trust Layer",
+  "total_tasks": 10,
+  "arc_intro": "Ravi says the mysterious CloudTrail entry from last week is 'still under review — don't lose that thread, but let's keep moving.' While closing out the identity cleanup, you noticed something else scrolling through FoodQuick's codebase: several services are calling AWS using hardcoded access keys, sitting in plain text. Humans aren't the only ones who need proper identity — machines do too.",
+  "tasks": [
+    {
+      "id": "C2.1b-T1",
+      "sequence": 1,
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "You mention the hardcoded keys to Ravi. He says: 'We just spent a week fixing who has access. Why does this matter — it's not like a person is misusing anything, it's just our own code.'",
+      "question": "How do you explain why hardcoded keys in service code are a real risk, even with no human doing anything wrong?",
+      "options": [
+        "A) It doesn't really matter as long as the code repository is private",
+        "B) If that code is ever exposed — pushed to a public repo, a laptop stolen, a backup leaked — those keys are immediately usable by anyone who finds them, and they stay valid until someone manually notices and rotates them",
+        "C) It only matters if the service handles payment data specifically",
+        "D) Hardcoded keys are fine as long as they're not committed with comments explaining what they do"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: If that code is ever exposed — pushed to a public repo, a laptop stolen, a backup leaked — those keys are immediately usable by anyone who finds them, and they stay valid until someone manually notices and rotates them",
+      "ren_correct": "Correct! Static credentials — exposure, damage window.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.1b-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "question": "What is the fundamental difference between how an IAM Role and a hardcoded access key each handle credential expiry?",
+      "options": [
+        "A) Both expire automatically every hour, no difference",
+        "B) A Role's credentials are temporary and refresh automatically via STS — a hardcoded key stays valid indefinitely until someone manually rotates or deletes it",
+        "C) Hardcoded keys are actually safer because they never unexpectedly stop working",
+        "D) Roles require the same manual rotation process as access keys"
+      ],
+      "correct_index": 1,
+      "explanation": "Role credentials — hourly auto-refresh, STS handle do. Hardcoded key — manual rotation do forever valid. core difference,.",
+      "ren_correct": "Correct! Auto-refresh vs 'valid forever until someone remembers' — this is why roles win every time.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.1b-T3",
+      "sequence": 3,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "You do a quick scan across FoodQuick's active services to map how widespread this problem is before fixing anything.",
+      "broken_config": "Service Audit — Credential Method:\n├── order-notification-service (EC2) — hardcoded keys in source file\n├── inventory-sync-service (EC2) — IAM Role attached (foodquick-ec2-s3-read)\n├── payment-processor (Lambda) — hardcoded keys in environment config\n├── delivery-tracker (EC2) — IAM Role attached\n└── analytics-pipeline (Lambda) — hardcoded keys, same key reused across 2 other services",
+      "what_to_find": [
+        "order-notification-service and payment-processor both use hardcoded keys — need migration to Roles",
+        "analytics-pipeline is the worst case — the SAME hardcoded key is reused across 3 different services, meaning one leak compromises all three at once",
+        "inventory-sync-service and delivery-tracker already use Roles correctly — no action needed there"
+      ],
+      "correct_fix": "Migration priority order: 1) analytics-pipeline first — shared key across 3 services is the highest-risk item. 2) payment-processor — handles sensitive payment data. 3) order-notification-service — lower risk but still needs fixing. Each migrated to its own dedicated, scoped role — never a shared credential across multiple services again.",
+      "explanation": "Map every finding before you change anything — missing one leaves a hole in the investigation."
+    },
+    {
+      "id": "C2.1b-T4",
+      "sequence": 4,
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "question": "For each service, arrange the correct migration sequence to guarantee zero downtime.",
+      "items": [
+        "Create the IAM Role with exactly the permissions that service needs",
+        "Attach the role to the service (EC2 instance profile or Lambda execution role)",
+        "Deploy and verify the service works correctly using the new role",
+        "Only after verification — remove the hardcoded keys from the code",
+        "Redeploy with keys fully removed, confirm no regression"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Order matters: secure control first, then migrate access, then retire the old path."
+    },
+    {
+      "id": "C2.1b-T5",
+      "sequence": 5,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "karthik-dev takes analytics-pipeline first, since it's the highest priority. He creates a dedicated role with only the specific S3 and DynamoDB permissions this one service needs, attaches it, and deploys.",
+      "question": "Before he removes the old shared hardcoded key from analytics-pipeline's code, what must he confirm about the OTHER two services that were also using that same shared key?",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "The other two services must also be migrated to their own dedicated roles first — removing the shared key while they still depend on it would break them",
+        "Each of the three services needs its OWN separate role, not a shared one, to avoid recreating the same shared-credential problem"
+      ],
+      "explanation": "Shared key remove do, key use services- migrate. No break. service- own role — shared credential Not quite — fix- core."
+    },
+    {
+      "id": "C2.1b-T6",
+      "sequence": 6,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "priya-dev takes payment-processor. She creates its execution role, tests it thoroughly in staging, confirms payments still process correctly, and is ready to remove the old hardcoded keys from the environment config.",
+      "question": "This is a payment-handling service. What additional precaution should she take before removing the old credentials, beyond what karthik-dev did for analytics-pipeline?",
+      "options": [
+        "A) No additional precaution needed — the same process applies to every service equally",
+        "B) Monitor a small window of live traffic after the role-based deployment (not just staging) before fully removing the old keys, specifically because payment failures have real financial and customer-trust impact if something was missed in staging",
+        "C) Skip staging entirely and test directly in production to save time, since payments are urgent",
+        "D) Keep the old hardcoded keys active permanently as a backup, just in case"
+      ],
+      "correct_index": 1,
+      "explanation": "Payment service — staging- correct- do, production- short monitoring window extra safety. Real money involve, extra caution worth it. Old keys forever.",
+      "ren_correct": "judgment! Higher stakes service = slightly extra caution, not a different process entirely.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.1b-T7",
+      "sequence": 7,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "While migrating order-notification-service (the last of the three), you check its role permissions before finalizing and notice something odd — the role has far more access than a notification service should ever need.",
+      "error_shown": "IAM Role: foodquick-order-notification-role\nAttached Policy: AdministratorAccess\nRole created: 6 months ago\nLast modified: 6 months ago (never touched since)\nCreated by: [user account no longer exists in IAM — deleted at some point]",
+      "diagnosis": "This role was given AdministratorAccess 6 months ago by a user account that has since been deleted — meaning nobody currently on the team knows WHY this decision was made, or whether it was ever meant to be temporary. This is the second time in this investigation you've found access nobody can currently explain.",
+      "fix": "Do not simply trust the existing role. Create a fresh, correctly scoped role for order-notification-service (this service only needs to publish to SNS and write basic logs), attach it, verify the service works, then delete the old AdministratorAccess role entirely. Document this finding.",
+      "explanation": "6 touch AdministratorAccess role, deleted user account create do — pattern. Trust do, fresh scoped role create do replace must be done."
+    },
+    {
+      "id": "C2.1b-T8",
+      "sequence": 8,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "iam_console",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "All three services are now migrated. Before closing this piece, do a final scope check on all the NEW roles you created, to make sure none of them accidentally inherited the old over-broad pattern.",
+      "broken_config": "New Roles — Final Check:\n├── foodquick-analytics-role — dynamodb:PutItem, s3:GetObject (scoped) ✓\n├── foodquick-payment-role — dynamodb:GetItem, dynamodb:PutItem (scoped) ✓\n└── foodquick-order-notification-role-NEW — sns:Publish, logs:PutLogEvents, s3:* (one line looks wrong)",
+      "what_to_find": [
+        "The new order-notification role has s3:* included — this service does not touch S3 at all, based on its actual function",
+        "This looks like a copy-paste leftover from drafting the policy off an earlier example, not an intentional grant"
+      ],
+      "correct_fix": "Remove the s3:* statement entirely from foodquick-order-notification-role-NEW. Final scoped policy should only contain sns:Publish and logs:PutLogEvents.",
+      "explanation": "Map every finding before you change anything — missing one leaves a hole in the investigation."
+    },
+    {
+      "id": "C2.1b-T9",
+      "sequence": 9,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "With services properly using roles now, Ravi mentions FoodQuick is planning two things soon: a data scientist joining who'll run scripts from her personal laptop querying AWS, and a future CI/CD pipeline deploying from a dev AWS account into production.",
+      "cases": {
+        "case_1": "The data scientist's personal laptop, running scripts periodically.",
+        "case_2": "The future CI/CD pipeline, deploying from a separate dev account into production."
+      },
+      "correct_answers": {
+        "case_1": "IAM User with access keys, but MFA mandatory — a human on a personal device needs some standing credential, and MFA is the non-negotiable safeguard.",
+        "case_2": "An IAM Role the pipeline assumes — never static keys. For a GitHub-style pipeline that's a Role via OIDC (the pattern from the learning); when the pipeline lives in a separate AWS account, the same idea becomes a cross-account Role with a trust policy."
+      },
+      "explanation": "Personal laptop = human = User + MFA. Pipeline = machine = Role assumption pattern — OIDC-, static keys. Separate AWS account- idea cross-account Role + trust policy — piece- deep-."
+    },
+    {
+      "id": "C2.1b-T10",
+      "sequence": 10,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1b",
+      "max_attempts": 3,
+      "scenario": "Time to report back to Ravi on this piece.",
+      "question": "Write your status update covering what was fixed, and flag the pattern you're starting to notice.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "All three services migrated from hardcoded keys to dedicated, scoped IAM Roles",
+        "Found and replaced a 6-month-old AdministratorAccess role created by a since-deleted user account, with no documented reason",
+        "This is the second time unexplained access has surfaced in this investigation — first the mysterious CloudTrail key, now this forgotten admin role — worth flagging as a possible pattern"
+      ],
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    }
+  ],
+  "arc_outro": "Service Trust Layer: secured. Two unexplained access findings now, not one. Ravi reads your report and goes quiet for a second. 'Twice is not a coincidence. Once you've got the access policies themselves cleaned up properly, I want you to actually dig into why this keeps happening.' Next: before you can investigate the pattern, you need to fix how permissions get written in the first place."
+}

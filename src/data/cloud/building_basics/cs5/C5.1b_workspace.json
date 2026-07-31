@@ -1,0 +1,229 @@
+{
+  "lesson_id": "C5.1b",
+  "ticket": "FQ-189",
+  "sender": "Meera Iyer (VP of Finance, CFO's Office)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-189 — Meera Iyer (VP of Finance, CFO's Office)\n\nGood work on the log script. Now customer support is telling me product images are loading slowly or not at all for some restaurants, and it started right around when I'm told someone set up a cost-saving policy for old files. I want to understand if these two things are connected before I say anything to the product team.\n\n— Meera",
+  "arc_outro": "Meera Iyer — FQ-189 update:\n\nThat explains the support tickets exactly — a well-intentioned cost fix broke something customer-facing because 'old' and 'rarely viewed' turned out to not be the same thing. Good that it's properly fixed now, not just patched temporarily. Intelligent-Tiering going forward makes sense to me even without the technical details — it sounds like it does the job automatically instead of guessing with a fixed rule.\n\nStill haven't forgotten about that growing bucket. Let's keep going — I want the full storage picture before we come back to it.\n\n— Meera",
+  "tasks": [
+    {
+      "id": "C5.1b-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C5.1b",
+      "scenario": "You investigate the timing: a lifecycle policy was added roughly 5 weeks ago, and customer complaints about broken/slow product images started roughly 2 weeks ago — after the policy had been running long enough to start affecting the first batch of eligible objects.",
+      "question": "What should you check first to understand what this lifecycle policy is actually doing?",
+      "options": [
+        "A) Immediately disable the lifecycle policy without checking what it does, since disabling things is always the safest first step",
+        "B) Read the actual lifecycle policy configuration — what objects it targets, what storage class it transitions them to, and after what age — before assuming anything about cause and effect",
+        "C) Assume the complaints are unrelated to the policy, since a cost-saving change and a customer-facing bug are unlikely to be connected",
+        "D) Ask customer support to describe the images in more technical detail before looking at any AWS configuration"
+      ],
+      "correct_index": 1,
+      "explanation": "Timing correlate does, but ASSUME for doing earlier actual policy configuration paakkanum — what target does, enga transition does, how much in age. Disable doing udane doing premature — what does — therinjukkanum first.",
+      "ren_correct": "Correct — actual config paathu understand doing first, assume without doing.",
+      "ren_wrong": "A bit think again — disable doing or dismiss doing both premature. Actual policy configuration first paakkanum."
+    },
+    {
+      "id": "C5.1b-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.1b",
+      "question": "What's the practical difference between S3 Standard and S3 Standard-IA (Infrequent Access) for an application actively serving files to users?",
+      "options": [
+        "A) They're functionally identical for serving files — IA is just cheaper storage with no other difference at all",
+        "B) Both offer the same millisecond-level retrieval speed suitable for real-time serving, but Standard-IA has a lower storage cost combined with a per-GB retrieval fee — making it cost-effective for genuinely infrequently-accessed data, but each access still costs a bit more than Standard",
+        "C) Standard-IA takes several minutes to retrieve objects, similar to Glacier",
+        "D) Standard-IA can only be used for objects smaller than 1MB"
+      ],
+      "correct_index": 1,
+      "explanation": "Standard-IA um Standard also both fast retrieval (milliseconds) — real-time for serving problem not. Difference storage cost (IA cheaper) and retrieval fee (for IA per-GB fee is there access doesbothu). Genuinely rarely-accessed for data IA nallathu, but frequently accessed — retrieval fees add up will happen.",
+      "ren_correct": "Correct — IA um fast retrieval, storage cheaper, retrieval fee only extra.",
+      "ren_wrong": "A bit think again — Standard-IA Glacier like slow not. Both fast retrieval, cost structure only vera."
+    },
+    {
+      "id": "C5.1b-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.1b",
+      "question": "What happens when you try to access an object that's been transitioned to S3 Glacier or Glacier Deep Archive, as if it were a normal, actively-served file?",
+      "options": [
+        "A) It works instantly, exactly like Standard storage, since Glacier is just a cheaper billing tier with no functional difference",
+        "B) You cannot access it directly and instantly — you must first initiate a RESTORE request, which takes anywhere from minutes to many hours (or longer for Deep Archive) depending on the retrieval speed tier chosen, before the object becomes temporarily accessible",
+        "C) The object is permanently deleted and cannot be recovered once moved to Glacier",
+        "D) Glacier objects can only be accessed by AWS Support directly, never by the account owner"
+      ],
+      "correct_index": 1,
+      "explanation": "Glacier/Deep in Archive object direct-a, instantly access to do cannot — RESTORE request first must do, that minutes to many hours edukkum (retrieval tier depend has been done). This exact reason real-time for serving Glacier fit aagathu.",
+      "ren_correct": "Correct — Glacier instant access not, restore process first is needed.",
+      "ren_wrong": "A bit think again — Glacier just cheaper billing not. Real functional difference is there — instant access not, restore is needed."
+    },
+    {
+      "id": "C5.1b-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.1b",
+      "scenario": "You pull the actual lifecycle policy configuration on the product-images bucket.",
+      "broken_config": "Lifecycle rule: \"cost-optimization-rule\"\n├── Applies to: ALL objects in foodquick-product-images/\n├── Transition: move to GLACIER after 30 days from object creation date\n└── No exceptions based on access frequency — purely age-based\n\nSample of currently-affected objects (transitioned, now in Glacier):\n├── dominos-style-pizza-photo.jpg (uploaded 45 days ago) — one of the most-viewed images on the entire app, still actively served on a popular restaurant's homepage\n├── seasonal-diwali-special-2024.jpg (uploaded 60 days ago) — no longer actively promoted, genuinely low access now\n└── restaurant-logo-xyz.png (uploaded 90 days ago) — still actively displayed on that restaurant's active listing page",
+      "what_to_find": [
+        "The lifecycle rule transitions based PURELY on object age, with no consideration of actual access frequency — it assumes 'older than 30 days' means 'rarely accessed,' which is false for a lot of this content",
+        "Several of the affected images are still genuinely popular and actively served — 'old' (by upload date) does not mean 'rarely viewed' for content like a popular restaurant's photo or an active listing's logo",
+        "This is exactly the customer-facing bug: these images are now in Glacier, meaning every page load trying to display them either fails or waits on a restore that takes hours — completely broken for real-time serving",
+        "The one correctly-identified case (the seasonal Diwali image) shows the underlying cost-saving INTENT was reasonable — it's the blind age-based rule, not the goal, that's the actual problem"
+      ],
+      "correct_fix": "Immediately restore the actively-served affected images back to Standard (or Standard-IA) storage — permanently, not just a temporary Glacier restore — and replace the age-only lifecycle rule with S3 Intelligent-Tiering, which automatically monitors ACTUAL access patterns and moves objects between tiers based on real usage, not just age.",
+      "explanation": "This exact spec mistake — actively-served content for Glacier move doing, age-based assumption access pattern's match aagalaam. Intent nallathu (cost save doing), execution wrong — access pattern paakkama, age only use doing."
+    },
+    {
+      "id": "C5.1b-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C5.1b",
+      "question": "Arrange the correct order to fix the affected images and prevent this from recurring.",
+      "items": [
+        "Identify every object currently in Glacier that's actually still being actively accessed/served",
+        "Initiate a restore request for those specific objects to make them temporarily accessible again",
+        "Permanently copy the restored objects back to Standard (or Standard-IA) storage, not just leave them as a temporary restore",
+        "Disable the age-only lifecycle rule and replace it with S3 Intelligent-Tiering",
+        "Verify the previously-broken images now load correctly for real customers"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First identify affected objects, then restore must do (temporary access), then PERMANENT-a copy must do back to Standard (this is important, temporary restore only podhathu), then policy replace must do for Intelligent-Tiering, LAST-a real customer-facing verify must do.",
+      "ren_correct": "Nice sequencing — temporary restore and permanent fix both include did you do, correct in order.",
+      "ren_wrong": "Order again paaru — temporary restore doing only podhathu, PERMANENT-a for Standard copy must do, or temporary period expire but problem again will come."
+    },
+    {
+      "id": "C5.1b-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1b",
+      "scenario": "You initiate a Glacier restore for the affected images, choosing the 'Expedited' retrieval tier (typically 1-5 minutes) to minimize customer impact while the permanent fix is being rolled out.",
+      "question": "Once the restore completes and the images are temporarily accessible again, is the customer-facing problem now fully solved?",
+      "options": [
+        "A) Yes — once restored, the object stays permanently accessible in Standard storage from that point forward",
+        "B) No — a Glacier restore is TEMPORARY by default, accessible only for a chosen duration (e.g. a few days), after which it reverts back to Glacier-only access unless the object is also explicitly copied to a non-Glacier storage class permanently",
+        "C) Yes, and additionally the object is automatically removed from Glacier entirely once restored",
+        "D) No — restored objects can only be viewed by AWS Support, never by the actual application"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, important gotcha — Glacier restore TEMPORARY only, chosen duration (e.g. 5 days) kku then automatic-a for Glacier again poidum, unless explicit-a for Standard permanent copy if we had done. Restore only after doing 'fixed' — ninachikitta, a bit naala kalichi again will break.",
+      "ren_correct": "Correct — restore temporary only, permanent for fix explicit copy is needed.",
+      "ren_wrong": "A bit think again — restore permanent not, temporary access only. Explicit-a for Standard copy without doing, a bit naala kalichi again problem will come."
+    },
+    {
+      "id": "C5.1b-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1b",
+      "scenario": "karthik-dev, who originally set up the age-based lifecycle rule, asks: 'If I just increase the age threshold from 30 days to 90 days, would that avoid this problem going forward?'",
+      "question": "Would raising the age threshold actually solve the underlying issue?",
+      "options": [
+        "A) Yes — this completely solves the problem, since 90 days is clearly long enough for any image to no longer be actively used",
+        "B) No — it would delay the problem, not fix it. Some content (like a permanently popular restaurant's photo or an actively-listed logo) may still be genuinely popular well past 90 days or even years later, since real-world popularity doesn't reliably correlate with any fixed age threshold at all",
+        "C) Yes, and increasing it to any number above 30 completely eliminates the possibility of this happening again",
+        "D) No — age-based thresholds should never be used for any S3 lifecycle rule under any circumstances"
+      ],
+      "correct_index": 1,
+      "explanation": "Age threshold increase doing problem delay does, fix what was done — ywhat real popularity age's correlate aagathu reliably. A restaurant photo forever popular-a irukalam, 90 days also, 2 years also even if. This Intelligent-Tiering real value — actual access pattern monitor does, guess what was done.",
+      "ren_correct": "Correct — age threshold delay does only, real fix access-pattern-based monitoring.",
+      "ren_wrong": "A bit think again — age threshold how much periya-a even if, real popularity age's match will happen — is not guaranteed. Access-pattern-based approach real fix."
+    },
+    {
+      "id": "C5.1b-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C5.1b",
+      "scenario": "A week after Intelligent-Tiering is live, ananya-analyst reports one specific old promotional banner image is loading slowly on the rare occasions it's accessed, even though it's not urgent or customer-facing anymore.",
+      "error_shown": "Image load time: ~800ms on first access after a long idle period, then ~40ms on subsequent accesses within the same day",
+      "diagnosis": "This is expected Intelligent-Tiering behavior, not a bug. The object had been automatically moved to the Infrequent Access tier after a period with no access. The first request after that idle period retrieves it from the IA tier (slightly slower, though nowhere near Glacier's hours-long delay), and Intelligent-Tiering then automatically moves it back toward the frequent-access tier since it was just accessed, making subsequent loads fast again.",
+      "fix": "No fix needed — this is Intelligent-Tiering working exactly as designed: a small, acceptable latency difference for genuinely infrequent content, with automatic recovery to fast access if the content becomes popular again. This is a fundamentally different (and much smaller) trade-off than the Glacier mistake, which caused hours-long delays, not milliseconds.",
+      "explanation": "This real, important distinction to make clear — Intelligent-Tiering's IA tier delay (milliseconds) and Glacier's delay (hours) both different different scale. This bug not, Intelligent-Tiering's designed trade-off, very acceptable, Glacier mistake's vera."
+    },
+    {
+      "id": "C5.1b-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.1b",
+      "scenario": "Intelligent-Tiering is now configured on foodquick-product-images/. Final audit before reporting back.",
+      "broken_config": "foodquick-product-images/ bucket:\n├── Lifecycle: S3 Intelligent-Tiering enabled (replacing the old age-only rule)\n├── Previously-affected images: permanently restored to Standard, confirmed loading correctly in the live app\n├── Intelligent-Tiering behavior: automatically monitors each object's access pattern; objects not accessed for 30 consecutive days move to a lower-cost tier automatically, and immediately move BACK to the frequent-access tier the moment they're accessed again — no manual restore process, no retrieval delay\n└── Small monitoring fee applies per object, in exchange for this automatic behavior",
+      "what_to_find": [
+        "The previously broken images are confirmed working via a real customer-facing check, not just assumed fixed from the config change alone",
+        "Intelligent-Tiering's automatic move-back-when-accessed behavior is exactly what solves this class of problem permanently — a popular image that goes quiet for a while and then gets popular again is handled correctly without anyone needing to notice or intervene",
+        "The small per-object monitoring fee is a real, ongoing cost — worth weighing against the storage savings and the cost of NOT having this problem recur"
+      ],
+      "correct_fix": "No further changes needed — this is a complete, verified fix that also structurally prevents the same age-based mistake from recurring going forward.",
+      "explanation": "This 'recognize this is already correct' verify task — we real customer-facing verify we have done, AND Intelligent-Tiering's automatic behavior this class of problem-a structurally prevent does, not just this one incident."
+    },
+    {
+      "id": "C5.1b-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C5.1b",
+      "cases": {
+        "case_1": "Product images and logos actively served to customers, with unpredictable and changing popularity over time",
+        "case_2": "Completed order invoices older than 2 years, required to be retained for compliance but essentially never actually read",
+        "case_3": "The current month's raw analytics export files, actively queried by the BI team daily",
+        "case_4": "Audit logs that are rarely accessed but occasionally needed within minutes during a compliance review, never instantly"
+      },
+      "correct_answers": {
+        "case_1": "S3 Intelligent-Tiering — unpredictable, changing popularity is exactly what it's designed to handle automatically",
+        "case_2": "S3 Glacier Deep Archive — true long-term compliance archival, essentially never read, cost is the primary concern, retrieval time of many hours is acceptable",
+        "case_3": "S3 Standard — actively and frequently queried, needs fast, reliable access with no retrieval delay or fee",
+        "case_4": "S3 Glacier (standard, not Deep Archive) — rarely accessed but needs a MINUTES-to-hours retrieval window sometimes, not the many-hours-to-days of Deep Archive, and not the instant access (and higher cost) of Standard-IA"
+      },
+      "scenario": "Meera wants a clear framework for the whole storage team on which class fits which kind of content, based on everything found in this investigation.",
+      "explanation": "Naangu different different access pattern — unpredictable-popularity (Intelligent-Tiering), true-almost-never-accessed compliance (Deep Archive), actively-queried-daily (Standard), rarely-but-sometimes-needed-within-minutes (Glacier standard, not Deep Archive). This real judgment, retrieval time tolerance-a base after doing decide must do.",
+      "ren_correct": "Correct — access pattern AND retrieval time tolerance both base after doing right class match did you do.",
+      "ren_wrong": "A bit think again — each case also different different access pattern and retrieval tolerance is there, for each one different different class fit will happen."
+    },
+    {
+      "id": "C5.1b-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C5.1b",
+      "scenario": "Meera asks for the real cost comparison: the product-images bucket is roughly 500GB. S3 Standard costs ~₹1.92/GB-month, Glacier costs ~₹0.33/GB-month, and Intelligent-Tiering costs the same as Standard/IA tiers PLUS a small monitoring fee (~₹0.0025 per 1,000 objects/month, negligible at FoodQuick's object count).",
+      "question": "How should the switch from the broken age-based Glacier rule to Intelligent-Tiering be framed cost-wise, given Glacier was technically the cheapest option?",
+      "solution": "Glacier storage alone would cost roughly ₹165/month for 500GB versus roughly ₹960/month on Standard — a real difference. But Glacier wasn't actually usable here since it broke real customer-facing functionality, making the 'savings' illusory — the true cost included broken pages and support tickets. Intelligent-Tiering automatically finds genuinely-cold content and moves ONLY that to cheaper tiers, capturing real savings on the truly-infrequent portion of the 500GB while keeping actively-served content fast — a smaller but SAFE and real saving, unlike Glacier's larger but functionally-broken one.",
+      "explanation": "This real cost framing — cheapest option-a base after doing decide doing not, ACTUALLY USABLE savings-a base after doing decide must do. Glacier's savings real not, ywhat that app-a break having done."
+    },
+    {
+      "id": "C5.1b-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1b",
+      "scenario": "Time to report back to Meera on this piece of FQ-189.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the image loading issue. Storage costs are optimized now.\"",
+        "B) \"Confirmed the broken images were caused by a well-intentioned but purely age-based lifecycle rule that moved actively-served content to Glacier after 30 days, regardless of actual popularity. Permanently restored the affected images to Standard (not just a temporary Glacier restore) and replaced the rule with S3 Intelligent-Tiering, which automatically tracks real access patterns instead of guessing by age. Verified working for real customers. Cost-wise, Glacier's apparent savings were illusory since it broke functionality — Intelligent-Tiering captures real, safe savings on genuinely cold content instead. Still holding the growing-bucket question open as instructed.\"",
+        "C) \"Storage classes are all set correctly now, nothing else to add.\"",
+        "D) \"The images will work fine once the Glacier restore finishes, no further changes needed.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — root cause, the permanent (not temporary) fix, the structural prevention (Intelligent-Tiering), AND honest cost framing (Glacier's savings were illusory). Option D dangerous — restore only — temporary, permanent fix without problem again will come, we already in T6 we saw gotcha.",
+      "ren_correct": "This correct report — root cause, permanent fix, structural prevention, and honest cost framing, all included.",
+      "ren_wrong": "This report either vague-a is there, or temporary restore-a permanent fix-a confuse does (D) — this real gotcha we already kandupidichom."
+    }
+  ],
+  "act_number": 2,
+  "act_title": "Lifecycle Before the Bill Explodes",
+  "builds_layer": "Storage Lifecycle Layer"
+}

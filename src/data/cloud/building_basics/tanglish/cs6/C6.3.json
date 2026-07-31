@@ -1,0 +1,329 @@
+{
+  "lesson_id": "C6.3",
+  "lesson_title": "CloudTrail Audit",
+  "section_id": "CS6",
+  "section_name": "Monitoring",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C6.2 — CloudWatch Alarms and SNS",
+  "student_will_learn": [
+    "Explain what CloudTrail records and how it differs from CloudWatch Logs",
+    "Distinguish between management events and data events",
+    "Explain why a multi-region trail is necessary for complete audit coverage",
+    "Search CloudTrail event history to answer 'who did what, when' questions",
+    "Trace a security incident using CloudTrail's exact API call, identity, IP, and timestamp records"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம alarms பார்த்தோம் - problems நடக்கும்போது team-க்கு தெரியப்படுத்த. இப்போ Deepak Menon-ஓட FQ-203 ticket-ல ஒரு வேற கேள்வி - 'ஏதாவது தப்பா நடந்தா, exact-ஆ யார், எப்போ, என்ன பண்ணாங்கனு எப்படி கண்டுபிடிக்கறது?' இதுக்கு CloudWatch போதாது - இதுக்கு CloudTrail தான் தேவை. C2.5-ல நாம SCPs பத்தி பேசினோம் - அதே lesson-ல ஒரு mention பண்ணினோம், CloudTrail account-ல நடக்கற ஒவ்வொரு API call-ஐயும் track பண்ணும்னு. இன்னைக்கு அதை முழுசா கத்துக்கலாம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS6 · Lesson C6.3",
+        "CloudTrail Audit",
+        "Ticket FQ-203 — continuing with Deepak Menon"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "CloudTrail Records Every API Call, Not Application Behavior",
+      "ava_speaks": "CloudTrail-க்கும் CloudWatch Logs-க்கும் confuse ஆகக்கூடாது - CloudWatch Logs, application-ஓட own output (print statements, error logs) capture பண்ணும். CloudTrail, AWS account-ல நடக்கற ஒவ்வொரு API call-ஐயும் record பண்ணும் - யார் call பண்ணாங்க, எந்த action, எப்போ, எந்த IP address-ல இருந்து. CloudTrail Events ரெண்டு types - Management Events (resource create/modify/delete - example: 'ஒரு IAM user create ஆச்சு', 'ஒரு security group modify ஆச்சு') மற்றும் Data Events (resource-க்குள்ள actual data operations - example: 'ஒரு S3 object download ஆச்சு', அதிக volume-ல நடக்கும், default-ஆ off).",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "CloudTrail vs CloudWatch Logs"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "CloudTrail",
+            "CloudWatch Logs"
+          ],
+          "rows": [
+            [
+              "Records AWS API calls — who did what to which resource",
+              "Records application-generated output — what the app printed/logged"
+            ],
+            [
+              "Answers 'who created/deleted/modified this?'",
+              "Answers 'why did the application behave this way?'"
+            ],
+            [
+              "Management Events (default, free) vs Data Events (opt-in, higher volume)",
+              "Whatever the application chooses to log"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "CloudTrail is about accountability and audit — every action against your AWS account has a permanent, queryable record of who did it."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு IAM user, ஒரு security group-ல ஒரு rule delete பண்ணிட்டார். இது எங்க record ஆகும்?",
+          "options": [
+            "A) CloudWatch Logs-ல, application log-ஆ",
+            "B) CloudTrail-ல, ஒரு Management Event-ஆ",
+            "C) இரண்டு இடத்திலும் record ஆகாது",
+            "D) S3-ல மட்டும் record ஆகும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Security group modify பண்றது ஒரு AWS API call - இது CloudTrail-ல ஒரு Management Event-ஆ record ஆகும், யார் பண்ணாங்க, எப்போன்னு exact-ஆ.",
+          "ava_wrong": "இல்ல, இது application behavior இல்ல, அது ஒரு AWS resource-ஐ modify பண்ற API call - இதுதான் CloudTrail-ஓட வேலை, Management Event-ஆ record பண்றது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "S3 bucket-ல ஒவ்வொரு object download-ஐயும் track பண்ணணும் - இது எந்த event type?",
+          "options": [
+            "A) Management Event, default-ஆ on ஆகி இருக்கும்",
+            "B) Data Event, explicit-ஆ opt-in பண்ணனும், அதிக volume-ஆ இருக்கும்",
+            "C) இது CloudTrail-ல track பண்ணவே முடியாது",
+            "D) இதுக்கு CloudWatch Logs தான் use பண்ணனும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Individual object-level operations (GetObject, PutObject) Data Events - இது explicit-ஆ enable பண்ணனும், ஏன்னா high-traffic buckets-ல இது huge volume-ஆ இருக்கும்.",
+          "ava_wrong": "இல்ல, individual S3 object operations Management Events இல்ல - அவை Data Events, default-ஆ off, high volume-ஆ இருக்கறதால explicit-ஆ enable பண்ண வேண்டும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Tracing a Compromised Credential Through CloudTrail",
+      "ava_speaks": "ஒரு mid-size Indian SaaS company-ல, ஒரு developer-ஓட IAM credentials phishing-ல compromise ஆச்சு. Security team, CloudTrail event history-ஐ search பண்ணி, exact-ஆ trace பண்ணினாங்க - எந்த IP address-ல இருந்து login ஆச்சு (unfamiliar location), என்ன API calls call ஆச்சு (புது access keys create பண்ணது, unusual regions-ல instances launch பண்ணது), எத்தனை நேரம் access இருந்துச்சு. இந்த exact timeline இல்லாம, incident response ரொம்ப கஷ்டமா இருந்திருக்கும் - CloudTrail தான் 'என்ன exactly நடந்துச்சு'nு precisely reconstruct பண்ண உதவுச்சு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "What CloudTrail Reveals During an Investigation"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Investigation Question",
+            "CloudTrail Field That Answers It"
+          ],
+          "rows": [
+            [
+              "Who performed this action?",
+              "userIdentity (IAM user/role ARN)"
+            ],
+            [
+              "From where?",
+              "sourceIPAddress"
+            ],
+            [
+              "Exactly when?",
+              "eventTime"
+            ],
+            [
+              "What exactly did they do?",
+              "eventName and requestParameters"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up a Multi-Region Trail and Searching Event History",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட account-க்கு ஒரு multi-region CloudTrail trail set பண்றான், அப்புறம் ஒரு specific security group change-ஐ investigate பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "CloudTrail",
+        "steps": [
+          {
+            "ava_narration": "CloudTrail Console-ல 'Create trail' click பண்றோம், name 'foodquick-audit-trail' கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "CloudTrail Console → Create trail",
+              "field": "Trail name",
+              "value": "foodquick-audit-trail",
+              "highlight": "Trail name field",
+              "result": "A new trail configuration begins"
+            }
+          },
+          {
+            "ava_narration": "'Apply trail to all regions' toggle-ஐ ON பண்றோம் - இது critical, ஏன்னா ஒரு engineer, unfamiliar region-ல (example: us-west-2) ஏதாவது தப்பா பண்ணா, அது trail-ல capture ஆகணும், அந்த region-ஐ யாரும் actively use பண்ணாவிட்டாலும்.",
+            "console_action": {
+              "type": "click",
+              "path": "Trail configuration → Apply trail to all regions",
+              "highlight": "Multi-region toggle",
+              "result": "The trail now captures API activity across every AWS region, not just the ones actively used"
+            }
+          },
+          {
+            "ava_narration": "S3 bucket-ஆ 'foodquick-cloudtrail-logs' கொடுத்து, log file validation enable பண்றோம் - இது logs tamper பண்ணப்படலைனு cryptographically verify பண்ண உதவும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Storage location",
+              "field": "S3 bucket, Log file validation",
+              "value": "foodquick-cloudtrail-logs, Enabled",
+              "highlight": "Log file validation toggle",
+              "result": "Trail logs are stored in S3 with cryptographic validation, ensuring they haven't been tampered with"
+            }
+          },
+          {
+            "ava_narration": "Trail create ஆனப்பிறகு, 'Event history'-க்கு போய், ஒரு specific investigation பண்றோம் - foodquick-payment-sg security group-ல, யார் ஒரு rule delete பண்ணினாங்கனு தேடறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "CloudTrail Console → Event history",
+              "highlight": "Event history search",
+              "result": "The search interface for querying historical CloudTrail events opens"
+            }
+          },
+          {
+            "ava_narration": "Filter-ஆ 'Resource name'-ஐ 'foodquick-payment-sg'nு set பண்றோம், event name-ஆ 'RevokeSecurityGroupIngress' தேடுறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Event history search filters",
+              "field": "Resource name, Event name",
+              "value": "foodquick-payment-sg, RevokeSecurityGroupIngress",
+              "highlight": "Search filter fields",
+              "result": "The search returns the exact event: who deleted the rule, from what IP, at what precise timestamp"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "FoodQuick now has complete, multi-region audit coverage, and can precisely answer 'who changed this security group rule and when' using Event History search.",
+          "what_to_notice": "Multi-region trail இல்லாம இருந்திருந்தா, ஒரு engineer தப்பா ஒரு unused region-ல ஏதாவது change பண்ணா, அது completely untracked-ஆ இருந்திருக்கும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Anatomy of a CloudTrail Event Record",
+      "ava_speaks": "இந்த diagram பாரு - ஒரு single CloudTrail event, என்ன fields வெச்சிருக்கும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "CloudTrail Event Record:",
+            "  eventTime: 2026-07-15T03:42:17Z",
+            "  eventName: RevokeSecurityGroupIngress",
+            "  userIdentity: { type: IAMUser, arn: arn:aws:iam::123456789012:user/priya-dev }",
+            "  sourceIPAddress: 203.0.113.45",
+            "  requestParameters: { groupId: sg-0abc123, ipPermissions: [ port: 5432, ... ] }",
+            "  awsRegion: ap-south-1",
+            "",
+            "Every field here answers a specific investigation question — who, what, when, from where."
+          ]
+        },
+        "ava_narration": "இந்த ஒரே ஒரு event record-லேயே, ஒரு full investigation-க்கான எல்லா key facts-ஐயும் கொடுக்குது - guess பண்ண வேண்டியதே இல்ல."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Investigate an Unexpected IAM Change",
+      "instruction": "FoodQuick-ல ஒரு IAM role-ஓட permissions, யாருக்கும் தெரியாம மாறியிருக்கு. CloudTrail event history use பண்ணி, யார் பண்ணாங்கனு கண்டுபிடி.",
+      "scenario": "Deepak Menon, foodquick-app-server-role-ல ஒரு புது, unexpected policy attach ஆகி இருக்குனு கண்டுபிடிச்சாங்க. இது யார் பண்ணாங்க, எப்போ பண்ணாங்கனு investigate பண்ணணும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "CloudTrail Console → Event history",
+        "current_configuration": "No search has been performed yet"
+      },
+      "requirements": [
+        "Search Event history filtering by Resource name 'foodquick-app-server-role'",
+        "Look for the event name 'AttachRolePolicy'",
+        "Identify the userIdentity field to determine who performed the action",
+        "Note the sourceIPAddress and eventTime for the investigation record"
+      ],
+      "hints": [
+        "Event history-ல resource name filter, exact IAM role name-ஐ தேட உதவும்",
+        "'AttachRolePolicy' தான் exact event name, policy attach பண்ற action-க்கு - இது தேடினா, precise result கிடைக்கும்",
+        "userIdentity field-ல, IAM user அல்லது role ARN இருக்கும் - இதுதான் 'யார் பண்ணாங்க'nு answer பண்ணும் key field"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "The search returns the AttachRolePolicy event, revealing the specific IAM identity, source IP, and timestamp of the change",
+        "ava_correct": "Correct! இப்போ exact-ஆ யார், எப்போ இந்த change பண்ணாங்கனு தெரியும் - இது தான் CloudTrail-ஓட real power, guess பண்ண வேண்டியதே இல்ல.",
+        "ava_wrong": "Filter fields-ஐ ஒரு தடவை check பண்ணு - resource name exact-ஆ match ஆகுதா, event name 'AttachRolePolicy' correctly spell ஆகியிருக்கானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Investigation That Missed Half the Story",
+      "ava_speaks": "ananya-analyst, ஒரு suspicious activity investigate பண்றப்போ, ap-south-1 region-ல மட்டும் CloudTrail logs பார்த்தாங்க - ஏன்னா FoodQuick-ஓட production எல்லாம் அங்க தான் இருக்கு. ஆனா trail multi-region-ஆ set பண்ணி இருக்கல, அதனால ஒரு critical piece of evidence அவங்களுக்கு தெரியவே இல்ல.",
+      "setup": "ananya-analyst investigates a suspicious set of API calls, checking CloudTrail logs only in ap-south-1 since that's where FoodQuick's production infrastructure lives. The trail was configured as single-region months ago and never updated.",
+      "what_happened": "The attacker (using compromised credentials) deliberately created new access keys and launched resources in us-east-1 — a region FoodQuick never actively uses — specifically because activity there would be less likely to be noticed. Since the trail only covers ap-south-1, this entire sequence of actions is completely invisible to the investigation.",
+      "broken_config": "CloudTrail trail: foodquick-audit-trail\nRegion coverage: ap-south-1 only (multi-region NOT enabled)\n\nAttacker activity: CreateAccessKey and RunInstances calls made in us-east-1, completely outside the trail's coverage",
+      "error_shown": "Investigation gap: ananya-analyst's CloudTrail search in ap-south-1 shows no suspicious activity, creating a false impression that the account is clean — while us-east-1 activity remains completely unlogged and undiscovered for weeks.",
+      "the_real_problem": "Single-region trail, 'நம்ம production இங்க தான்'nு assumption-ஐ base பண்ணி design பண்ணப்பட்டது - ஆனா attacker (அல்லது ஒரு தப்பான automation script), எந்த region-ஐ வேணும்னாலும் use பண்ணலாம். Multi-region coverage இல்லாம, unused regions 'blind spots'-ஆ மாறிடும் - malicious activity precisely அங்கதான் நடக்கும்.",
+      "fix": {
+        "corrected_config": "Update foodquick-audit-trail to enable 'Apply trail to all regions', ensuring every region — used or not — is captured going forward. Immediately review historical CloudTrail data (if retained) across all regions for the current investigation.",
+        "result": "Full visibility is restored — the us-east-1 activity is discovered upon proper multi-region review, and future investigations won't have this blind spot."
+      },
+      "lesson": "Single-region CloudTrail trail, 'நாங்க இந்த region-ஐ மட்டும் தான் use பண்றோம்'nு assumption-ஐ நம்பி இருக்கும் - ஆனா attackers exactly unused, unmonitored regions-ஐ தேடி target பண்ணுவாங்க. Multi-region trail, இந்த blind spot-ஐ முழுசா நீக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — CloudTrail Investigation Skills",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team wants to know whether a specific S3 object was downloaded by an unauthorized party. Does the default CloudTrail configuration (Management Events only) capture this?",
+          "answer": "No — individual object-level GetObject calls are Data Events, which are NOT captured by default. The team would need to have explicitly enabled Data Events logging for that S3 bucket beforehand; if they didn't, this specific download activity simply isn't in CloudTrail at all, regardless of how thoroughly they search."
+        },
+        {
+          "question": "An investigation finds a CloudTrail event where userIdentity shows an IAM role (not an IAM user) performed a sensitive action. What does this suggest about tracing the actual human responsible?",
+          "answer": "It requires an extra step — since roles are assumed by something (a person via federation, an EC2 instance, a Lambda function), you'd need to trace the AssumeRole event just before it to identify who or what actually assumed that role, rather than the role identity alone telling you the specific human involved."
+        },
+        {
+          "question": "A company enables CloudTrail today but needs to investigate suspicious activity from 8 months ago. Will CloudTrail have that historical data?",
+          "answer": "Only if CloudTrail was already enabled and logging 8 months ago — CloudTrail can't retroactively capture events from before it was turned on. This is exactly why enabling CloudTrail (and multi-region coverage) as early as possible, ideally from account creation, matters so much for future investigative capability."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Make CloudTrail Data Actually Useful During an Incident",
+      "ava_speaks": "Real companies-ல, CloudTrail ஒரு போதும் 'set it and forget it' இல்ல - Deepak Menon மாதிரி DevOps leads, இது investigation-க்கு உண்மையிலேயே useful-ஆ இருக்குனு proactively உறுதி பண்றாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Enable multi-region trails from day one of the AWS account's life, not retrofitted after an incident",
+          "detail": "இது ananya-analyst-ஓட investigation gap மாதிரி blind spots-ஐ முன்னாடியே தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Route CloudTrail logs to a dedicated, tightly access-controlled S3 bucket, ideally in a separate account, with log file validation enabled",
+          "detail": "இது logs-ஐ, ஒரு attacker தன் tracks-ஐ cover பண்ண delete பண்ணாதுனு உறுதி பண்ணும்"
+        },
+        {
+          "step": 3,
+          "action": "Integrate CloudTrail with CloudWatch Logs for real-time alerting on specific sensitive API calls (like root account usage, IAM policy changes)",
+          "detail": "இது investigation-ஐ, incident நடந்த பிறகு மட்டும் இல்லாம, proactive-ஆவும் ஆக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "CloudTrail Lake",
+          "use": "CloudTrail events-ஐ SQL-like queries வெச்சு directly query பண்ண உதவும், Event history UI-ஐ விட மேலும் powerful investigation-க்கு"
+        },
+        {
+          "tool": "Amazon GuardDuty",
+          "use": "CloudTrail data-ஐ machine-learning-based threat detection-கூட combine பண்ணி, suspicious patterns-ஐ automatic-ஆ flag பண்ணும் - manual search-ஐ மட்டும் நம்பாம"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம CloudTrail எப்படி ஒவ்வொரு API call-ஐயும் record பண்ணும்னு, Management vs Data Events-ஓட வித்தியாசம், multi-region trails ஏன் critical-னு கத்துக்கிட்டோம். மிக முக்கியமா, single-region trails, unused regions-ஐ blind spots-ஆ மாத்தும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம Config மற்றும் Trusted Advisor பார்ப்போம் - CS6-ஓட கடைசி lesson.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C6.3 — Summary",
+      "points": [
+        "✓ CloudTrail records every AWS API call — who, what, when, and from where",
+        "✓ Management Events (resource-level changes) are logged by default; Data Events (object-level operations) require explicit opt-in",
+        "✓ A multi-region trail is essential — attackers deliberately target unused, unmonitored regions",
+        "✓ Event history search lets you answer precise 'who did this?' questions using resource name and event name filters",
+        "✓ CloudTrail is complementary to CloudWatch Logs — one tracks AWS account activity, the other tracks application behavior"
+      ],
+      "coming_next": "Lesson C6.4: Config and Trusted Advisor"
+    }
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "lesson_id": "C7.3",
+  "ticket": "FQ-218",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-218 — Ravi Krishnan (Head of Engineering)\n\nTwo things this lesson. First — Meera just called. She has a board meeting tomorrow and one of the questions will be 'which team owns which cost line item in our AWS bill.' I told her I'd have an answer. I need your help getting there.\n\nSecond — I want to look at the whole picture before we close this ticket. You've touched every part of this infrastructure. I want to see it drawn out properly, as one coherent architecture, not as individual fixes across six tickets.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan (Head of Engineering)\n\nThat's what the architecture looks like now — and that's what we couldn't have drawn 8 months ago at FQ-142 without embarrassing ourselves. Not because we didn't have the resources, but because we didn't understand them.\n\nMeera has her cost breakdown by team. Tagging policy is enforced in CloudFormation now, not just hoped for in a wiki. And I can see the whole thing in one diagram without having to explain 'there's also this thing in us-east-1 that we forgot to mention.'\n\nOne last thing before we close FQ-218: I want to formally close FQ-142. The ticket that started all of this. That's the next conversation.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C7.3-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C7.3",
+      "scenario": "Meera needs a cost breakdown by team for her board meeting tomorrow. You open AWS Cost Explorer and try to filter by team — there's no usable dimension to filter on. All resources show up under the same flat account view.",
+      "question": "What's the root cause of not being able to break down costs by team, and what would have needed to happen for this to be possible?",
+      "options": [
+        "A) AWS doesn't support per-team cost breakdown — this capability simply doesn't exist",
+        "B) Resources need consistent, activated cost allocation TAGS (key-value metadata on each resource, such as Team: order-service, Team: analytics) before Cost Explorer can filter and group by them. Without a tagging strategy applied consistently from the beginning, there's no dimension to filter on",
+        "C) Per-team cost breakdown requires setting up a separate AWS account for each team",
+        "D) Cost Explorer only shows per-service breakdowns (EC2, RDS, S3) — team-level attribution is impossible regardless of tags"
+      ],
+      "correct_index": 1,
+      "explanation": "Tags without Cost in Explorer filter to do dimension not — resources just flat account in view kaanudhu. Consistent tagging strategy + Cost allocation tags activated in billing = team-level, service-level, project-level filtering possible. This retrospective-a to add very kastam, prospective-a start do easy.",
+      "ren_correct": "Correct — consistent tags are the prerequisite for any cost attribution capability.",
+      "ren_wrong": "A bit think again — AWS per-team attribution support does, but tags consistently apply if done it was only. Tagging strategy without, dimension not."
+    },
+    {
+      "id": "C7.3-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.3",
+      "question": "What is an AWS resource tag, and what does 'activating a tag as a cost allocation tag' specifically do?",
+      "options": [
+        "A) Tags are AWS-managed labels automatically applied to all resources; activation makes them permanently visible",
+        "B) A tag is a user-defined key-value pair attached to a resource (e.g. Team: order-engineering, Environment: production). Activating a tag as a cost allocation tag in the Billing console tells AWS to include that tag dimension in Cost Explorer reports and cost allocation reports — without activation, the tag exists on the resource but doesn't appear as a filterable dimension in cost reports",
+        "C) Tags are only available for EC2 instances and S3 buckets, not other resource types",
+        "D) Activating a cost allocation tag automatically applies that tag to all untagged resources in the account"
+      ],
+      "correct_index": 1,
+      "explanation": "Tag — user-defined key-value pair — in resource exist does. But Cost in Explorer filter-a use must do- — , Billing in console cost allocation tag-a activate must do verum. Activate without doing tag in resource is there but cost in reports kaanaaathu — two separate steps.",
+      "ren_correct": "Correct — tags exist on resources, but cost allocation activation is a separate step in the Billing console.",
+      "ren_wrong": "A bit think again — tag in resource irundhaalum, cost in reports kbut Billing in console activate must do. Two separate steps, one alone not enough."
+    },
+    {
+      "id": "C7.3-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C7.3",
+      "question": "What's the practical difference between having a tagging POLICY (documented rules for how to tag) versus just having a tagging CONVENTION (an informal wiki page saying 'please tag your stuff')?",
+      "options": [
+        "A) There's no practical difference — any written guide on tagging is equally effective",
+        "B) A tagging policy is enforced (through AWS Config rules, IAM policies, or CloudFormation required tags) so resources cannot be created without required tags; a tagging convention is just a request that people remember, which they frequently don't. Only a policy creates the structural guarantee that tags are actually applied consistently",
+        "C) Policies are more expensive to maintain than conventions because they require AWS Config, which has significant per-rule charges",
+        "D) Conventions are preferable because they allow more flexibility and are less likely to break deployments"
+      ],
+      "correct_index": 1,
+      "explanation": "Policy enforce does — resource tags without create do cannot (CloudFormation required tags, AWS Config rule, IAM policy). Convention just 'please remember' — people forget, especially when they're in a hurry. Only structural enforcement gives consistent tagging.",
+      "ren_correct": "Correct — policy enforces structurally, convention relies on memory. Only enforcement creates consistency.",
+      "ren_wrong": "A bit think again — convention and policy same effect not. Policy enforce does, convention request does. Real difference in outcomes."
+    },
+    {
+      "id": "C7.3-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.3",
+      "scenario": "You pull the current tagging state across the account.",
+      "broken_config": "Account-wide resource tagging audit:\n\nEC2 Instances:\n├── order-service (×4): Tags: Name=order-service — no Team, no Environment, no Owner\n├── reporting-db-01: Tags: Name=reporting-db-01 — no Team, no Environment\n├── notification-worker: Tags: (none at all)\n└── bastion: Tags: Name=bastion — no Team\n\nRDS:\n└── foodquick-orders-db: Tags: Name=foodquick-orders-db, CreatedBy=default-vpc-setup — no Team, no Environment\n\nS3 Buckets:\n├── foodquick-product-images: Tags: (none)\n├── foodquick-driver-documents: Tags: (none)\n└── foodquick-legacy-exports: Tags: (none — now deleted, but was never tagged either)\n\nCost allocation tags activated in Billing: NONE\n\nResult: ₹0 cost attribution to any team or service is possible from current billing data",
+      "what_to_find": [
+        "No resource in the entire account has a consistent Team or Environment tag — the Name tag exists on some but is inconsistently applied and not a cost allocation dimension",
+        "Cost allocation tags have never been activated in the Billing console — even if some tags existed, they would not appear in Cost Explorer reports",
+        "notification-worker has zero tags of any kind — not even a Name tag — making it the most difficult resource to attribute to any team or purpose from billing data alone",
+        "This is the exact scenario Meera is facing: a board meeting question ('which team owns this cost') that engineering genuinely cannot answer from AWS billing data today"
+      ],
+      "correct_fix": "Define a mandatory tagging policy (minimum: Team, Environment, and Owner tags required on all resources) and enforce it in CloudFormation templates going forward. Retrospectively apply tags to all existing resources. Activate Team, Environment, and Owner as cost allocation tags in the Billing console. Set up an AWS Config rule to flag any untagged resource going forward.",
+      "explanation": "This exact spec mistake confirmed on the actual account — no tagging strategy, no cost allocation. Meera's question legitimate, engineering answer honest-a 'we can't tell you from billing data today.'"
+    },
+    {
+      "id": "C7.3-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C7.3",
+      "question": "Arrange the correct order to fix the tagging gap properly — for both existing resources and future ones.",
+      "items": [
+        "Define the mandatory tag policy (minimum required keys: Team, Environment, Owner)",
+        "Retrospectively apply tags to all existing resources across the account",
+        "Activate the new tags as cost allocation tags in the AWS Billing console",
+        "Add required tag enforcement to all CloudFormation templates going forward",
+        "Set up an AWS Config rule to flag any resource missing required tags",
+        "Verify Cost Explorer now shows cost attribution by Team and Environment after the next billing cycle"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "explanation": "Policy define must do first (what tags, what values, before applying), then existing resources retroactively tag must do, then in billing activate must do, then future enforcement in templates + Config in rule add must do, LAST-a next billing in cycle verify must do. Billing cycle's delay is there — activate did udane historical data retroactively appear aagathu.",
+      "ren_correct": "Nice sequencing — policy first, retroactive application, billing activation, enforcement for future, then verify after the billing cycle.",
+      "ren_wrong": "Order think again — policy define without doing tag apply must not. Billing activation and enforcement also separate necessary steps."
+    },
+    {
+      "id": "C7.3-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.3",
+      "scenario": "karthik-dev says: 'Let's just agree on a tagging convention now and everyone tags their stuff going forward. We don't need a hard enforcement rule — the team knows the policy.'",
+      "question": "Why is a convention-only approach insufficient as the structural fix here?",
+      "options": [
+        "A) It's actually fine for a small team — enforcement overhead outweighs the benefits for FoodQuick's current size",
+        "B) Convention-only relies on everyone remembering to tag every resource, every time, including during urgent deployments and on-call incidents when it's most likely to be forgotten. The entire history of this ticket shows exactly what 'rely on people remembering' produces: 8-month-old TODO comments, indefinite log retention defaults, 6-week-open security misconfigurations. Structural enforcement (required tags in CloudFormation, AWS Config flagging) is what makes the convention actually work",
+        "C) AWS prevents any team with fewer than 50 engineers from using tag enforcement",
+        "D) Convention is always better than enforcement because enforcement blocks deployments in emergencies"
+      ],
+      "correct_index": 1,
+      "explanation": "This CS2-CS6's whole pattern's direct application — 'people will remember' — we paatha: Vikram's TODO, Deepak's manual SG change, priya.k's subscription, every 'never expire' default. Structural enforcement real fix, convention is the intent, enforcement is what makes it real.",
+      "ren_correct": "Correct — this entire ticket's history shows what 'rely on people remembering' produces. Enforcement is the structural fix.",
+      "ren_wrong": "A bit think again — convention-only insufficient, and the evidence is the entire history of this course. Structural enforcement real guarantee."
+    },
+    {
+      "id": "C7.3-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.3",
+      "scenario": "While retroactively tagging existing resources, you reach reporting-db-01. It runs internal analytics reports for ananya-analyst's team, but it lives on infrastructure provisioned and maintained by the platform engineering team. karthik-dev asks: 'Which team do we tag this as — analytics or platform?'",
+      "question": "How should ambiguous ownership be resolved in a tagging policy?",
+      "options": [
+        "A) Skip tagging ambiguous resources entirely until ownership is definitively resolved",
+        "B) Use multiple tags to capture different dimensions — Owner: platform-engineering (who provisions/maintains the infrastructure), ServiceFor: analytics (what business function it serves) — so both dimensions are captured without forcing a false either/or. The tagging policy should anticipate shared or cross-functional resources and define how to handle them, rather than leaving ambiguity as an excuse not to tag",
+        "C) Assign ownership to whichever team uses the resource most, determined by log analysis",
+        "D) Platform engineering should own all infrastructure resources without exception, regardless of business function"
+      ],
+      "correct_index": 1,
+      "explanation": "Ambiguous for ownership two-tag approach — Owner (infrastructure responsibility) and ServiceFor (business function) — render both dimensions without either/or compromise. Policy should anticipate this: shared resources are common, 'skip because ambiguous' is the real mistake.",
+      "ren_correct": "Correct — two dimensions, two tags. Policy should anticipate shared resources, not treat ambiguity as an excuse.",
+      "ren_wrong": "A bit think again — ambiguous-a even if skip doingle tax loss-a is there. Two separate tag keys solve the either/or problem cleanly."
+    },
+    {
+      "id": "C7.3-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C7.3",
+      "scenario": "Tags are applied across all existing resources. You open Cost Explorer to show Meera the team-level breakdown — but the Team tag dimension still doesn't appear as a filtering option.",
+      "error_shown": "AWS Cost Explorer — Group By:\nAvailable dimensions: Service, Linked Account, Region, Usage Type, API Operation\n\n(Team, Environment, and Owner tags do not appear as filterable dimensions despite being applied to all resources)",
+      "diagnosis": "Resource tags exist on the resources — that part was done correctly. But the separate step of activating them as cost allocation tags in the AWS Billing console was not completed yet. Without this activation, tags exist as metadata on resources but are invisible to Cost Explorer's reporting layer. Additionally, even after activation, Cost Explorer only shows tag data for costs incurred AFTER the activation date — historical costs before activation cannot be retroactively attributed by tag.",
+      "fix": "Go to the AWS Billing console → Cost Allocation Tags → activate Team, Environment, and Owner. Cost Explorer will begin showing these as filterable dimensions for new costs immediately; historical pre-activation costs will remain unattributable by tag. For Meera's board meeting tomorrow: be honest that the tag data will be available from today's costs forward, but historical breakdown requires estimation from service-level data combined with known ownership.",
+      "explanation": "This two-step process's real gotcha — tag in resource irundhaalum, in billing activate without doing, Cost in Explorer kaanaaathu. AND historical costs retroactively appear aagathu — only going-forward. for Meera honest answer: from today forward, not retroactively."
+    },
+    {
+      "id": "C7.3-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C7.3",
+      "scenario": "With tagging complete, Ravi asks for the final coherent architecture diagram — everything built across CS2-CS6, as it actually stands today.",
+      "broken_config": "FoodQuick Production Architecture — Current State (post CS2-CS6):\n\nACCOUNT BASELINE (CS2/FQ-142):\n├── IAM: least-privilege roles, no hardcoded keys, Parameter Store for secrets, SCP guardrails\n└── CloudTrail: multi-region, management events, 1yr S3 retention\n\nNETWORK (CS3/FQ-156):\n├── Custom VPC (10.0.0.0/16), ap-south-1, 3 AZs\n├── Public subnets (aa11, bb22, cc33) — ALB, NAT Gateways ×3 (one per AZ)\n├── Private subnets (dd44, ee55, ff66) — order-service ASG, foodquick-orders-db\n├── IGW → public subnets, private subnets → NAT Gateways → IGW\n└── Route 53: foodquick.in ALIAS → ALB, weighted routing for canary, failover with health checks\n\nCOMPUTE (CS4/FQ-171):\n├── order-service: 4×m5.large (ASG min=3/desired=4/max=12, target-tracking CPU 60%, 3 AZs, mixed types)\n├── ALB: foodquick-order-alb → order-service-tg (health check /health, 3-of-5 datapoints)\n├── reporting-db-01: m5.large (reporting only, EBS gp3, non-burstable)\n├── notification-worker: m5.large\n└── bastion: t3.micro, public subnet, SSH restricted to admin VPN CIDR\n\nSTORAGE (CS5/FQ-189):\n├── foodquick-orders-db: RDS PostgreSQL, Multi-AZ, private subnet, SG → app-tier SG only\n├── foodquick-product-images: S3 Standard + Intelligent-Tiering\n├── foodquick-driver-documents: S3, BPA enforced, pre-signed URLs for access\n└── CloudTrail logs: s3://foodquick-cloudtrail-logs/, 1yr retention\n\nMONITORING (CS6/FQ-203):\n├── CloudWatch: log groups (90/90/30d retention), alarms (3-of-5 datapoints, distribution-list SNS)\n├── Dashboard: SUM for request volume, p99 latency, active alarm panel\n└── X-Ray: 5% sampling, tracing enabled on order-service",
+      "what_to_find": [
+        "The architecture is coherent and deliberate — every component was reasoned through, not accumulated accidentally",
+        "Security is defense-in-depth: IAM least-privilege at account level, SG restrictions at resource level, BPA at bucket level, encryption in transit and at rest",
+        "Reliability is Multi-AZ at every stateful layer (RDS, ASG, NAT Gateways) with verified failover behavior",
+        "The architecture has known, documented remaining gaps (IaC coverage not complete for S3/CloudWatch/IAM, load testing framework not yet in place) — gaps a student can name specifically are better than unexamined unknowns"
+      ],
+      "correct_fix": "No changes needed — this is the architecture review task. The job here is to be able to explain every component, its reason for being where it is, and what trade-off it represents. A student who can walk through this diagram and explain each decision is ready for CS7's final lesson.",
+      "explanation": "This capstone 'recognize this is already correct' task — but this also the student's architecture to explain, not just audit. Ovva component also in CS2-CS6 we saw lessons's result. This Building Basics's whole point."
+    },
+    {
+      "id": "C7.3-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C7.3",
+      "cases": {
+        "case_1": "order-service EC2 instances and ALB",
+        "case_2": "reporting-db-01 (used by analytics team, provisioned by platform engineering)",
+        "case_3": "foodquick-product-images S3 bucket (used by the product/mobile team, managed by platform)",
+        "case_4": "CloudWatch alarms and dashboards set up by Deepak's DevOps function"
+      },
+      "correct_answers": {
+        "case_1": "Team: order-engineering, Environment: production, Owner: karthik-dev (or the team's on-call rotation) — straightforward single-team ownership",
+        "case_2": "Owner: platform-engineering (provisions and maintains), ServiceFor: analytics (business function served) — the two-tag approach for cross-functional resources from T7",
+        "case_3": "Owner: platform-engineering, ServiceFor: product — same two-tag pattern, different teams",
+        "case_4": "Team: devops, Environment: production, Owner: deepak.menon — monitoring infrastructure is owned by DevOps even though it serves all teams"
+      },
+      "scenario": "Apply the new tagging policy to each of these real FoodQuick resources, using the approach developed in T7 for shared/ambiguous resources.",
+      "explanation": "Naanku real FoodQuick resources-a tag doing — one straightforward (order-service), two shared/cross-functional (reporting-db-01, product-images bucket need two-tag approach), one DevOps-owned (monitoring infra). This applied judgment, not template-matching.",
+      "ren_correct": "Correct — each resource also ownership dimensions-a base after doing appropriate tags match did you do.",
+      "ren_wrong": "A bit think again — shared resources need the two-tag approach (Owner + ServiceFor), not forced either/or. Apply the T7 pattern."
+    },
+    {
+      "id": "C7.3-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C7.3",
+      "scenario": "Meera's board meeting is tomorrow. With tag activation done today, historical cost attribution by tag isn't possible yet — but she needs something for the board. You use service-level Cost Explorer data plus known ownership to construct an estimated per-team breakdown for the past quarter. Total AWS spend last quarter: ₹11.2L.",
+      "question": "How should this estimated breakdown be framed honestly for a board audience — given it's estimated from service data, not from clean tag attribution?",
+      "solution": "Estimated breakdown (from service-level data + ownership mapping): Order Engineering: ~₹4.8L (EC2 order-service, ALB, RDS orders-db primary) | Platform Engineering: ~₹2.9L (networking, NAT Gateways, bastion, Reserved Instances admin overhead) | Analytics: ~₹1.7L (reporting-db-01, S3 exports, Logs Insights queries) | DevOps/Monitoring: ~₹0.4L (CloudWatch, CloudTrail, X-Ray) | Unattributed/Shared: ~₹1.4L (S3 cross-team buckets, partial overlap). Frame honestly: 'These are estimates based on service ownership mapping, not clean tag data. From today's billing cycle forward, we will have exact per-team attribution through cost allocation tags. The estimates are directionally correct but should not be treated as precise.'",
+      "explanation": "This real business communication — honest about what's estimated vs exact, useful numbers kudukkadhu, 'we can't tell you anything' — refusal not. 'Directionally correct, not precise' — right level of confidence for estimated data."
+    },
+    {
+      "id": "C7.3-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C7.3",
+      "scenario": "Time to report back to Ravi on this piece of FQ-218.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Tagged everything and set up cost attribution. Meera should be all set.\"",
+        "B) \"Tagging policy defined (Team, Environment, Owner — mandatory, two-tag approach for cross-functional resources) and applied retroactively to all resources. Cost allocation tags activated in billing — going-forward attribution will be exact; historical is estimated from service-level data (Meera has the breakdown for tomorrow, framed as directional estimates). AWS Config rule flagging untagged resources. CloudFormation templates updated to enforce required tags. Also completed the full architecture review — all components from CS2-CS6 in one diagram, every trade-off documented. Notable remaining gaps: IaC coverage still not complete for S3/CloudWatch/IAM, load testing framework not yet in place — both documented and accepted deliberately.\"",
+        "C) \"Meera has the numbers. Architecture looks fine.\"",
+        "D) \"Unable to provide historical cost attribution — tagging should have been done earlier.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific policy decisions (two-tag approach), honest about historical vs going-forward attribution, AND architecture review outcome with remaining gaps explicitly named. Option D unhelpfully true but not useful — good engineering communication finds the best available answer, not just what's impossible.",
+      "ren_correct": "This correct report — specific, honest about the historical limitation, complete architecture summary with gaps named.",
+      "ren_wrong": "This report either vague-a is there or unhelpfully-just-the-limitations (D) — best available answer kudukkrthat engineering communication."
+    }
+  ],
+  "act_number": 3,
+  "act_title": "Deploy the Application Layer",
+  "builds_layer": "App Deploy Layer"
+}

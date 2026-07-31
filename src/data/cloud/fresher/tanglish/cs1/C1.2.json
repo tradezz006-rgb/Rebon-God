@@ -1,0 +1,422 @@
+{
+  "lesson_id": "C1.2",
+  "id": "C1.2",
+  "lesson_title": "AWS Global Infrastructure",
+  "section_id": "CS1",
+  "section_name": "Cloud Foundations",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C1.1",
+  "student_will_learn": [
+    "Regions (Geographic locations of data centers)",
+    "Availability Zones (AZs) and Fault Tolerance",
+    "Edge Locations (For CDN)",
+    "Why ap-south-1 is the default for Indian apps",
+    "Latency and its business impact"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Welcome back! போன lesson-ல Cloud-ங்குறது நிஜமான physical servers அப்படின்னு பார்த்தோம். ஆனா அந்த servers உலகத்துல எங்க இருக்கு? நீங்க India-ல இருந்துட்டு USA-ல இருக்குற server-ஐ rent பண்ணா என்ன ஆகும்? Today, AWS Global Infrastructure பத்தி decode பண்ண போறோம். Lesson 1.2. Let's go.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Pace · Session 1 · Lesson 1.2",
+        "AWS Global Infrastructure",
+        "Regions, AZs, and Latency"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Regions & Availability Zones",
+      "ava_speaks": "AWS அவங்களோட Data Centers-ஐ உலகம் முழுக்க பிரிச்சு வெச்சிருக்காங்க. இதை 'Regions' அப்படின்னு சொல்வோம். For example, AWS Mumbai (ap-south-1) என்பது ஒரு Region, AWS Virginia (us-east-1) என்பது இன்னொரு Region.\n\nஆனா ஒரு Region-க்குள்ள ஒரே ஒரு building மட்டும் இருக்காது. ஒரு building-ல fire accident நடந்தா app மொத்தமா down ஆகிடும். அதனால, ஒரு Region-க்குள்ள minimum 3 தனித்தனி physical buildings இருக்கும். இதை 'Availability Zones' அல்லது AZs அப்படின்னு சொல்வோம். ஒவ்வொரு AZ-க்கும் தனித்தனி power supply, cooling, and network இருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Infrastructure Hierarchy"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "1. Region = A physical geographic area (e.g., Mumbai, Singapore).\n2. Availability Zone (AZ) = 1 or more physical data centers inside a Region.\n3. Edge Location = Smaller global points for caching data (CloudFront)."
+        },
+        {
+          "type": "draw_diagram",
+          "title": "Inside ap-south-1 (Mumbai Region)",
+          "diagram": {
+            "ascii": [
+              "      [ MUMBAI REGION ]",
+              "    /         |         \\",
+              " [AZ 1]     [AZ 2]     [AZ 3]",
+              " (ap-south-1a) (1b)     (1c)",
+              "  * Fully isolated from each other"
+            ]
+          }
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "உங்களுடைய payment app-ஐ Indian customers-க்காக உருவாக்குகிறீர்கள். எந்த AWS Region-ஐ choose பண்ணுவீங்க?",
+          "options": [
+            "A) us-east-1 (Virginia) - AWS-ன் மிகப்பெரிய Region.",
+            "B) ap-south-1 (Mumbai) - Users-க்கு மிக அருகில் உள்ள Region."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! Users எங்க இருக்காங்களோ, அதுக்கு பக்கத்துல இருக்குற Region-ஐ choose பண்றது தான் Latency-ஐ குறைக்கும்.",
+          "ava_wrong": "தவறு! Users India-ல் இருக்கும்போது, server-ம் India-ல் தான் (Mumbai) இருக்க வேண்டும். Virginia-ஐ choose செய்தால் app மிகவும் slow ஆகிவிடும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "உங்க app ஒரே ஒரு AZ-ல் மட்டுமே ஓடிக்கொண்டிருக்கிறது. அந்த AZ-ல் power cut ஏற்பட்டால் என்ன நடக்கும்?",
+          "options": [
+            "A) App உடனே offline சென்றுவிடும்.",
+            "B) AWS தானாகவே வேறு Region-க்கு மாற்றிவிடும்."
+          ],
+          "correct_index": 0,
+          "ava_correct": "Correct. Single AZ என்பது Single Point of Failure. Power cut ஆனால் app down ஆகிவிடும். அதனால் தான் Multi-AZ முக்கியம்.",
+          "ava_wrong": "இல்லை, app offline ஆகிவிடும்! AWS தானாகவே வேறு Region-க்கு மாற்றாது. நீங்க தான் Multi-AZ-ல் app-ஐ deploy செய்ய வேண்டும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "PhonePe & The Cost of Latency",
+      "ava_speaks": "Latency (delay) எவ்ளோ பெரிய impact உருவாக்கும்னு PhonePe-வோட example வெச்சு சொல்றேன்.\n\nPhonePe அவங்க app-ஐ Day 1-ல இருந்தே Mumbai Region-ல தான் deploy பண்ணாங்க. ஒரு Bangalore user payment பண்ணும்போது, data Mumbai போய் வர வெறும் 8ms தான் ஆகுது. Payment 0.3 seconds-ல complete ஆகிடும்.\n\nஅதே server-ஐ USA (Virginia)-ல வெச்சிருந்தா, request போய் வர 220ms ஆகும். App ரொம்ப slow-ஆ feel ஆகும். Customer 'payment fail ஆகிடுச்சு'னு நினைச்சு 'Pay' button-ஐ ரெண்டாவது முறை click பண்ணுவாங்க. Double charge ஆகி பெரிய trust issue உருவாகும். Latency directly impacts revenue.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Speed of Physics (Bangalore User)"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Region",
+            "Distance",
+            "Latency",
+            "Result"
+          ],
+          "rows": [
+            [
+              "ap-south-1 (Mumbai)",
+              "~1000 km",
+              "8 ms",
+              "Instant Payment"
+            ],
+            [
+              "ap-southeast-1 (Singapore)",
+              "~3200 km",
+              "60 ms",
+              "Slight Lag"
+            ],
+            [
+              "us-east-1 (Virginia)",
+              "~14000 km",
+              "220 ms",
+              "Double-Tap Errors"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Live: AWS Console Region Switcher",
+      "ava_speaks": "இப்போ AWS Console-ல Region எப்படி மாத்துறதுன்னு live-ஆ பார்ப்போம். இது தான் ஒரு Cloud Engineer கவனிக்க வேண்டிய first விஷயம்.",
+      "editor_session": {
+        "language": "browser",
+        "filename": "AWS Management Console",
+        "environment": "visual_ui",
+        "steps": [
+          {
+            "ava_narration": "Console-ல் login பண்ணதும், top-right corner-ஐ பாருங்க. நிறைய பேர் இத கவனிக்காம விட்டுடுவாங்க.",
+            "code": "Navigation Bar -> Top Right\nCurrent Region: N. Virginia (us-east-1)",
+            "highlight_lines": [
+              2
+            ]
+          },
+          {
+            "ava_narration": "Region dropdown-ஐ click பண்ணி, India-க்கு ஏத்த மாதிரி ap-south-1-ஐ select பண்றேன். இப்போ நான் create பண்ற servers எல்லாம் Mumbai-ல உருவாகும்.",
+            "code": "Dropdown -> Select: Asia Pacific (Mumbai) ap-south-1\nCurrent Region: Mumbai (ap-south-1)",
+            "highlight_lines": [
+              1,
+              2
+            ]
+          },
+          {
+            "ava_narration": "EC2 Dashboard போனா, Subnet choose பண்ணும்போது எந்த AZ வேணும்னு (1a, 1b, 1c) நம்மால select பண்ண முடியும்.",
+            "code": "EC2 -> Launch -> Network Settings -> Subnet:\n- ap-south-1a\n- ap-south-1b\n- ap-south-1c",
+            "highlight_lines": [
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "expected_output": {
+          "mumbai": "Console strictly filtered to resources in ap-south-1.",
+          "what_to_notice": "Regions completely isolate resources. Mumbai-ல் create பண்ணிய server, Virginia Region-ல் காட்டாது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Mapping the Latency Rings",
+      "ava_speaks": "Distance-ஐ பொறுத்து speed எப்படி மாறுதுன்னு ஒரு map-ல பாருங்க. Mumbai-ஐ சுத்தி இருக்குற rings தான் latency zones.",
+      "output_preview": {
+        "type": "concept_board",
+        "title": "Latency Rings from Mumbai (ap-south-1)",
+        "what_to_look_for": [
+          "Inner Ring (India): ~10-30ms",
+          "Middle Ring (Middle East / SE Asia): ~60-90ms",
+          "Outer Ring (USA / Europe): ~150-250ms"
+        ],
+        "ava_narration": "உங்க users எந்த ring-குள்ள இருக்காங்களோ, அந்த ஊருக்கு nearest-ஆ இருக்குற Region-ஐ choose பண்ணனும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "உங்க Turn — Architectural Decision",
+      "instruction": "இந்த scenario-ஐ படிச்சு சரியான architecture-ஐ design பண்ணுங்க.",
+      "requirements": [
+        "நீங்க ஒரு Hotel Booking app-ஐ Indian travelers-க்காக உருவாக்குறீங்க.",
+        "1. எந்த Region-ஐ choose பண்ணுவீங்க?",
+        "2. Single-AZ use பண்ணுவீங்களா அல்லது Multi-AZ use பண்ணுவீங்களா?",
+        "3. Multi-AZ use பண்ணால் cost எப்படி மாறுபடும்?"
+      ],
+      "starter_code": "Decisions:\nRegion: [Your Choice]\nAZ Setup: [Single / Multi]\nCost Impact: [Same / Double / Half]",
+      "hints": [
+        "Indian users-க்கு latency கம்மியா இருக்கணும்.",
+        "App எப்பவும் down ஆகக்கூடாது (High Availability)."
+      ],
+      "ava_solution": {
+        "explanation": "Region: ap-south-1 (Mumbai) தான் correct. AZ Setup: Multi-AZ (குறைந்தது 2 AZ-களில் servers இருக்க வேண்டும்). Cost: இரண்டு servers ஓடுவதால் cost exactly Double ஆகும். ஆனால் Booking app down ஆனா revenue loss பெரியதா இருக்கும், so the cost is worth it."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The YouTube Tutorial Mistake",
+      "ava_speaks": "நிறைய beginners பண்ற ஒரு classic mistake இது தான்.",
+      "setup": "ஒரு developer YouTube tutorial பார்த்து Indian food delivery app-ஐ deploy பண்றார். Tutorial-ல் US Region (us-east-1) use பண்ணியிருப்பாங்க. Developer-ம் அதையே blindly follow பண்றார்.",
+      "what_happened": "App live ஆனதும் Indian users-க்கு 250ms latency வருது. App ரொம்ப slow ஆகி, loading screen சுத்திட்டே இருக்கு. App உடைந்திருப்பதாக நினைத்து users delete பண்ணிடுறாங்க.",
+      "the_real_problem": "Code-ல் எந்த பிரச்சனையும் இல்லை. Region தப்பாக select பண்ணது தான் பிரச்சனை.",
+      "fix": {
+        "code": "1. Check Region Selector top-right.\n2. Switch from us-east-1 to ap-south-1.\n3. Re-deploy the EC2 instance.",
+        "result": "Latency 250ms-ல் இருந்து 12ms ஆக குறையும். Zero code changes!"
+      },
+      "lesson": "Never copy a tutorial's Region blindly. Always match the Region to your users."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "3 Quick Questions",
+      "ava_speaks": "உங்களுடைய judgment-ஐ test பண்ண 3 scenarios.",
+      "challenges": [
+        {
+          "question": "உங்க app-க்கு India மற்றும் Australia-ல் சரிசமமான users இருக்கிறார்கள். ஒரே ஒரு Region மட்டும் தான் choose பண்ண முடியும். எதை choose பண்ணுவீங்க?",
+          "answer": "Singapore (ap-southeast-1). இரண்டு நாடுகளுக்கும் நடுவில் உள்ள Region-ஐ choose செய்தால் latency balance ஆகும்."
+        },
+        {
+          "question": "உங்க app-க்கு 99.99% uptime தேவை. ஒரு Region-ல் குறைந்தபட்சம் எத்தனை AZ-களை நீங்கள் use செய்ய வேண்டும்?",
+          "answer": "குறைந்தபட்சம் 2 AZ-கள் (Multi-AZ setup). ஒரு AZ down ஆனாலும் இன்னொன்று காப்பாற்றும்."
+        },
+        {
+          "question": "Netflix videos Lucknow-ல் வேகமாக load ஆகிறது. ஆனால் அங்கே AWS Region இல்லை. இது எப்படி சாத்தியம்?",
+          "answer": "Edge Locations (CloudFront). AWS உலகம் முழுவதும் 400+ Edge Locations-ல் data-வை cache செய்து வைக்கிறது."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Real Development-ல எப்படி நடக்கும்",
+      "ava_speaks": "Real world-ல ஒரு புது project start பண்ணும்போது இந்த decisions தான் first எடுப்பாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "User Location Analysis",
+          "detail": "Major user base எந்த நாட்டில் இருக்கிறது என்று identify செய்வது."
+        },
+        {
+          "step": 2,
+          "action": "Set Default Region",
+          "detail": "Console-ல் login செய்ததும் Top-Right corner-ஐ சரிபார்த்து Region-ஐ மாற்றுவது."
+        },
+        {
+          "step": 3,
+          "action": "Plan AZ Distribution",
+          "detail": "Single point of failure-ஐ தடுக்க resources-ஐ AZ 1a மற்றும் 1b என பிரித்து வைப்பது."
+        },
+        {
+          "step": 4,
+          "action": "Global Caching",
+          "detail": "Static images-க்கு Edge Locations (CloudFront CDN) பயன்படுத்துவது."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "Region Selector",
+          "use": "Console-ல் எந்த data center-ல் வேலை செய்கிறோம் என்பதை முடிவு செய்ய."
+        },
+        {
+          "tool": "CloudPing.info",
+          "use": "எந்த Region-ல் latency குறைவாக உள்ளது என test செய்ய."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Cloud-ல் Region என்பது ஊர்கள் (e.g., Mumbai, Virginia). AZ என்பது அந்த ஊருக்குள்ள இருக்குற தனித்தனி physical buildings. Users எந்த நாட்டில் இருக்கிறார்களோ, அவர்களுக்கு அருகிலுள்ள Region-ஐ choose பண்ணுவது தான் மிக முக்கியம். Single AZ-ல் app-ஐ வைப்பது ஆபத்து, எப்பவும் Multi-AZ-ஐ பயன்படுத்துங்கள்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson 1.2 — Summary",
+      "points": [
+        "✓ Regions = Geographic areas containing data centers.",
+        "✓ AZs = Isolated physical buildings inside a Region (Avoids single point of failure).",
+        "✓ Latency = Physical distance creates delay. Closer Region = Faster App.",
+        "✓ Golden Rule = Check the top-right Region selector before building anything."
+      ],
+      "coming_next": "Lesson 1.3: Console Navigation"
+    }
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "C1.2-T1",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Region vs AZ — applied",
+      "scenario_text": "MedGo's architect draws the board as: 'ap-south-1 (Mumbai) is one building; each AZ is a different country.' Before the design review, what do you correct?",
+      "options": [
+        "Keep it — a Region is always a single building.",
+        "Keep it — AZs are countries and Regions sit inside them.",
+        "Flip it — a Region is the geographic area (Mumbai); each AZ is an isolated data-center building inside that Region."
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Correct. Region = /area. AZ = isolated building. MedGo board accurate.",
+      "ava_feedback_wrong": "Region geographic area; AZ isolated data center — reverse Not quite.",
+      "whiteboard_heading": "MedGo Region vs AZ",
+      "whiteboard_points": [
+        "Region = Geographic Area",
+        "AZ = Isolated Data Center inside a Region"
+      ]
+    },
+    {
+      "task_id": "C1.2-T2",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Choosing a region for Indian users",
+      "scenario_text": "MedGo's doctors and patients are almost entirely in Tamil Nadu and Karnataka. Video consults feel laggy if round-trip delay is high. Which Region should you launch the consult API in first?",
+      "options": [
+        "us-east-1 (N. Virginia) — most tutorials use it",
+        "eu-west-1 (Ireland) — cheaper compute this month",
+        "ap-south-1 (Mumbai) — closest major AWS Region to your users"
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Users India- → server- India- (Mumbai). Latency = fewer dropped video frames.",
+      "ava_feedback_wrong": "Tutorial popularity / temporary price beats physics Not quite. Put compute near MedGo's patients — ap-south-1.",
+      "whiteboard_heading": "MedGo Latency Choice",
+      "whiteboard_points": [
+        "Match server location to user location",
+        "Closer distance = Lower Latency = Faster App"
+      ]
+    },
+    {
+      "task_id": "C1.2-T3",
+      "task_number": 3,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Fault tolerance / Multi-AZ setup",
+      "scenario_text": "MedGo runs its booking API on a single EC2 in one AZ inside Mumbai. That AZ loses power for 40 minutes during a storm. What happens, and what should have been different?",
+      "options": [
+        "AWS silently fails the instance over to another AZ with zero downtime — no design change needed.",
+        "Booking goes fully offline (single point of failure). MedGo should have run capacity in at least two AZs.",
+        "Edge Locations keep the API alive even if the AZ burns."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Single AZ = single point of failure. Multi-AZ No storm = full outage. AWS compute- auto-move do.",
+      "ava_feedback_wrong": "AWS single EC2- magic- AZ- shift do. Design Multi-AZ from day one.",
+      "whiteboard_heading": "MedGo Single Point of Failure",
+      "whiteboard_points": [
+        "1 AZ = High Risk",
+        "Multi-AZ = High Availability",
+        "AWS does not auto-replicate compute across AZs"
+      ]
+    },
+    {
+      "task_id": "C1.2-T4",
+      "task_number": 4,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Wrong-region latency trap",
+      "scenario_text": "A MedGo intern copies a Singapore workshop lab and deploys the patient portal in ap-southeast-1. Chennai users report 2–3 second page loads. Code looks fine in reviews. Fastest real fix?",
+      "options": [
+        "Rewrite the React frontend for micro-optimizations.",
+        "Redeploy the portal in ap-south-1 (Mumbai) so distance (and latency) drops.",
+        "Buy the largest instance size available in Singapore."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Code innocent — distance guilty. Move the workload near users (Mumbai), don't just buy a bigger faraway box.",
+      "ava_feedback_wrong": "Bigger CPU in Singapore still fights 1000+ km of network. Region near users wins.",
+      "whiteboard_heading": "MedGo Region Trap",
+      "whiteboard_points": [
+        "Never blindly copy a lab's Region",
+        "Code cannot beat physics",
+        "Always check the top-right Region selector"
+      ]
+    },
+    {
+      "task_id": "C1.2-T5",
+      "task_number": 5,
+      "type": "match_task",
+      "ui_component": "MatchComponent",
+      "difficulty": "fresher",
+      "topic": "Diagnose MedGo infrastructure symptoms",
+      "left_items": [
+        "MedGo picks Mumbai as the place all primary resources live",
+        "MedGo splits booking servers across two isolated buildings in Mumbai",
+        "MedGo caches doctor profile photos at nearby PoPs so Lucknow loads fast",
+        "Patients in Chennai feel delay talking to a Virginia-hosted API"
+      ],
+      "right_items": [
+        "Region decision",
+        "Multi-AZ design",
+        "Edge Location / CDN pattern",
+        "High latency from distance"
+      ],
+      "correct_pairs": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "ava_feedback_correct": "You diagnosed MedGo's symptoms with the right infrastructure labels — not flashcard recall.",
+      "ava_feedback_wrong": "Mumbai home = Region. Two buildings = AZs. Cached photos far from origin = Edge. Virginia lag = Latency.",
+      "whiteboard_heading": "MedGo Infra Diagnosis",
+      "whiteboard_points": [
+        "Region = Area",
+        "AZ = Building",
+        "Edge = Cache",
+        "Latency = Delay"
+      ]
+    }
+  ],
+  "content_status": "live"
+}

@@ -1,0 +1,228 @@
+{
+  "lesson_id": "C4.5",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nThis fleet grows and shrinks based on someone noticing traffic is high and manually bumping a number, not on any automatic policy. order-service's ASG has had min=3, desired=4, max=6 since the resilience work a while back, but nobody ever actually attached a scaling policy to it. Let's fix that properly, and let's make sure the numbers themselves are actually right, not just present.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nGood instinct catching that max=6 during the flash sale test — a real scaling policy is only as good as the ceiling it's allowed to work within. Target tracking is live now, cooldowns are sensible, and max is raised to something that can actually absorb a real spike instead of hitting a wall and returning 503s to customers.\n\nLast piece of compute: pricing models. We've been paying On-Demand for everything, and I don't think that's right for all of it.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.5-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.5",
+      "scenario": "You check order-service's ASG configuration: min=3, desired=4, max=6, spanning 3 AZs (set during the earlier resilience work). No scaling policy is attached — desired count has only ever been changed manually by an engineer noticing load was high.",
+      "question": "What's the practical consequence of having min/max/desired set correctly but no actual scaling policy attached?",
+      "options": [
+        "A) There's no real consequence — AWS automatically scales within min/max regardless of whether a policy is attached",
+        "B) The ASG will never automatically add or remove capacity based on actual load — it will simply stay at whatever desired count was last set manually, growing or shrinking only when someone notices and intervenes by hand, which can be too slow during a real traffic spike or wasteful during a quiet period",
+        "C) Without a scaling policy, the ASG defaults to always running at max capacity at all times",
+        "D) Without a scaling policy, the ASG defaults to always running at min capacity at all times"
+      ],
+      "correct_index": 1,
+      "explanation": "min/max/desired setting itself scaling policy not — that just BOUNDARIES define does. Actual automatic response (load high — scale out, load low — scale in) a real POLICY attach because of doing only happens. Without, desired count static-a will be, manual intervention only change.",
+      "ren_correct": "Correct — bounds setting and actual scaling policy both different different topic.",
+      "ren_wrong": "A bit think again — min/max/desired only if it was automatic scaling to happenthu. Policy attach must do real for response."
+    },
+    {
+      "id": "C4.5-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.5",
+      "question": "In an ASG configuration, what do min, max, and desired actually control?",
+      "options": [
+        "A) min and max are suggestions the ASG can ignore; only desired is ever actually enforced",
+        "B) min is the floor (never fewer instances than this), max is the ceiling (never more instances than this, even if scaling policies want to add more), and desired is the current target the ASG is actively trying to maintain, always kept between min and max",
+        "C) max is the floor and min is the ceiling — the naming is reversed from what most people expect",
+        "D) desired has no real effect — only min and max matter for actual instance count"
+      ],
+      "correct_index": 1,
+      "explanation": "min — floor, max — ceiling — scaling policy edho says vachu desired count max-a exceed doing not, min-a below poga cannot. Desired — ASG active-a maintain doing, min-max for range ulla.",
+      "ren_correct": "Correct — min floor, max ceiling, desired active target, all ithoda relationship correct-a is clear.",
+      "ren_wrong": "A bit think again — min floor, max ceiling, desired active target. Naming reverse not, this standard definition."
+    },
+    {
+      "id": "C4.5-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.5",
+      "question": "What's the difference between target tracking scaling, step scaling, and scheduled scaling?",
+      "options": [
+        "A) They're three names for the exact same underlying mechanism, just configured through different console screens",
+        "B) Target tracking automatically adjusts capacity to keep a metric (e.g. CPU utilization) at a set target, continuously and reactively. Step scaling adds/removes specific instance counts based on how far a metric crosses defined thresholds. Scheduled scaling changes capacity at specific, known times (e.g. before an expected daily peak), regardless of current metrics",
+        "C) Scheduled scaling is deprecated and should never be used in any modern setup",
+        "D) Step scaling can only scale IN (remove instances), never scale OUT (add instances)"
+      ],
+      "correct_index": 1,
+      "explanation": "Moonu different different approach — target tracking continuous-a metric-a monitor after doing adjust does (most common, reactive). Step scaling specific thresholds cross to do specific step-a add/remove does. Scheduled scaling KNOWN in time (metrics paakama) capacity change does — e.g. lunch hour peak already earlier ready for doing.",
+      "ren_correct": "Correct — moonume different different use for case, a replace doing not different onna.",
+      "ren_wrong": "A bit think again — moonume different mechanisms, same not. Ovvoruthukum different different use case is there."
+    },
+    {
+      "id": "C4.5-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.5",
+      "scenario": "You pull the full picture of how order-service's capacity has actually been managed over the past month.",
+      "broken_config": "order-service ASG: min=3, desired=4, max=6, 3 AZs, no scaling policy attached\n\nManual desired-count changes (from CloudTrail), last 30 days:\n├── Day 3: desired 4→6 (manually bumped after karthik-dev noticed high latency during a promo)\n├── Day 4: desired 6→4 (manually reduced back down, a day late, after promo traffic subsided)\n├── Day 17: desired 4→5 (bumped again during a different high-traffic period)\n└── Day 19: desired 5→4 (reduced back, again after the fact)\n\nCloudWatch CPU utilization during these periods: consistently 75-85% during the high-traffic windows before manual intervention, dropping to 30-40% after",
+      "what_to_find": [
+        "Every capacity change has been REACTIVE and manual — someone had to notice high latency/CPU first, then act, meaning there was always a lag between the actual load increase and the capacity response",
+        "The reductions back down also happened late (a full day after traffic subsided in one case), meaning FoodQuick paid for unnecessary capacity for longer than needed",
+        "CPU utilization sitting at 75-85% for extended periods before intervention suggests customers likely experienced degraded performance during the lag, not just an internal metrics concern",
+        "This entire pattern is exactly what an automatic scaling policy is designed to eliminate — both the slow scale-out response and the wasteful slow scale-in"
+      ],
+      "correct_fix": "Attach a target tracking scaling policy based on CPU utilization, with a target (e.g. 60%) low enough to leave headroom for the scale-out to actually happen before customers are affected, replacing the manual bump-and-forget pattern entirely.",
+      "explanation": "This exact spec problem — manual scaling — lag will be two directions-layum (scale out late, scale in late). Automatic target tracking policy idha eliminate does, proactive-a react does before customer impact serious-a aagardhukku first."
+    },
+    {
+      "id": "C4.5-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.5",
+      "question": "Arrange the correct order to set up and validate the new target tracking scaling policy.",
+      "items": [
+        "Review historical CPU utilization patterns to choose a sensible target percentage, not an arbitrary guess",
+        "Attach a target tracking policy with the chosen CPU target to the ASG",
+        "Set an appropriate cooldown period so the ASG doesn't react to every brief, temporary spike",
+        "Test the policy with a simulated load increase and confirm it scales out appropriately",
+        "Monitor for a full week of real traffic to confirm the policy behaves sensibly before considering this fully done"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Data-driven target choose doing first, then policy attach must do, cooldown set must do (flapping avoid for doing), then simulated test, LAST-a real in traffic a full week monitor must do before fully-done — declare doing.",
+      "ren_correct": "Nice sequencing — data-driven decision, safety (cooldown), test, and real-world monitoring before declaring done.",
+      "ren_wrong": "Order again paaru — target percentage arbitrary-a guess without doing, historical data first paakkanum."
+    },
+    {
+      "id": "C4.5-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.5",
+      "scenario": "Historical data shows CPU utilization climbing above 80% is when latency actually starts degrading for customers. karthik-dev suggests setting the target tracking target at 85%, reasoning 'that way we use the instances more fully before scaling out, saving cost.'",
+      "question": "Is targeting 85% CPU utilization a good choice here?",
+      "options": [
+        "A) Yes — maximizing utilization before scaling always saves the most money with no downside",
+        "B) No — since 80% is where degradation actually starts, a target of 85% means the ASG only starts scaling out AFTER customers are already experiencing problems, and it takes time to actually launch and register new instances. The target should be set with headroom BELOW the degradation point (e.g. 60-65%), so scaling completes before customers are affected, not after",
+        "C) Yes, but only if the cooldown period is also set to zero",
+        "D) It doesn't matter what target is chosen, since target tracking always scales instantly with zero lag"
+      ],
+      "correct_index": 1,
+      "explanation": "85% target —, degradation start aaga (80%) Then scaling trigger will happen — and new instance launch after doing, healthy aagi, traffic receive for doing a bit time edukkum. This lag-a customer already impact but then fix will happen. Target-a degradation for point KEEZHA vekkanum (60-65%), scaling COMPLETE aaganum customer affect aagardhukku first.",
+      "ren_correct": "Correct — target headroom below the degradation in point vekkanum, not right at or above it.",
+      "ren_wrong": "A bit think again — maximizing utilization cost save even if done, customer already degradation feel did then scale doing late. Headroom is needed."
+    },
+    {
+      "id": "C4.5-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.5",
+      "scenario": "You're setting the cooldown period for the scaling policy. ananya-analyst asks: 'Why not just set the cooldown to 0, so the ASG can react as fast as possible to any change?'",
+      "question": "What's the risk of setting cooldown to 0 (or an extremely short value)?",
+      "options": [
+        "A) There's no risk — faster reaction is always strictly better with no downside",
+        "B) With no cooldown, the ASG might repeatedly scale out and back in (\"flapping\") in response to normal, brief metric fluctuations that don't reflect a genuine sustained trend — each scaling action also needs time to actually take effect (new instances need to boot and become healthy) before its impact is even visible in the metrics, so reacting instantly can mean overreacting before the previous action has even registered",
+        "C) Cooldown only affects scale-IN actions, never scale-out, so it's irrelevant to this concern",
+        "D) A cooldown of 0 is not technically possible to configure in AWS"
+      ],
+      "correct_index": 1,
+      "explanation": "Cooldown without, ASG brief, temporary spikes-kum react we can do, unnecessary flapping create does. Importantly, a scaling action's effect (new instance boot aagi healthy aaganum) visible aaga a bit time edukkum — that for time earlier different action edukka try did, confusing, wasteful flapping will come.",
+      "ren_correct": "Correct — cooldown flapping avoid does, and scaling action's effect visible aaga time gives.",
+      "ren_wrong": "A bit think again — instant reaction always better not. Cooldown without flapping risk is there, real problem."
+    },
+    {
+      "id": "C4.5-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.5",
+      "scenario": "The target tracking policy is live and working well for weeks. Then FoodQuick runs a major flash sale promotion, driving traffic far higher than anything seen before. Customers start reporting 503 errors during the sale's peak hour.",
+      "error_shown": "ALB target group: \"503 Service Unavailable\" — CloudWatch shows the ASG at 6/6 instances (at max capacity) with CPU utilization at 94%, scaling activity log shows repeated 'attempted to scale to 8 desired, but max capacity is 6' entries",
+      "diagnosis": "The target tracking policy is working exactly as designed — it correctly detected sustained high CPU and repeatedly tried to scale out. But it hit the ASG's max=6 ceiling, which was set during the earlier resilience work for a very different reason (AZ-failure redundancy) and was never revisited for genuine peak-traffic capacity planning. The policy has no ability to exceed max, no matter how badly it's needed — max is a hard ceiling by design.",
+      "fix": "Raise the ASG's max capacity to a value that reflects genuine peak-traffic headroom (informed by load testing, not just AZ-redundancy math), and re-run a simulated flash-sale-level load test to confirm the new max allows the policy to scale out enough to avoid 503s.",
+      "explanation": "This exact spec mistake — max capacity too low, scaling policy velai does correctly, but ceiling for that block does. This real reminder — min/max numbers a for context (AZ redundancy) set if we had done, that different for context (peak traffic) automatically correct-a will be — guarantee not — periodically revisit must do."
+    },
+    {
+      "id": "C4.5-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.5",
+      "scenario": "Max capacity is raised and re-tested. Final audit before reporting back.",
+      "broken_config": "order-service ASG (updated):\n├── min=3, desired=4, max=12 (raised from 6, based on flash-sale load test data)\n├── Target tracking: CPU utilization target 60%\n├── Cooldown: 180 seconds\n└── 3 AZs, mixed instance types (from earlier resilience work)\n\nSimulated flash-sale load test (2x the traffic seen during the real incident):\n├── ASG scaled out to 10/12 instances during peak, staying below max\n├── CPU utilization held around 55-65% throughout, never approaching the degradation threshold\n└── Zero 503 errors observed during the full simulated test",
+      "what_to_find": [
+        "Max capacity now reflects genuine peak-traffic headroom, not just the AZ-redundancy number from a different context",
+        "The scaling policy successfully kept CPU utilization near its target throughout, meaning customers didn't experience degradation this time",
+        "Staying below max (10/12, not hitting the ceiling) during a 2x load test shows real headroom remains, not just barely enough capacity",
+        "Zero 503s during the test is the real proof this is fixed, not just that the numbers look reasonable on paper"
+      ],
+      "correct_fix": "No further changes needed — verified under a real (simulated) stress test, not just a configuration review.",
+      "explanation": "This 'recognize this is already correct' verify task — we max raise we have done based on REAL data (load test), not a guess, and confirm we have done real simulated in stress zero 503s-a."
+    },
+    {
+      "id": "C4.5-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.5",
+      "cases": {
+        "case_1": "order-service's day-to-day, somewhat unpredictable customer traffic, which needs to respond automatically to whatever load actually shows up",
+        "case_2": "FoodQuick's known, reliable daily lunch-hour (12-2pm) traffic spike, which happens predictably every single day regardless of anything else",
+        "case_3": "A one-time, announced flash sale event happening at a specific known date and time next month"
+      },
+      "correct_answers": {
+        "case_1": "Target tracking — reactive, continuous adjustment fits genuinely unpredictable day-to-day load best",
+        "case_2": "Scheduled scaling (as a baseline floor before lunch hour) combined with target tracking as the safety net on top — since the pattern is known and reliable, pre-scaling ahead of it avoids any lag, while target tracking still handles anything beyond the expected pattern",
+        "case_3": "Scheduled scaling for the specific known event, likely combined with a temporarily raised max capacity for that window specifically, similar to the flash-sale lesson just learned"
+      },
+      "scenario": "Ravi asks you to match the right scaling approach to three different traffic patterns FoodQuick deals with.",
+      "explanation": "Moonu different different predictability level — genuinely unpredictable (target tracking), predictable-and-recurring (scheduled + target tracking together, not either alone), one-time-known-event (scheduled + temporary max increase). This real judgment, blanket 'always use target tracking' a answer not.",
+      "ren_correct": "Correct — predictability level-a base after doing right approach (or combination) match did you do.",
+      "ren_wrong": "A bit think again — each case also different different predictability level is there, for each one different different approach (or combination) fit will happen."
+    },
+    {
+      "id": "C4.5-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.5",
+      "scenario": "Ravi asks whether raising max from 6 to 12 creates a meaningful ongoing cost risk, given the ASG could theoretically now run twice as many instances. An m5.large costs roughly ₹5,600/month running continuously; the target tracking policy only scales OUT when actual CPU load genuinely demands it, and back in when load subsides.",
+      "question": "Is raising max to 12 a meaningful ongoing cost risk, given how target tracking actually works?",
+      "solution": "Raising max doesn't mean FoodQuick pays for 12 instances constantly — the target tracking policy only scales toward max when genuine load actually requires it, and scales back down afterward. The real cost exposure is bounded by actual usage patterns, not the ceiling itself. The flash-sale test showed peak usage around 10 instances for a few hours, not 12 for a whole month — a realistic cost impact of a few thousand rupees for that event, which is a reasonable trade against the 503-driven lost sales and customer trust the last flash sale actually cost.",
+      "explanation": "This real cost framing — max raise doing automatic-a cost adhigam what was done, ywhat scaling policy actual load-a only respond does. Real cost bounded by usage, not the ceiling number itself."
+    },
+    {
+      "id": "C4.5-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.5",
+      "scenario": "Time to report back to Ravi on this piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Set up auto scaling. Should handle traffic better now.\"",
+        "B) \"Replaced manual desired-count bumping with a target tracking policy (CPU target 60%, informed by real data on where degradation starts) and a 180s cooldown to prevent flapping. Flash-sale-scale load testing surfaced a real gap: max=6 (set for AZ-redundancy reasons, not peak-traffic capacity) caused 503s once the ASG hit its ceiling despite the policy working correctly. Raised max to 12 based on load test data, re-tested at 2x real incident load with zero 503s and real headroom remaining. Ongoing cost impact is usage-bound, not ceiling-bound, and reasonable against the cost of lost sales during the last flash sale.\"",
+        "C) \"Traffic issues are resolved now, no other details to share.\"",
+        "D) \"The 503s during the flash sale were a one-time fluke unrelated to our scaling configuration.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — full technical chain explain must do (manual-to-automatic, the real max-capacity gap found under real load, the fix, AND the cost framing). 'One-time fluke unrelated' — wrong — this directly max capacity configuration's result-a was there, fluke not.",
+      "ren_correct": "This correct report — full chain, evidence-based, and correctly attributes the 503s to the actual configuration gap.",
+      "ren_wrong": "This report either vague-a is there or real root cause-a dismiss does ('one-time fluke') — this real, explainable configuration gap."
+    }
+  ],
+  "act_number": 6,
+  "act_title": "Auto Scaling That Survives Failure",
+  "builds_layer": "Elasticity Layer"
+}

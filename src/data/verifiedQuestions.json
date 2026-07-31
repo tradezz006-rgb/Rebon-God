@@ -1,0 +1,9 @@
+[
+  {
+    "lesson_id": "1.1",
+    "question": "What happens if I use GET instead of POST for a password?",
+    "expected_intent": "security concerns of GET vs POST",
+    "verified_response": "If you use GET, the password becomes part of the URL. This means it gets saved in browser history, server logs, and can be easily intercepted. Always use POST for sensitive data because it puts the data securely in the body of the request.",
+    "whiteboard_summary": "GET = URL (Public) | POST = Body (Secure)"
+  }
+]

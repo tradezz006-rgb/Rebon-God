@@ -1,0 +1,323 @@
+{
+  "lesson_id": "C5.2",
+  "lesson_title": "S3 Security",
+  "section_id": "CS5",
+  "section_name": "Storage",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C5.1b — S3 Storage Classes",
+  "student_will_learn": [
+    "Explain what Block Public Access is and why it acts as a master switch",
+    "Write a bucket policy that grants access to a specific principal",
+    "Generate and use a pre-signed URL for temporary, controlled access",
+    "Explain the difference between server-side and client-side encryption options",
+    "Identify why disabling Block Public Access 'temporarily' is a serious, recurring risk"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம storage classes பார்த்தோம். இப்போ CFO-ஓட FQ-189 ticket-ல அடுத்த கவலை - 'நம்ம S3 buckets-ல sensitive data இருக்கு, அது accidental-ஆ public-ஆ exposed ஆகாதுனு எப்படி உறுதி பண்றது?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற S3 Security.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS5 · Lesson C5.2",
+        "S3 Security",
+        "Ticket FQ-189 — continuing with CFO's Office"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Block Public Access — The Master Switch",
+      "ava_speaks": "S3-ல security-ஓட முதல் layer - Block Public Access. இது ஒரு account-level அல்லது bucket-level 'master switch' - இது ON-ஆ இருந்தா, bucket policy அல்லது object ACL எவ்ளோ permissive-ஆ இருந்தாலும், public access சாத்தியமே இல்ல. இது தான் safety net - individual policies-ல ஒரு mistake நடந்தாலும், இது overall protection தரும். Bucket policies, specific principals (IAM users, roles, accounts)-க்கு access grant பண்ண use பண்றோம் - Block Public Access OFF ஆகி இருந்தா மட்டும் தான் இது public access-ஐயும் grant பண்ண முடியும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Block Public Access Is a Safety Net, Not Just Another Setting"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Block Public Access ON",
+            "Block Public Access OFF"
+          ],
+          "rows": [
+            [
+              "Public access impossible, regardless of bucket policy or ACL settings",
+              "Public access possible IF a policy or ACL explicitly grants it"
+            ],
+            [
+              "Protects against accidental misconfiguration",
+              "A single mistake in a policy can expose data publicly"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "AWS enables Block Public Access by default on new buckets and accounts. Turning it off should always be a deliberate, reviewed, and time-boxed decision — never a permanent 'just in case' setting."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "Block Public Access ON-ஆ இருக்கு, ஆனா bucket policy-ல தப்பா ஒரு public-grant statement add பண்ணப்பட்டிருக்கு. Bucket public-ஆ access ஆகுமா?",
+          "options": [
+            "A) ஆமா, bucket policy explicit-ஆ allow பண்ணுது",
+            "B) இல்ல, Block Public Access, bucket policy-ஐ override பண்ணி, public access-ஐ முழுசா தடுக்கும்",
+            "C) Sometimes, IP address-ஐ பொறுத்து",
+            "D) Bucket automatic-ஆ delete ஆயிடும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Block Public Access ON-ஆ இருக்கும்போது, அது ஒரு master switch மாதிரி - bucket policy-ல தப்பான public grant இருந்தாலும், அது override ஆகி, public access தடுக்கப்படும்.",
+          "ava_wrong": "இல்ல, Block Public Access தான் இங்க முடிவெடுக்கும் - அது ON-ஆ இருந்தா, bucket policy எவ்ளோ permissive-ஆ இருந்தாலும், public access சாத்தியமே இல்ல. இதுதான் இதோட safety-net design."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு engineer, testing-க்காக Block Public Access-ஐ temporary-ஆ OFF பண்ணி, sensitive documents வெச்சிருக்கற bucket-ல மறந்துடுறார். இது ஏன் risky?",
+          "options": [
+            "A) Risky இல்ல, temporary settings automatic-ஆ revert ஆகும்",
+            "B) Risky, ஏன்னா OFF பண்ணின பிறகு, யாராவது bucket policy-ல தப்பா ஒரு public grant add பண்ணா (அல்லது ஏற்கனவே இருந்தா), data உடனே publicly exposed ஆகும்",
+            "C) Risky இல்ல, S3 automatic-ஆ sensitive data detect பண்ணி protect பண்ணும்",
+            "D) இது ஒரு billing issue மட்டும், security issue இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Settings automatic-ஆ revert ஆகாது - 'temporary' OFF, forever OFF-ஆ மாறிடலாம், அந்த window-ல ஒரு misconfigured policy exist பண்ணா, data உடனே exposed ஆயிடும்.",
+          "ava_wrong": "இல்ல, இது ஒரு real, serious risk - Block Public Access OFF ஆனதும் automatic-ஆ back ON ஆகாது. 'Temporary'nு நினைச்சு மறந்துட்டா, அந்த bucket permanently exposed-ஆ இருக்கக்கூடும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Publicly Exposed S3 Buckets — A Recurring, Costly Mistake",
+      "ava_speaks": "Publicly exposed S3 buckets, globally-ஆ ரொம்ப common data breach pattern - security researchers, தொடர்ந்து misconfigured public buckets கண்டுபிடிச்சு report பண்றாங்க. ஒரு mid-size Indian e-commerce startup, ஒரு testing exercise-க்காக Block Public Access disable பண்ணி, customer address மற்றும் phone number data கொண்ட ஒரு bucket-ஐ accidentally 11 நாள் public-ஆ விட்டுட்டாங்க - security researcher அதை discover பண்ணி report பண்ணும் வரைக்கும் யாருக்கும் தெரியல. இது ஒரு data breach notification, customer trust loss, மற்றும் regulatory scrutiny-க்கு வழிவகுத்துச்சு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Cost of 'Temporary' Security Changes"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Day 0",
+              "Block Public Access disabled 'temporarily' for a testing exercise"
+            ],
+            [
+              "Day 0-11",
+              "Bucket containing customer address and phone data sits publicly exposed"
+            ],
+            [
+              "Day 11",
+              "Security researcher discovers and reports the exposure"
+            ],
+            [
+              "Aftermath",
+              "Data breach notification, customer trust loss, regulatory scrutiny"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Configuring Secure Access — Bucket Policy and Pre-Signed URL",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட documents bucket-க்கு, correct security controls set பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "S3",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல, foodquick-internal-documents bucket-ல Block Public Access, ON-ஆ இருக்கானு confirm பண்றோம் - இது default state, மாத்தவே கூடாது இந்த bucket-க்கு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "S3 Console → foodquick-internal-documents → Permissions → Block public access",
+              "highlight": "Block public access settings — all 4 checkboxes enabled",
+              "result": "Confirms this sensitive bucket has full Block Public Access protection active"
+            }
+          },
+          {
+            "ava_narration": "இப்போ ஒரு bucket policy add பண்றோம் - specific-ஆ 'foodquick-finance-team-role' IAM role-க்கு மட்டும் read access குடுக்க.",
+            "console_action": {
+              "type": "fill",
+              "path": "Permissions → Bucket policy → Edit",
+              "field": "Bucket policy JSON",
+              "value": "{ \"Effect\": \"Allow\", \"Principal\": { \"AWS\": \"arn:aws:iam::123456789012:role/foodquick-finance-team-role\" }, \"Action\": \"s3:GetObject\", \"Resource\": \"arn:aws:s3:::foodquick-internal-documents/*\" }",
+              "highlight": "Bucket policy editor",
+              "result": "Only the finance team's IAM role can now read objects in this bucket — no public access, no broad account-wide access"
+            }
+          },
+          {
+            "ava_narration": "ஒரு external auditor-க்கு, ஒரு specific document-ஐ 24 மணி நேரத்துக்கு access குடுக்கணும் - IAM role create பண்றதுக்கு பதிலா, ஒரு pre-signed URL generate பண்றோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Object actions → Generate presigned URL",
+              "highlight": "Generate presigned URL option",
+              "result": "A dialog opens to configure the temporary URL"
+            }
+          },
+          {
+            "ava_narration": "Expiration time-ஆ 24 hours கொடுத்து, URL generate பண்றோம். இந்த URL-ஐ auditor-க்கு அனுப்பலாம் - அவங்க AWS credentials எதுவும் தேவை இல்லாம, இந்த ஒரே object-ஐ, 24 மணி நேரத்துக்கு மட்டும் access பண்ணலாம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Generate presigned URL dialog",
+              "field": "Expiration",
+              "value": "24 hours",
+              "highlight": "Expiration time field",
+              "result": "A time-limited URL is generated that grants access to this one object only, automatically expiring after 24 hours"
+            }
+          },
+          {
+            "ava_narration": "இறுதியா, bucket-ஓட Default encryption setting-ஐ check பண்றோம் - SSE-S3 (server-side encryption, AWS-managed keys) already enabled-ஆ இருக்கு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Properties → Default encryption",
+              "highlight": "Default encryption showing 'Enabled — SSE-S3'",
+              "result": "Confirms every object uploaded to this bucket is automatically encrypted at rest"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "foodquick-internal-documents remains fully protected by Block Public Access, grants access only to the specific finance team role via bucket policy, uses a pre-signed URL for the one-off auditor access need, and encrypts everything at rest by default.",
+          "what_to_notice": "External access (auditor) கிடைத்தது Block Public Access-ஐ ஒரு போதும் disable பண்ணாமலேயே - pre-signed URL, scoped, temporary access தந்துச்சு, முழு bucket-ஐயும் risk-க்கு வைக்காம."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How a Pre-Signed URL Grants Temporary Access Without a Policy Change",
+      "ava_speaks": "இந்த diagram பாரு - pre-signed URL எப்படி work பண்ணுதுனு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "karthik-dev (has S3 access) generates a pre-signed URL for one specific object, valid 24 hours",
+            "        |",
+            "URL contains an embedded, time-limited signature — proves the request was authorized by someone with access",
+            "        |",
+            "Auditor (has NO AWS account, NO IAM credentials) clicks the URL",
+            "        |",
+            "S3 validates the embedded signature and expiration — grants access to ONLY that object, ONLY within the time window",
+            "        |",
+            "After 24 hours: the same URL stops working entirely — no manual cleanup needed"
+          ]
+        },
+        "ava_narration": "Bucket-ஓட overall security posture (Block Public Access, bucket policy) எதுவும் மாறவே இல்ல - pre-signed URL ஒரு separate, self-expiring access mechanism."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Scope a Bucket Policy Correctly",
+      "instruction": "FoodQuick-ஓட ஒரு புது 'partner-restaurant-uploads' bucket-க்கு, correct bucket policy write பண்ணு.",
+      "scenario": "Ravi, partner restaurants தங்கள் menu photos upload பண்ண ஒரு bucket வேணும்nு request பண்ணி இருக்காங்க. ஒரு specific IAM role (foodquick-partner-upload-role) மட்டும் இந்த bucket-ல objects upload பண்ண முடியணும் - யாரும் delete அல்லது list பண்ண முடியக்கூடாது, public access ஒரு போதும் இருக்கக்கூடாது.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "S3 Console → foodquick-partner-restaurant-uploads → Permissions → Bucket policy",
+        "current_configuration": "Block Public Access is enabled (default). No bucket policy exists yet."
+      },
+      "requirements": [
+        "Write a bucket policy granting ONLY s3:PutObject to the foodquick-partner-upload-role",
+        "Do NOT include s3:DeleteObject or s3:ListBucket in the granted permissions",
+        "Do NOT modify or disable any Block Public Access settings",
+        "Scope the Resource to this specific bucket's objects, not a broader set of buckets"
+      ],
+      "hints": [
+        "Least privilege நினைவு வெச்சுக்கோ - request-ல upload மட்டும் தேவைப்படுது, அதனால Action field-ல s3:PutObject மட்டும் இருக்கணும், Delete அல்லது List சேர்க்க வேண்டாம்",
+        "Block Public Access-ஐ இந்த task-ல தொடவே தேவை இல்ல - correct approach, principal-scoped bucket policy, public access அல்ல",
+        "Resource ARN-ல bucket name தெளிவா குறிப்பிடு: arn:aws:s3:::foodquick-partner-restaurant-uploads/*"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A bucket policy exists granting only s3:PutObject to foodquick-partner-upload-role, scoped to this bucket's objects, with Block Public Access still fully enabled",
+        "ava_correct": "Correct! Partners upload பண்ண முடியும், ஆனா delete அல்லது list பண்ண முடியாது - least privilege exactly implement பண்ணி இருக்க.",
+        "ava_wrong": "Policy-ஐ ஒரு தடவை check பண்ணு - Action field-ல தேவைக்கு அதிகமா permissions இருக்கானு, அல்லது Block Public Access ஏதாவது touch பண்ணப்பட்டிருக்கானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "'Temporary' Public Access That Was Never Turned Back Off",
+      "ava_speaks": "priya-dev, ஒரு integration testing exercise-க்காக, foodquick-customer-documents bucket-ல Block Public Access-ஐ temporary-ஆ disable பண்ணிட்டா - 'இன்னைக்கு மட்டும் தான், testing முடிஞ்சதும் திரும்ப ON பண்ணிடுவேன்'nு நினைச்சு. அப்புறம் என்ன ஆச்சுனு பாருங்க.",
+      "setup": "priya-dev disables Block Public Access on foodquick-customer-documents to allow a third-party testing tool temporary access during an integration test, planning to re-enable it immediately after the test completes that same day.",
+      "what_happened": "The test gets interrupted by an unrelated production incident that pulls priya-dev away for the rest of the day. Block Public Access remains disabled, and the bucket policy — which already had a broader grant intended for internal use — combines with the disabled protection to leave customer documents publicly accessible for 19 days before a routine security audit catches it.",
+      "broken_config": "Bucket: foodquick-customer-documents\nBlock Public Access: DISABLED (since the interrupted testing session)\nExisting bucket policy: broader grant than intended, previously harmless only because Block Public Access was blocking its effect\n\nCombined effect: customer documents publicly readable via direct URL for 19 days",
+      "error_shown": "Security audit finding: foodquick-customer-documents is publicly accessible. Access logs show 340+ unique external IP addresses accessed objects in this bucket during the exposure window — far beyond any expected internal usage.",
+      "the_real_problem": "'Temporary' security changes, ஒரு explicit reminder, calendar entry, அல்லது automated re-enable mechanism இல்லாம பண்றது, easily மறந்துடும் - especially ஒரு unrelated emergency இடையில வந்தா. Block Public Access ஒரு critical safety net-ஆ இருக்கறதால, அதை disable பண்றது ஒரு போதும்'இன்னைக்கு மட்டும்'nு casual-ஆ treat பண்ண கூடாத ஒரு decision.",
+      "fix": {
+        "corrected_config": "1. Re-enable Block Public Access on foodquick-customer-documents immediately.\n2. Review and tighten the existing bucket policy to remove the overly broad grant.\n3. Establish a process: any Block Public Access change requires a tracked ticket with an automatic reminder/expiration, and ideally a peer-reviewed approval, rather than an individual's memory to revert it.",
+        "result": "The bucket is secured again, and a process change prevents this specific failure mode — an individual's memory as the only safeguard — from causing a repeat incident."
+      },
+      "lesson": "Disabling Block Public Access 'temporarily,' with no tracked reminder or enforced re-enable mechanism, தான் real risk - emergencies, interruptions, மற்றும் simple human forgetfulness, ஒரு short-term testing decision-ஐ, weeks-கணக்கான exposure-ஆ மாற்றிடும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — S3 Security Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team needs to share a large dataset with an external partner for exactly one week. Should they disable Block Public Access on the bucket, or use a pre-signed URL?",
+          "answer": "Pre-signed URL. It grants scoped, automatically-expiring access to specific objects without touching the bucket's overall public access posture — far safer than disabling a protective setting that affects everything in the bucket, especially when the need is time-limited and object-specific."
+        },
+        {
+          "question": "A bucket policy grants s3:GetObject to Principal '*' (everyone), but Block Public Access is fully enabled. Is this bucket publicly readable?",
+          "answer": "No — Block Public Access overrides the bucket policy's public grant entirely. The policy statement exists but has no effect while Block Public Access blocks it. This is exactly the safety-net behavior that makes Block Public Access valuable even when a policy mistake exists."
+        },
+        {
+          "question": "A team wants sensitive files encrypted not just at rest in S3, but such that even AWS itself cannot decrypt them without the customer's explicit key. Does default SSE-S3 encryption satisfy this requirement?",
+          "answer": "No — SSE-S3 uses AWS-managed keys, meaning AWS manages the encryption keys. For a requirement where only the customer controls decryption capability, SSE-KMS with a customer-managed key (or client-side encryption before upload) would be needed instead."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Prevent 'Temporary' Security Changes From Becoming Permanent",
+      "ava_speaks": "Real companies-ல, security-related temporary changes, individual memory-ஐ நம்பி விடப்படாது - அது process மற்றும் tooling-ஆல் enforce பண்ணப்படும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Require any Block Public Access change to go through a tracked change ticket with an explicit, calendared re-enable date",
+          "detail": "இது priya-dev-ஓட mistake மாதிரி, individual memory-ஐ மட்டும் நம்பி இருக்கும் risk-ஐ நீக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Set up AWS Config rules that continuously monitor for buckets with Block Public Access disabled, alerting immediately",
+          "detail": "இது ஒரு automatic safety net - manual tracking fail ஆனாலும், Config rule catch பண்ணும்"
+        },
+        {
+          "step": 3,
+          "action": "Run periodic automated scans (e.g. via S3 Public Access analyzer or IAM Access Analyzer) across all buckets, not relying solely on manual audits",
+          "detail": "இது 19-day exposure மாதிரி gaps-ஐ, weeks-க்கு பதிலா, hours-க்குள்ள கண்டுபிடிக்க உதவும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Config — s3-bucket-public-read-prohibited rule",
+          "use": "Buckets accidentally public-ஆ மாறினா, automatic-ஆ flag பண்ணி, optionally auto-remediate பண்ணும் (Lambda-based auto-fix attach பண்ணலாம்)"
+        },
+        {
+          "tool": "IAM Access Analyzer for S3",
+          "use": "Bucket policies-ல external access grant பண்ற statements-ஐ proactive-ஆ scan பண்ணி, unintended external access surface பண்ணும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம Block Public Access, bucket policies, pre-signed URLs, encryption options எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, 'temporary' security changes எப்படி easily permanent exposure-ஆ மாறும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம EBS Volumes பார்ப்போம் - gp3, io2 types, resize.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C5.2 — Summary",
+      "points": [
+        "✓ Block Public Access is a master switch that overrides any public grant in a bucket policy or ACL when enabled",
+        "✓ Bucket policies grant access to specific principals with fine-grained permissions",
+        "✓ Pre-signed URLs give temporary, scoped, auto-expiring access without changing overall bucket security posture",
+        "✓ SSE-S3 uses AWS-managed keys; SSE-KMS or client-side encryption give more control for stricter requirements",
+        "✓ Disabling Block Public Access 'temporarily' without a tracked re-enable mechanism is a common path to a real, prolonged data exposure"
+      ],
+      "coming_next": "Lesson C5.3: EBS Volumes"
+    }
+  }
+}

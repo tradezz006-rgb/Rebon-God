@@ -1,0 +1,323 @@
+{
+  "lesson_id": "C3.4",
+  "lesson_title": "Security Groups vs NACLs",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C3.3 — Internet Gateway, NAT Gateway, and Route Tables",
+  "student_will_learn": [
+    "Explain the difference between a stateful Security Group and a stateless Network ACL (NACL)",
+    "Explain why Security Groups operate at the instance level and NACLs operate at the subnet level",
+    "Explain why Security Groups can only allow, while NACLs can both allow and deny",
+    "Identify why leaving port 22 open to 0.0.0.0/0 in a Security Group is a serious risk",
+    "Decide when a NACL deny rule is the right tool instead of relying on Security Groups alone"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம network paths பத்தி பேசினோம் - route tables, IGW, NAT Gateway. இப்போ 'யார் உள்ள வரலாம்' பத்தி பேசப் போறோம் - இதுக்கு ரெண்டு tools இருக்கு, Security Groups மற்றும் Network ACLs (NACLs). ரெண்டும் traffic-ஐ filter பண்ணும், ஆனா completely வேற வேற முறையில வேலை செய்யும். இந்த difference புரியலைனா, security holes உருவாகும்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.4",
+        "Security Groups vs NACLs",
+        "Ticket FQ-156 — continuing with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Stateful vs Stateless — The Core Difference",
+      "ava_speaks": "Security Group (SG) instance-level firewall - அது ஒரு EC2 instance-கு நேரடியா attach ஆகும். அது stateful - அதாவது, inbound traffic-ஐ நீ allow பண்ணினா, அதுக்கான response traffic automatic-ஆ outbound-ல allow ஆயிடும், நீ தனியா ஒரு outbound rule எழுத வேண்டாம். NACL subnet-level firewall - அது ஒரு subnet-க்கு முழுசா apply ஆகும். அது stateless - inbound-ஐ allow பண்ணா, response-க்கு தனியா ஒரு outbound rule வேணும், இல்லனா response block ஆயிடும். இன்னொரு பெரிய difference - SG-ல Allow rules மட்டும் தான் எழுத முடியும் (Deny கிடையாது), NACL-ல Allow-மும் Deny-மும் ரெண்டுமே எழுதலாம்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Security Group vs NACL"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Security Group (SG)",
+            "Network ACL (NACL)"
+          ],
+          "rows": [
+            [
+              "Applies to individual instances (or ENIs)",
+              "Applies to an entire subnet"
+            ],
+            [
+              "Stateful — return traffic is automatically allowed",
+              "Stateless — inbound and outbound rules are evaluated separately"
+            ],
+            [
+              "Allow rules only",
+              "Allow AND Deny rules"
+            ],
+            [
+              "All rules evaluated together, no order",
+              "Rules evaluated in numbered order, lowest first"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Because SGs are stateful, most day-to-day traffic control happens there. NACLs are typically used as a broader, coarser subnet-wide safety net — especially for explicit Deny rules."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு Security Group inbound rule-ல port 443-ஐ allow பண்ணிருக்கோம். Outbound-க்கு தனியா ஒரு rule எழுதனுமா, response traffic வெளிய போக?",
+          "options": [
+            "A) ஆமா, தனியா outbound rule எழுதனும்",
+            "B) இல்ல, SG stateful-ஆ இருக்கறதால response automatic-ஆ allow ஆகும்",
+            "C) ஆமா, ஆனா NACL-ல மட்டும்",
+            "D) SG-ல outbound rules எழுதவே முடியாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! SG stateful, அதனால response traffic-ஐ track பண்ணி automatic-ஆ allow பண்ணும் - தனியா outbound rule தேவை இல்ல.",
+          "ava_wrong": "இல்ல, SG stateful-ஆ இருக்கறதால, inbound-ஐ allow பண்ணா, அதுக்கான response automatic-ஆ outbound-ல allow ஆயிடும் - இது NACL-ல இருந்து முக்கியமான வித்தியாசம்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு specific IP range-ஐ முழுசா block பண்ணனும் - அது ஒரு known malicious source. இதுக்கு Security Group-ஆ NACL-ஆ correct tool?",
+          "options": [
+            "A) Security Group, Deny rule எழுதலாம்",
+            "B) NACL, ஏன்னா அது Deny rules support பண்ணும், SG பண்ணாது",
+            "C) ரெண்டுமே ஒரே மாதிரி வேலை செய்யும்",
+            "D) இதுக்கு ரெண்டுமே use பண்ண முடியாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! SG-ல Deny rule எழுதவே முடியாது - அது Allow rules மட்டும். Explicit-ஆ ஒரு IP-ஐ block பண்ணனும்னா, NACL தான் correct tool.",
+          "ava_wrong": "இல்ல, Security Groups-ல Deny rules இல்லவே இல்ல - Allow rules மட்டும்தான். ஒரு IP-ஐ explicit-ஆ block பண்ணனும்னா, NACL தான் அந்த capability தரும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Port 22 Open to the World — A Classic, Costly Mistake",
+      "ava_speaks": "SSH port (22) 0.0.0.0/0-க்கு open-ஆ வெச்சிருக்கறது, globally-ஆ ஒரு common security mistake. ஒரு mid-size Indian e-commerce startup, 2022-ல இந்த exact mistake பண்ணி, automated bots brute-force SSH login attempt பண்ணி, weak password வெச்சிருந்த ஒரு test instance-ல உள்ள நுழைஞ்சு, அதை ஒரு botnet-ஓட part-ஆ மாத்திட்டாங்க - கண்டுபிடிக்கறதுக்கு 11 நாள் ஆச்சு, அதுக்குள்ள ₹9 லட்சம் bandwidth abuse charges வந்துச்சு. Port 22 எப்போவும் specific IP ranges-க்கு மட்டும் restrict பண்ணனும் - VPN range-ஆவது, office IP-ஆவது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Port 22 Exposure — Timeline of a Real-Style Incident"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Day 0",
+              "Port 22 opened to 0.0.0.0/0 'temporarily' for a test instance"
+            ],
+            [
+              "Day 1-11",
+              "Automated bots brute-force SSH, eventually succeed on a weak password"
+            ],
+            [
+              "Day 11",
+              "Compromised instance discovered as part of a botnet, discovered via unusual outbound traffic"
+            ],
+            [
+              "Total impact",
+              "₹9 lakh in bandwidth abuse charges before containment"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Locking Down SSH Access and Adding a NACL Deny Rule",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட app server security group-ல port 22 access-ஐ restrict பண்றான், அப்புறம் ஒரு NACL-ல ஒரு known-malicious IP range-ஐ explicit-ஆ deny பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல EC2 Console-ல Security Groups-க்கு போய், foodquick-app-sg-ஓட inbound rules-ஐ பாக்கிறோம். Port 22-க்கு source 0.0.0.0/0-ஆ இருக்கு - இது தான் தப்பு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Security Groups → foodquick-app-sg → Inbound rules",
+              "highlight": "The rule for port 22 with source 0.0.0.0/0",
+              "result": "Confirms SSH is currently reachable from anywhere on the internet"
+            }
+          },
+          {
+            "ava_narration": "இந்த rule-ஐ Edit பண்ணி, source-ஐ FoodQuick-ஓட office IP range-ஆ மாத்துறோம் - 203.0.113.0/24.",
+            "console_action": {
+              "type": "fill",
+              "path": "Edit inbound rules → Port 22 → Source",
+              "field": "Source",
+              "value": "203.0.113.0/24",
+              "highlight": "Source field for the SSH rule",
+              "result": "SSH access is now restricted to only FoodQuick's office IP range"
+            }
+          },
+          {
+            "ava_narration": "இப்போ Network ACLs-க்கு போய், foodquick-public-nacl-ஐ select பண்றோம். Priya Nair, ஒரு known malicious IP range flag பண்ணி இருக்காங்க - அதை explicit-ஆ deny பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "VPC Console → Network ACLs → foodquick-public-nacl → Inbound rules",
+              "highlight": "Add rule button",
+              "result": "The NACL's inbound rules list opens for editing"
+            }
+          },
+          {
+            "ava_narration": "Rule number 90-ஆ (lower numbers evaluate first, so this needs a low number to take effect before the general allow rules), type All Traffic, source 198.51.100.0/24, Deny-ஆ add பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Network ACL → Add inbound rule",
+              "field": "Rule number, Type, Source, Action",
+              "value": "90, All Traffic, 198.51.100.0/24, Deny",
+              "highlight": "Rule number and Action fields",
+              "result": "Traffic from this known malicious range is now blocked at the subnet level, before it ever reaches any instance's Security Group"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "SSH access to app servers is now limited to FoodQuick's office IP range instead of the entire internet, and a subnet-wide NACL Deny rule blocks a known malicious IP range before it even reaches individual instances.",
+          "what_to_notice": "NACL rules number order-ல evaluate ஆகும் - low number முதலில் check ஆகும். Deny rule-ஐ, பொதுவான Allow rules-க்கு முன்னாடி வர வேண்டிய அளவுக்கு low number-ல வெச்சிருக்கணும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Where SG and NACL Sit in the Traffic Path",
+      "ava_speaks": "இந்த diagram பாரு - ஒரு request எப்படி ரெண்டு layers-மும் கடந்து போகும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Internet",
+            "   |",
+            "NACL (subnet-level, stateless, checked first, can Allow or Deny)",
+            "   |",
+            "Security Group (instance-level, stateful, checked second, Allow only)",
+            "   |",
+            "EC2 Instance",
+            "",
+            "Traffic must pass BOTH layers to reach the instance.",
+            "A NACL Deny stops traffic before the Security Group is even evaluated."
+          ]
+        },
+        "ava_narration": "Traffic ரெண்டு layers-மும் கடக்கணும் - NACL முதல்ல, அப்புறம் Security Group. ரெண்டுல ஒண்ணு block பண்ணா, traffic போகாது."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Audit and Fix an Over-Permissive Security Group",
+      "instruction": "FoodQuick-ஓட ஒரு database security group-ல, தேவைக்கு அதிகமா open-ஆ இருக்கற rules-ஐ கண்டுபிடிச்சு fix பண்ணு.",
+      "scenario": "foodquick-db-sg-ல inbound rules audit பண்றப்போ, port 5432 (PostgreSQL) source 0.0.0.0/0-ஆ இருக்கு - இது எந்த IP-ல இருந்தும் database-ஐ reach பண்ண அனுமதிக்குது.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Security Groups → foodquick-db-sg → Inbound rules",
+        "current_configuration": "Port 5432, source 0.0.0.0/0 — open to the entire internet"
+      },
+      "requirements": [
+        "Locate the overly permissive rule for port 5432",
+        "Change the source from 0.0.0.0/0 to only the application tier's security group (foodquick-app-sg)",
+        "Confirm no other ports are open to 0.0.0.0/0 in this security group",
+        "Verify the change doesn't accidentally block legitimate application traffic"
+      ],
+      "hints": [
+        "Source field-ல IP range-க்கு பதிலா, வேற ஒரு security group-ஐயும் reference பண்ணலாம் - இது recommended pattern, application tier-ஐ மட்டும் trust பண்ண",
+        "Rule change பண்ணின பிறகு, foodquick-app-sg-ல இருக்கற instances மட்டும்தான் database-ஐ reach பண்ண முடியும்nு mentally verify பண்ணு",
+        "மற்ற inbound rules-ஐயும் ஒரு தடவை scroll பண்ணி பாரு, வேற எந்த port-மும் 0.0.0.0/0-ஆ இல்லைனு confirm பண்ணு"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "The port 5432 rule's source is changed from 0.0.0.0/0 to foodquick-app-sg, and no other rule in the security group has an open 0.0.0.0/0 source",
+        "ava_correct": "Correct! இப்போ database, application tier மட்டும் தான் reach பண்ண முடியும் - internet-ல இருந்து யாரும் direct-ஆ touch பண்ண முடியாது.",
+        "ava_wrong": "Source field-ஐ ஒரு தடவை check பண்ணு - இன்னும் 0.0.0.0/0 இருக்கா, அல்லது correct security group reference பண்ணிருக்கானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "SG Rules Locked Down, But the NACL Still Lets Everything Through",
+      "ava_speaks": "ananya-analyst ஒரு security review பண்றப்போ, ஒரு confusing finding வருது - Security Group rules எல்லாம் correct-ஆ configure பண்ணி இருக்கு, ஆனா ஒரு port scan tool இன்னும் open ports-ஐ காட்டுது. என்ன நடக்குதுனு பாருங்க.",
+      "setup": "ananya-analyst is reviewing FoodQuick's network security. The app server's Security Group has been correctly locked down — only ports 443 and a restricted SSH range are allowed. But a port scan still shows several other ports responding.",
+      "what_happened": "The subnet's NACL was left at its default configuration from when the VPC was first created — a broad 'Allow All' inbound rule with no restrictions, which was never reviewed. Since the NACL allows everything through and the Security Group is the only real filter, the SG's restrictions ARE working correctly — but the team assumed the NACL provided an additional, meaningful layer of defense, when it was actually contributing nothing.",
+      "broken_config": "Security Group foodquick-app-sg: correctly restricted (only 443, restricted SSH range)\n\nNACL foodquick-public-nacl inbound rules:\n{\n  \"rule_number\": 100,\n  \"type\": \"All Traffic\",\n  \"source\": \"0.0.0.0/0\",\n  \"action\": \"Allow\"\n}\n(this is the AWS default NACL rule, never modified since VPC creation)",
+      "error_shown": "Port scan report: ports 443 and 22 respond as expected (correctly filtered by SG); no other unexpected open ports found — BUT the security review flags that the NACL is providing zero additional filtering, meaning the SG is the ONLY layer of defense, with no subnet-level backstop.",
+      "the_real_problem": "இது ஒரு subtle mistake - SG தான் correct-ஆ இருக்கு, ஆனா team NACL-மும் ஏதோ meaningful protection தருதுன்னு நினைச்சாங்க. Default NACL rule (Allow All) touch பண்ணாம விட்டிருந்தா, NACL layer effectively 'இல்லாதது' மாதிரி தான் - defense-in-depth இல்ல, ஒரே ஒரு layer தான் இருக்கு.",
+      "fix": {
+        "corrected_config": "Add explicit NACL rules matching the intended access pattern, e.g.:\n{ \"rule_number\": 100, \"type\": \"HTTPS (443)\", \"source\": \"0.0.0.0/0\", \"action\": \"Allow\" },\n{ \"rule_number\": 110, \"type\": \"SSH (22)\", \"source\": \"203.0.113.0/24\", \"action\": \"Allow\" },\n{ \"rule_number\": 200, \"type\": \"All Traffic\", \"source\": \"0.0.0.0/0\", \"action\": \"Deny\" }\n(remembering NACLs are stateless — matching outbound rules are also needed)",
+        "result": "The NACL now provides a genuine second layer of defense that matches the Security Group's intent, instead of silently allowing everything through unchecked."
+      },
+      "lesson": "SG locked down பண்றது போதாது - NACL default settings-ஐ review பண்ணாம விட்டா, அது 'இருக்கு'nு தோணும், ஆனா உண்மையிலேயே எந்த protection-மும் தராது."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — SG or NACL?",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "You need to block a specific troublesome IP address that's been hammering the app with requests, while keeping everything else working exactly as before. SG or NACL?",
+          "answer": "NACL. Security Groups only support Allow rules — there's no way to explicitly deny a single IP with an SG. A NACL Deny rule for that specific IP, placed before the general Allow rule, is the right tool."
+        },
+        {
+          "question": "You're setting up normal inbound access for a new application — allow port 443 from the internet, and nothing else. Is a Security Group alone typically sufficient for this day-to-day case?",
+          "answer": "Yes, for most day-to-day access control, Security Groups alone are sufficient and simpler to manage since they're stateful — you don't have to remember matching outbound rules. NACLs are usually left at a sensible default and only touched for specific broader restrictions."
+        },
+        {
+          "question": "An engineer adds an inbound Allow rule to a Security Group for port 8080 but forgets to add a corresponding outbound rule. Will responses to that traffic get through?",
+          "answer": "Yes — because Security Groups are stateful, once inbound traffic is allowed, the response traffic is automatically permitted outbound without needing a matching rule. If this were a NACL instead, the missing outbound rule would silently block all the responses."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Security Reviews Check Both Layers, Not Just One",
+      "ava_speaks": "Real security audits-ல, ananya-analyst மாதிரி analysts, SG-ஐ மட்டும் பார்த்து 'okay'nு சொல்லி விட மாட்டாங்க - NACL-ஐயும் தனியா review பண்றது ஒரு standard checklist item.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Review every Security Group attached to internet-facing resources, checking each rule's source against least privilege",
+          "detail": "இது தான் most common layer, அதனால இதுல தான் அதிகமா mistakes கண்டுபிடிக்கப்படும்"
+        },
+        {
+          "step": 2,
+          "action": "Separately review each subnet's NACL, confirming it isn't sitting at an unreviewed default",
+          "detail": "இது often skip ஆகிடும் layer - default NACL touch பண்ணாம விட்டுட்டா, அது silent-ஆ ஒரு false sense of security கொடுக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Run an automated port scan against the public-facing endpoints periodically, comparing results against the intended rule set",
+          "detail": "இது ரெண்டு layers-மும் சேர்ந்து actual behavior என்னனு verify பண்ணும் - individual rules சரியா இருந்தாலும், combination-ல ஏதாவது gap இருக்கலாம்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Security Hub",
+          "use": "Security Groups மற்றும் NACLs-ல overly permissive rules இருந்தா automatic-ஆ flag பண்ணி, ஒரு centralized dashboard-ல காட்டும்"
+        },
+        {
+          "tool": "Nmap (or a similar port scanner)",
+          "use": "Actual reachable ports-ஐ externally verify பண்ண உதவும் - configuration சொல்றது vs உண்மையில் நடக்கறது-ஐ compare பண்ண"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம Security Groups stateful, instance-level, Allow-only-nu, NACLs stateless, subnet-level, Allow-மும் Deny-மும் இருக்குமுனு கத்துக்கிட்டோம். Port 22-ஐ 0.0.0.0/0-க்கு open-ஆ வெச்சிருக்கறது எவ்ளோ risky-nு, default NACL settings review பண்ணாம விட்டா என்ன ஆகுமுனு கத்துக்கிட்ட. அடுத்த lesson-ல நாம VPC Peering, Transit Gateway பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.4 — Summary",
+      "points": [
+        "✓ Security Groups are stateful and instance-level; NACLs are stateless and subnet-level",
+        "✓ Security Groups only support Allow rules; NACLs support both Allow and Deny",
+        "✓ Traffic must pass both the NACL and the Security Group to reach an instance",
+        "✓ Leaving SSH (port 22) open to 0.0.0.0/0 is a serious, common, and avoidable risk",
+        "✓ A correctly locked-down Security Group can create a false sense of security if the subnet's NACL is left at an unreviewed default"
+      ],
+      "coming_next": "Lesson C3.5: VPC Peering and Transit Gateway"
+    }
+  }
+}

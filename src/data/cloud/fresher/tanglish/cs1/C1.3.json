@@ -1,0 +1,393 @@
+{
+  "lesson_id": "C1.3",
+  "id": "C1.3",
+  "lesson_title": "AWS Console Navigation",
+  "section_id": "CS1",
+  "section_name": "Cloud Foundations",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 17,
+  "prerequisites": "C1.2",
+  "student_will_learn": [
+    "AWS Console-ன் முக்கிய பகுதிகள்",
+    "Search bar-ஐ (/) பயன்படுத்தி services-ஐ தேடுவது",
+    "Services-ஐ Favorites-ல் Pin செய்வது",
+    "Account Menu மற்றும் Billing-ஐ கண்டுபிடிப்பது",
+    "Region-மாறினால் resources எப்படி மறையும் என்பது"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Welcome! முதல் முறையா AWS-க்குள்ள login பண்ணும்போது ஒரு airplane cockpit-குள்ள நுழைஞ்ச மாதிரி இருக்கும். 200+ services இருக்கும், எங்க click பண்றதுன்னே தெரியாது. பயப்பட தேவையில்லை. ஒரு senior cloud engineer அந்த 200 services-ல 5 அல்லது 6 services தான் daily use பண்ணுவாங்க. Today, AWS console-ஐ எப்படி confusion இல்லாம navigate பண்றதுன்னு கத்துக்க போறோம். Lesson 1.3. Let's go.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Pace · Session 1 · Lesson 1.3",
+        "AWS Console Navigation",
+        "Mastering the Cloud Cockpit"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "The Console Layout",
+      "ava_speaks": "AWS Management Console-ல மூணே மூணு விஷயங்கள் தான் நீங்க daily கவனிக்கணும்.\n\n1. The Search Bar: இதுதான் உங்க best friend. Menus குள்ள போய் தேடுறதுக்கு பதிலா, keyboard-ல '/' press பண்ணிட்டு service name-ஐ type பண்ணா உடனே வந்துடும்.\n2. The Region Selector (Top-Right): போன lesson-ல பார்த்த மாதிரி, நீங்க எந்த ஊர் data center-ல இருக்கீங்கனு காட்டும்.\n3. The Account Menu (Top-Right): இங்க தான் உங்க Account ID, Billing, மற்றும் security settings இருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Top Navigation Bar Breakdown"
+        },
+        {
+          "type": "draw_diagram",
+          "title": "AWS Console Header",
+          "diagram": {
+            "ascii": [
+              "[AWS Logo] | [Search Bar (Shortcut: /)] | [CloudShell] | [Region: Mumbai] | [Account: MyUser]"
+            ]
+          }
+        },
+        {
+          "type": "write_callout",
+          "text": "Golden Rule of Navigation:\nNever click through categories. ALWAYS use the Search Bar."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "நீங்கள் நேற்று ஒரு EC2 server-ஐ create செய்தீர்கள். இன்று login செய்து பார்க்கும்போது EC2 list empty-ஆக உள்ளது. First என்ன check பண்ணுவீங்க?",
+          "options": [
+            "A) AWS account hack ஆகிவிட்டதா என்று பார்ப்பேன்.",
+            "B) Top-right corner-ல் சரியான Region (e.g., ap-south-1) select ஆகியுள்ளதா என்று பார்ப்பேன்."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Spot on! Resources எதுவுமே delete ஆகிருக்காது. நீங்க Region மாறி இருப்பீங்க. சரியான Region-ஐ select பண்ணா எல்லாம் திரும்ப வந்துடும்.",
+          "ava_wrong": "இல்லை! பயப்பட தேவையில்லை. Resources Region-specific. நீங்க வேற ஒரு Region-ல் தேடிக்கொண்டிருக்கிறீர்கள் என்று அர்த்தம்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "IAM service-ஐ open செய்ய மிகவும் வேகமான வழி எது?",
+          "options": [
+            "A) Services menu -> Security -> IAM என்று click செய்து போவது.",
+            "B) Keyboard-ல் '/' press செய்து 'IAM' என type செய்து Enter தட்டுவது."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! 3 seconds-ல நீங்க எந்த service-க்கும் போகலாம். Professionals எப்பவும் search bar தான் use பண்ணுவாங்க.",
+          "ava_wrong": "தவறு. Categories-ல் போய் தேடுவது ரொம்ப slow. Search shortcut (/) தான் எப்பவும் fast."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Missing Servers Panic",
+      "ava_speaks": "Bengaluru-ல இருக்குற ஒரு startup-ல நடந்த உண்மையான கதை இது.\n\nஒரு Junior developer அவரோட முதல் வாரத்துல console-ஐ explore பண்ணிட்டு இருந்தாரு. Accident-ஆ Region-ஐ 'Mumbai'-ல் இருந்து 'Oregon'-க்கு மாத்திட்டாரு. Dashboard-ஐ பார்த்தா அவரோட 15 EC2 servers-ம் காணோம். 'எல்லாமே அழிஞ்சிடுச்சு!'னு panic ஆகி, Senior engineer-ஐ கூப்பிடுறாரு.\n\nSenior வந்து, ஒரு செகண்ட் சிரிச்சிட்டு, Top-right corner-ல Region-ஐ மறுபடியும் Mumbai-க்கு மாத்துனாரு. அத்தனை servers-ம் அங்கேயே தான் இருந்துச்சு. ஆனா இந்த சின்ன panic-னால 2 hours productivity waste. ₹40,000 developer salary time வீணாகுச்சு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Region Trap"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "AWS Console is REGION-SCOPED.\nIf you are in Virginia, you CANNOT see your servers in Mumbai.\nThey are not deleted, they are just in another building."
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Live: Shortcuts & Pinning",
+      "ava_speaks": "Console-ஐ நமக்கு ஏத்த மாதிரி எப்படி customize பண்றதுன்னு live-ஆ பார்ப்போம். அடிக்கடி use பண்ற services-ஐ நாம pin பண்ணி வெச்சுக்கலாம்.",
+      "editor_session": {
+        "language": "browser",
+        "filename": "AWS Management Console",
+        "environment": "visual_ui",
+        "steps": [
+          {
+            "ava_narration": "First, keyboard-ல '/' press பண்றேன். நேரா search bar open ஆகுது.",
+            "code": "Press '/'\nType 'EC2'",
+            "highlight_lines": [
+              1,
+              2
+            ]
+          },
+          {
+            "ava_narration": "EC2 service பக்கத்துல இருக்குற 'Star' icon-ஐ click பண்றேன். இப்போ அது Top navigation bar-ல pin ஆகிடும்.",
+            "code": "Hover over EC2 -> Click Star (Favorite)\nEC2 appears on the top navbar",
+            "highlight_lines": [
+              1
+            ]
+          },
+          {
+            "ava_narration": "அடுத்து Top-Right-ல இருக்குற Account Menu-ஐ click பண்ணி Billing Dashboard-குள்ள போறோம். இங்க தான் நம்ம Account ID இருக்கும்.",
+            "code": "Click Account Name (Top-Right) -> View Account ID (e.g., 1234-5678-9012)\nClick -> Billing and Cost Management",
+            "highlight_lines": [
+              1,
+              2
+            ]
+          }
+        ],
+        "expected_output": {
+          "mumbai": "Favorites bar contains: EC2, IAM, VPC, S3.",
+          "what_to_notice": "Console இப்போ ரொம்ப clean ஆகிடுச்சு. தேவையற்ற services நம்ம கண்ணுக்கு தெரியாது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Clean Cockpit",
+      "ava_speaks": "Pin பண்ணதுக்கு அப்புறம் உங்க Console எப்படி இருக்கும்னு பாருங்க. இதுதான் ஒரு professional cloud engineer-ஓட setup.",
+      "output_preview": {
+        "type": "concept_board",
+        "title": "Optimized Navigation Bar",
+        "what_to_look_for": [
+          "[AWS] | [Services] | EC2 | S3 | IAM | VPC | RDS",
+          "Search bar ready for quick jumps"
+        ],
+        "ava_narration": "இந்த 5 services தான் நீங்க 90% time use பண்ண போறீங்க. இதை set பண்ணிட்டா எந்த குழப்பமும் வராது."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "உங்க Turn — Console Scavenger Hunt",
+      "instruction": "AWS Console-ல் இந்த 3 தகவல்களையும் menus-ஐ click பண்ணாமல், Search மற்றும் Shortcuts மூலம் கண்டுபிடிக்கவும்.",
+      "requirements": [
+        "1. உங்களுடைய 12-digit AWS Account ID-ஐ எங்கு பார்ப்பீர்கள்?",
+        "2. IAM (Identity and Access Management) Service-ஐ 3 seconds-ல் open செய்ய என்ன செய்வீர்கள்?",
+        "3. CloudWatch service-ஐ Favorites-ல் Pin செய்வது எப்படி?"
+      ],
+      "starter_code": "Action Plan:\n1. Account ID: _________________\n2. Open IAM: _________________\n3. Pin CloudWatch: _________________",
+      "hints": [
+        "Account ID எப்பவும் Top-Right Account Menu-ல் இருக்கும்.",
+        "Fast-ஆ open பண்ண '/' shortcut-ஐ மறக்காதீங்க."
+      ],
+      "ava_solution": {
+        "explanation": "1. Top-Right Account Name -> Account ID. 2. Press '/' -> Type 'IAM' -> Enter. 3. Search 'CloudWatch' -> Star icon-ஐ click பண்ணனும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Hidden Idle Bill",
+      "ava_speaks": "Navigation சரியா தெரியாததால வரக்கூடிய ஒரு cost mistake-ஐ பார்ப்போம்.",
+      "setup": "Developer ஒரு புது project-க்காக console-ஐ explore பண்றார். Accident-ஆ us-east-1 Region-ல் 3 EC2 servers, 2 S3 buckets create பண்ணிடுறார். Project முடிஞ்சதும், Mumbai (ap-south-1) Region-க்கு வந்துட்டு, 'ஓகே எல்லாத்தையும் delete பண்ணிட்டோம்'னு நினைச்சுக்கிறார்.",
+      "what_happened": "3 months கழிச்சு ₹18,000 idle bill வருது. ஆனா அவரோட Mumbai dashboard-ல எந்த server-ம் காட்டல. Delete பண்ண முடியாம திணறுறார்.",
+      "the_real_problem": "Servers ஓடிக்கிட்டு இருக்குறது us-east-1-ல. அதை Mumbai Region dashboard-ல் இருந்து பார்க்கவோ delete பண்ணவோ முடியாது.",
+      "fix": {
+        "code": "1. Change Region to us-east-1 to find the resources.\n2. PRO FIX: Use 'AWS Resource Groups' to search ALL regions at once.",
+        "result": "எப்பவும் Resources-க்கு 'Owner: YourName' என்று Tag செய்தால், எந்த Region-ல் இருந்தாலும் Global Search மூலம் கண்டுபிடித்துவிடலாம்."
+      },
+      "lesson": "Out of sight is NOT out of mind. Always check multiple regions if you suspect hidden resources."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "3 Quick Questions",
+      "ava_speaks": "Three quick navigation scenarios — head-ல answer பண்ணுங்க.",
+      "challenges": [
+        {
+          "question": "AWS Search Bar-ஐ mouse-ஐ தொடாமல் open செய்ய எந்த keyboard button-ஐ press பண்ண வேண்டும்?",
+          "answer": "Forward slash '/' button-ஐ press பண்ண வேண்டும்."
+        },
+        {
+          "question": "உங்களுடைய current month bill எவ்ளோ இருக்குன்னு பார்க்க எந்த Dashboard-க்கு போகணும்?",
+          "answer": "Billing and Cost Management Dashboard (Account Menu-ல் இருக்கும்)."
+        },
+        {
+          "question": "EC2 Service-குள்ள இருக்கும்போது Search bar-ல் தேடினால், அது Global-ஆக தேடுமா அல்லது EC2-க்குள்ள மட்டும் தேடுமா?",
+          "answer": "Top navigation bar-ல் உள்ள search (Alt+S or /) எப்பவும் Global Services-ஐ தேடும். EC2-க்குள்ள உள்ள search bar instances-ஐ மட்டும் தேடும்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Real Development-ல எப்படி நடக்கும்",
+      "ava_speaks": "ஒரு Cloud Engineer தினமும் காலைல login பண்ணதும் பண்ற Routine இதுதான்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Check the Region",
+          "detail": "Login ஆனவுடன் முதல் பார்வை Top-Right Corner-ல் உள்ள Region மீது தான் போகும்."
+        },
+        {
+          "step": 2,
+          "action": "Use the Pinned Navbar",
+          "detail": "தேவையற்ற menus-ஐ தொடாமல், Pinned Favorites மூலம் நேராக EC2 அல்லது S3-க்கு போவது."
+        },
+        {
+          "step": 3,
+          "action": "Global Search for Troubleshooting",
+          "detail": "எதாவது புது service தேவைப்பட்டால் உடனே '/' press செய்து தேடுவது."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "Search Shortcut (/)",
+          "use": "Navigate instantly without mouse clicks."
+        },
+        {
+          "tool": "Favorites (Star Icon)",
+          "use": "Build your own custom Cloud Cockpit."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "AWS console-ஐ பார்த்து பயப்பட தேவையில்லை. Search bar (/) தான் உங்க steering wheel. அடிக்கடி use பண்ற services-ஐ Pin பண்ணி வெச்சுக்கோங்க. Resources காணோம்னா உடனே Region-ஐ செக் பண்ணுங்க. The console is just a tool, you are in control.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson 1.3 — Summary",
+      "points": [
+        "✓ Press '/' to instantly open the Search Bar.",
+        "✓ Pin frequently used services (EC2, S3, VPC) using the Star icon.",
+        "✓ Console is Region-Scoped: Resources in US won't show in Mumbai dashboard.",
+        "✓ Account ID and Billing are always in the top-right Account menu."
+      ],
+      "coming_next": "Lesson 1.4: Billing, Cost Explorer, and Budget Alerts"
+    }
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "C1.3-T1",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "The Region Trap (Missing Resources)",
+      "scenario_text": "MedGo's on-call engineer panics Monday 9am: Friday's three Mumbai EC2 consult boxes show as '0 Running' in EC2. CloudTrail shows no Terminate calls. Bill still has weekend compute lines. Most likely cause?",
+      "options": [
+        "AWS deleted the weekend test fleet automatically.",
+        "The account was emptied by an attacker overnight.",
+        "The console Region selector is pointing somewhere other than ap-south-1 — resources are Region-scoped."
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Calm down first. Wrong Region = empty dashboard. Switch to Mumbai and the fleet reappears.",
+      "ava_feedback_wrong": "No Terminate in CloudTrail + weekend charges = instances still exist. Check top-right Region before declaring an outage.",
+      "whiteboard_heading": "MedGo Region Trap",
+      "whiteboard_points": [
+        "AWS Console is Region-Scoped",
+        "Mumbai resources won't show in Virginia",
+        "Always check top-right corner first"
+      ]
+    },
+    {
+      "task_id": "C1.3-T2",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Search shortcut under pressure",
+      "scenario_text": "During a live MedGo incident call, Ren asks you to open CloudWatch in under 5 seconds while screen-sharing. Menus are nested and slow. What do you do?",
+      "options": [
+        "Click Services → Management & Governance → hunt for CloudWatch.",
+        "Press '/' , type CloudWatch, hit Enter.",
+        "Scroll Recently visited on the home page hoping it appears."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Professionals drive with '/'. Incident calls don't wait for nested menus.",
+      "ava_feedback_wrong": "Category clicks burn minutes. '/' + type + Enter is the console steering wheel.",
+      "whiteboard_heading": "MedGo Navigation Under Fire",
+      "whiteboard_points": [
+        "Never click through categories in an incident",
+        "Press '/' to instantly search",
+        "Type service name → Enter"
+      ]
+    },
+    {
+      "task_id": "C1.3-T3",
+      "task_number": 3,
+      "type": "match_task",
+      "ui_component": "MatchComponent",
+      "difficulty": "fresher",
+      "topic": "Console controls for MedGo tickets",
+      "left_items": [
+        "Jump to Billing or IAM in two keystrokes during standup",
+        "Keep EC2 and S3 one click away every morning",
+        "Copy MedGo's 12-digit Account ID for a vendor form",
+        "Switch the console from Virginia lab leftovers to Mumbai prod"
+      ],
+      "right_items": [
+        "Search Bar (/)",
+        "Star / Favorites pin",
+        "Account menu (top-right)",
+        "Region selector (top-right)"
+      ],
+      "correct_pairs": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "ava_feedback_correct": "You mapped real MedGo tickets to the right console controls — that's professional navigation.",
+      "ava_feedback_wrong": "Fast jump = Search. Daily services = Star. Account ID/Billing = Account menu. Data center switch = Region selector.",
+      "whiteboard_heading": "MedGo Console Cockpit",
+      "whiteboard_points": [
+        "Star = Favorite",
+        "Account Menu = Billing & ID",
+        "Region = Data Center"
+      ]
+    },
+    {
+      "task_id": "C1.3-T4",
+      "task_number": 4,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Finding the Account ID",
+      "scenario_text": "A diagnostics lab vendor needs MedGo's 12-digit AWS Account ID for a cross-account imaging bucket share. Where do you grab it without opening a support ticket?",
+      "options": [
+        "Somewhere buried in EC2 instance settings.",
+        "Account name dropdown in the top-right corner of the console.",
+        "Only by emailing AWS Support."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Top-right Account menu — Account ID is right there. No support ticket needed.",
+      "ava_feedback_wrong": "Account ID lives in the top-right Account menu, not EC2 settings or Support.",
+      "whiteboard_heading": "MedGo Account ID",
+      "whiteboard_points": [
+        "Top-Right Corner",
+        "Click Account Name Dropdown",
+        "Format: 12-digit number"
+      ]
+    },
+    {
+      "task_id": "C1.3-T5",
+      "task_number": 5,
+      "type": "order_task",
+      "ui_component": "OrderComponent",
+      "difficulty": "fresher",
+      "topic": "Pinning favorites",
+      "question": "MedGo's new hire will live in EC2 and CloudWatch all week. Order the steps to pin CloudWatch to the top navbar.",
+      "items": [
+        "Press '/' to activate the search bar",
+        "Type CloudWatch",
+        "Hover the CloudWatch result in the list",
+        "Click the Star icon to pin it"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ava_feedback_correct": "Search → type → hover → star. MedGo cockpit ready.",
+      "ava_feedback_wrong": "You must search first, then hover the result, then star — order matters.",
+      "whiteboard_heading": "MedGo Navbar Pin",
+      "whiteboard_points": [
+        "1. Search Service",
+        "2. Hover over result",
+        "3. Click Star Icon",
+        "4. Access instantly from header"
+      ]
+    }
+  ],
+  "content_status": "live"
+}

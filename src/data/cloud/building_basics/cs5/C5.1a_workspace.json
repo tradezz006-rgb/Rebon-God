@@ -1,0 +1,231 @@
+{
+  "lesson_id": "C5.1a",
+  "ticket": "FQ-189",
+  "sender": "Meera Iyer (VP of Finance, CFO's Office)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-189 — Meera Iyer (VP of Finance, CFO's Office)\n\nOur AWS bill has grown faster than our order volume for three straight quarters, and storage is the single biggest line item behind compute. I'm not an engineer, so I need your team to actually explain where this money is going, not just tell me it's fixed.\n\nFirst thing that came up when our team asked about it: someone mentioned a log processing script that 'mounts S3 like a drive.' I don't know what that means, but I'm told it's relevant. Start there.\n\n— Meera",
+  "arc_outro": "Meera Iyer — FQ-189 update:\n\nThat's the clearest explanation of a cost issue I've gotten from engineering in a while — thank you for putting it in numbers I can actually use in the board deck. The log script fix alone should show up in next month's bill.\n\nOne more thing from your audit I want to flag before we move on: that other bucket you mentioned, growing on its own with no clear owner. I'd like to understand that fully before we decide anything about it — don't delete anything yet. We'll get there as we go deeper into storage.\n\n— Meera",
+  "tasks": [
+    {
+      "id": "C5.1a-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C5.1a",
+      "scenario": "You investigate the log processing script Meera mentioned. It uses s3fs-fuse to mount an S3 bucket directly as a local filesystem path (/mnt/s3-logs/), and the script treats it exactly like a local disk — opening files, appending log lines, renaming rotated log files, and listing directory contents.",
+      "question": "Before diagnosing anything specific, what's the most important thing to understand about this setup?",
+      "options": [
+        "A) S3 IS actually a real filesystem underneath, so this approach should work exactly like a local disk with no meaningful difference",
+        "B) S3 is fundamentally a key-value object store, not a filesystem — s3fs-fuse is a translation layer that makes it LOOK like a filesystem to the script, but every filesystem-like operation (append, rename, list) gets translated into one or more actual S3 API calls behind the scenes, each with its own cost and latency",
+        "C) This setup is fine because s3fs-fuse eliminates all S3 API calls entirely, making it functionally identical to a local disk",
+        "D) The only issue is naming — the mount path should be renamed to something clearer, otherwise this approach is architecturally sound"
+      ],
+      "correct_index": 1,
+      "explanation": "S3 fundamentally key-value store — object store, filesystem not. s3fs-fuse a translation layer, for script filesystem like feel does, but each operation (append, rename, list) real S3 API call-a translate will happen, cost and latency real-a will be. This first understand must do needed point.",
+      "ren_correct": "Correct — S3 object store, filesystem not. s3fs-fuse just a translation layer, real API calls behind it.",
+      "ren_wrong": "A bit think again — S3 real filesystem not. s3fs-fuse translation layer only, actual API calls happen behind the scenes."
+    },
+    {
+      "id": "C5.1a-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.1a",
+      "question": "In S3, what does an object's 'key' like logs/2024/orders/jan-15.log actually represent?",
+      "options": [
+        "A) A true nested folder path, exactly like a directory structure on a real filesystem",
+        "B) A single, flat string that happens to contain slashes — S3 has no true nested folders at all. The console displays slash-separated keys as if they were folders purely for visual convenience, but underneath it's one flat namespace of key-value pairs",
+        "C) A database table name, unrelated to file storage at all",
+        "D) A required field that must exactly match a pre-created folder structure before any object can be uploaded"
+      ],
+      "correct_index": 1,
+      "explanation": "in S3 'folder' — in console kaanrthat real folder not — that just a flat key in string slash is there, and console visual for convenience that slashes-a folder like kaatum. Underneath, S3 completely flat namespace, real nested directory structure not AWS's in side.",
+      "ren_correct": "Correct — flat namespace, folders console's visual trick only.",
+      "ren_wrong": "A bit think again — in S3 true nested folders not. Ella key also flat in namespace is there, slashes visual convenience only."
+    },
+    {
+      "id": "C5.1a-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.1a",
+      "question": "On a real filesystem, renaming a file is typically a cheap, near-instant metadata operation. What actually happens when you 'rename' an object in S3?",
+      "options": [
+        "A) S3 has a true, native rename operation that works exactly like a filesystem, updating only metadata with no data movement",
+        "B) There is no native rename in S3 — 'renaming' an object actually means COPYING the object to a new key and then DELETING the original, which involves moving the actual data (not just metadata), and costs more and takes longer than a filesystem rename, especially for large objects",
+        "C) S3 objects can never be renamed under any circumstances, only deleted and manually re-uploaded",
+        "D) Renaming only works for objects smaller than 1KB"
+      ],
+      "correct_index": 1,
+      "explanation": "in S3 native rename operation — anything not. 'Rename' doing real-a COPY (new for key) + DELETE (old key) — this metadata-only operation not, actual data move will happen, periya for object very slow-a and expensive-a will be, filesystem rename's different topic completely.",
+      "ren_correct": "Correct — S3 rename — real-a copy+delete, metadata-only operation not.",
+      "ren_wrong": "A bit think again — in S3 native rename — anything not. Rename — real-a copy+delete, this filesystem rename's vera."
+    },
+    {
+      "id": "C5.1a-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.1a",
+      "scenario": "You dig into exactly what the log script does through its s3fs-fuse mount, over a typical day.",
+      "broken_config": "Log script behavior (via /mnt/s3-logs/ s3fs-fuse mount):\n├── Appends a new line to the current log file roughly every 2 seconds (each append triggers a full re-upload of the object under s3fs-fuse's default behavior, since S3 has no true append operation either)\n├── \"Renames\" the log file at each hourly rotation (a COPY + DELETE per rotation, 24 times/day)\n├── Lists the \"directory\" contents before each rotation to check for existing files (a LIST API call, potentially expensive at scale)\n└── Estimated actual S3 API calls per day: ~43,200 PUT-equivalent calls (from appends) + 48 COPY/DELETE calls (from rotations) + 24 LIST calls\n\nS3 request pricing: PUT/COPY requests ~₹0.0004 each, LIST requests ~₹0.0004 each, GET requests ~₹0.00008 each",
+      "what_to_find": [
+        "The append-every-2-seconds pattern is the biggest issue — S3 has no true append operation, so s3fs-fuse likely re-uploads the ENTIRE current log file on every single append, meaning a growing file gets re-uploaded in full, over and over, all day",
+        "This means write costs scale with (file size × number of appends), not just the actual amount of new data being written — a massive inefficiency compared to just writing to a local file and uploading complete files periodically",
+        "The hourly rename operations, while smaller in count, are also unnecessary S3 API cost that a native upload pattern (write locally, upload once per rotation) would avoid entirely",
+        "At roughly ₹0.0004 per PUT-equivalent call, ~43,200 calls/day is already about ₹17.28/day just from this one script's append pattern alone — and this is likely only ONE of several similar scripts across the fleet"
+      ],
+      "correct_fix": "Rewrite the log script to write to a local file normally (no S3 mount at all), and use the S3 SDK/CLI to upload the completed log file to S3 once per rotation (e.g., hourly), rather than mounting S3 as a filesystem and letting every local-style operation translate into a real API call.",
+      "explanation": "This exact spec mistake — S3-a mounted drive like use doing, real cost implications-a purinjikaama. Local-first, batch-upload approach real fix — S3's actual model (key-value, batch operations) respect doing."
+    },
+    {
+      "id": "C5.1a-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C5.1a",
+      "question": "Arrange the correct order to migrate the log script away from the s3fs-fuse mount safely.",
+      "items": [
+        "Modify the script to write logs to a normal local file path instead of the S3 mount",
+        "Add a scheduled upload step (using the S3 SDK/CLI) that uploads the completed log file to S3 once per rotation",
+        "Run the new version in parallel with the old one for a short period, comparing output to confirm equivalent behavior",
+        "Once confirmed equivalent, cut over fully to the new version and unmount the s3fs-fuse mount",
+        "Monitor the next billing cycle to confirm the expected reduction in S3 request costs"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First local file-a switch must do, then batch upload step add must do, then parallel run after doing verify must do (this risky for change safe approach), then full cutover, LAST-a in billing real savings confirm must do.",
+      "ren_correct": "Nice sequencing — parallel verification before full cutover, real billing confirmation at the end.",
+      "ren_wrong": "Order again paaru — parallel verify without doing full cutover doing risky, that earlier step-a must be."
+    },
+    {
+      "id": "C5.1a-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1a",
+      "scenario": "karthik-dev, reviewing the fix, asks: 'Why not just keep using s3fs-fuse but reduce the append frequency to once a minute instead of every 2 seconds? Wouldn't that fix most of the cost issue with a smaller change?'",
+      "question": "Is reducing append frequency (while still using s3fs-fuse) a good enough fix?",
+      "options": [
+        "A) Yes — this fully solves the problem with the smallest possible change, no further work needed",
+        "B) It would help (fewer re-uploads), but it doesn't address the underlying issue: s3fs-fuse still re-uploads the ENTIRE growing file on every write, so cost still scales with file size over the day, just less frequently. The native local-write-then-batch-upload approach avoids this scaling problem entirely, not just reduces its frequency",
+        "C) No — reducing append frequency would actually increase costs, since S3 charges more for infrequent access patterns",
+        "D) It doesn't matter either way, since S3 request costs are fixed regardless of file size or frequency"
+      ],
+      "correct_index": 1,
+      "explanation": "Frequency kammi doing help does, but real problem (full file re-upload per write, size's scale will happen) still will be. Native approach (local write, batch upload) idha completely avoid does, frequency reduce doing only symptom kammi does, root cause fix what was done.",
+      "ren_correct": "Correct — frequency reduce doing partial help only, root cause vera, native approach real fix.",
+      "ren_wrong": "A bit think again — frequency reduce doing symptom kammi does, but file-size-based re-upload problem still will be. Native approach root cause fix does."
+    },
+    {
+      "id": "C5.1a-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1a",
+      "scenario": "ananya-analyst wants to write a script that needs to quickly check whether a specific report file exists somewhere inside a bucket with millions of objects, spread across thousands of \"folder-like\" prefixes.",
+      "question": "Given S3 has no true nested folder structure, what's the right way to check for a specific object's existence efficiently?",
+      "options": [
+        "A) List every object in the entire bucket recursively and search through the results for a match, since that's how folder searching works on a real filesystem",
+        "B) Use a direct HEAD request (or equivalent SDK call) for the object's EXACT full key, since S3 is a flat key-value store — looking up one specific known key directly is fast and cheap, unlike scanning through a folder hierarchy",
+        "C) S3 cannot check for individual object existence at all, only whether a bucket exists",
+        "D) Existence checks require downloading the full object first, then checking if the download succeeded"
+      ],
+      "correct_index": 1,
+      "explanation": "S3 flat key-value store-a irundhaladhala, a specific known key check must dona, DIRECT lookup (HEAD request) must do, recursive listing do not do. This real, practical consequence of 'no true folders' — a exact key therinjaa, direct-a check we can do, scan doing vendaam.",
+      "ren_correct": "Correct — flat key-value store's real advantage, exact key theriyum — direct lookup fast-a will be.",
+      "ren_wrong": "A bit think again — recursive listing doing unnecessary-a expensive and slow. Exact key therinjaa, direct HEAD request must do."
+    },
+    {
+      "id": "C5.1a-T8",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C5.1a",
+      "cases": {
+        "case_1": "Storing product images that customers view via the app, accessed frequently from anywhere, no filesystem semantics needed",
+        "case_2": "The root volume of an EC2 instance running a database, needing genuine filesystem behavior and low-latency block-level access",
+        "case_3": "A shared directory that THREE different EC2 instances need to read and write simultaneously, with real file-locking semantics",
+        "case_4": "Long-term archival of old order records for compliance, rarely accessed, cost being the primary concern",
+        "case_5": "A single instance's temporary scratch space for a batch job, needing fast local disk access with no sharing requirement"
+      },
+      "correct_answers": {
+        "case_1": "S3 — object storage fits perfectly for frequently-accessed, app-served files with no filesystem semantics needed",
+        "case_2": "EBS — block storage attached to one instance, true filesystem semantics, low latency, exactly what a database root volume needs",
+        "case_3": "EFS — the ONLY one of these three that supports genuine multi-instance shared filesystem access with real file-locking",
+        "case_4": "S3 (with a lifecycle policy to a cheaper storage class like Glacier) — archival, cost-focused, rarely-accessed data is S3's strength, especially with tiering",
+        "case_5": "EBS (or even instance store if truly ephemeral) — single-instance, fast, local, no sharing needed, doesn't need EFS's shared-access overhead or S3's object model"
+      },
+      "scenario": "Meera's team wants a clearer picture of when to use each storage type, having just learned that S3 isn't a drop-in filesystem replacement. Match the right storage type to each of these five scenarios.",
+      "explanation": "Ainthu different different requirement — object storage/app-served (S3), single-instance block storage (EBS), genuine multi-instance shared filesystem (EFS — the only one supporting this), cost-focused archival (S3 with lifecycle), single-instance scratch (EBS/instance store). This real judgment, a default answer not ellathukum.",
+      "ren_correct": "Correct — each case-kum actual requirement (sharing, latency, cost, filesystem semantics) base after doing right storage type match did you do.",
+      "ren_wrong": "A bit think again — each case also different different requirement, for each one different different storage type fit will happen. EFS only true multi-instance sharing support does."
+    },
+    {
+      "id": "C5.1a-T9",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C5.1a",
+      "scenario": "While pulling S3 Cost Explorer data to quantify the log script's impact for Meera's report, you notice something unrelated: a bucket called foodquick-legacy-exports, currently at 340GB, growing at a steady ~8GB per week for as long as the billing history goes back.",
+      "error_shown": "$ aws s3 ls s3://foodquick-legacy-exports/ --recursive | tail -5\n2024-XX-XX export_batch_9821.csv.gz\n2024-XX-XX export_batch_9822.csv.gz\n2024-XX-XX export_batch_9823.csv.gz\n(new files appearing roughly every few hours, consistently, going back as far as billing history is available)\n\n$ No one on the current team recognizes this bucket's name or purpose. No application code in the current repos references it.",
+      "diagnosis": "This is a genuinely separate finding from the log script issue — an actively, continuously growing bucket with no identifiable current owner or matching application code. Unlike the log script (which had a clear, findable cause), this requires deeper investigation before anything can be concluded, since something is clearly still writing to it regularly.",
+      "fix": "Do not delete, modify, or otherwise touch this bucket. Flag it explicitly to Meera as a separate, unresolved finding — something is actively writing here, so this is a live, ongoing question, not old dead weight like a stale snapshot would be. Continue the broader FQ-189 storage investigation with this open.",
+      "explanation": "This CS5's own mystery, in C3/C4 we saw same investigative discipline — purinjikaama anything touch do not. This Importantly different from a stale/dead resource — this ACTIVELY growing, so something still writing here, that real, live question."
+    },
+    {
+      "id": "C5.1a-T10",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.1a",
+      "scenario": "The log script fix is deployed. Final audit before reporting the numbers to Meera.",
+      "broken_config": "Post-fix audit — log script:\n├── Now writes to local disk, uploads completed hourly log file via S3 CLI\n├── Estimated S3 API calls per day: ~24 PUT calls (one per hourly upload), down from ~43,248\n├── Parallel-run comparison: new version's uploaded logs match old version's content exactly, confirmed over a 48-hour test\n└── foodquick-legacy-exports: unchanged, still flagged as open, not touched",
+      "what_to_find": [
+        "API call volume dropped by well over 99% (from ~43,248/day to ~24/day) — this is the real, measurable result of fixing the root cause rather than just tuning frequency",
+        "The parallel-run comparison confirms the new approach produces equivalent output, not just cheaper output — correctness was verified, not assumed",
+        "The mystery bucket is correctly left untouched and still flagged, exactly as instructed — this audit doesn't quietly forget about it just because it isn't this task's focus"
+      ],
+      "correct_fix": "No further changes needed for the log script fix — proceed to calculate the real cost savings for Meera's report.",
+      "explanation": "This 'recognize this is already correct' verify task — we root cause fix after doing real measurable result (99%+ reduction) is there, AND correctness verify we have done, AND mystery correctly untouched-a is there."
+    },
+    {
+      "id": "C5.1a-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C5.1a",
+      "scenario": "Meera needs the actual monthly savings number for her board deck. Before the fix: ~43,248 PUT-equivalent calls/day at ~₹0.0004 each. After the fix: ~24 PUT calls/day at the same rate.",
+      "question": "What's the real monthly savings from this one fix, and how should it be framed for a non-technical audience like Meera's board deck?",
+      "solution": "Before: 43,248 × ₹0.0004 × 30 days ≈ ₹5,190/month just in S3 request costs from this one script. After: 24 × ₹0.0004 × 30 days ≈ ₹0.29/month — effectively eliminated. Framed simply: 'One log script was accidentally costing roughly ₹5,190/month in unnecessary S3 API calls due to a filesystem-mounting pattern that isn't how S3 is designed to be used — fixed with no functional change to the logs themselves, confirmed via a 48-hour side-by-side comparison.'",
+      "explanation": "This real ₹ number, board-deck-ready framing — technical root cause (filesystem mounting anti-pattern) and business impact (₹5,190/month) both clear-a explain doing, non-technical audience-kum understand like."
+    },
+    {
+      "id": "C5.1a-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.1a",
+      "scenario": "Time to report back to Meera on this first piece of FQ-189.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed a script issue. Storage costs should be better now.\"",
+        "B) \"Found the log script was mounting S3 as a filesystem (s3fs-fuse) and re-uploading its entire growing log file on every 2-second append — costing roughly ₹5,190/month in unnecessary S3 requests alone, with no benefit. Rewrote it to write locally and batch-upload hourly instead, verified equivalent output over 48 hours, confirmed ~99% reduction in API calls. Separately, found an unrelated actively-growing bucket (foodquick-legacy-exports, 340GB, ~8GB/week) with no identifiable current owner — flagging this as a distinct, unresolved finding, not touching it per your instruction.\"",
+        "C) \"Storage is optimized now, no other issues to report.\"",
+        "D) \"Found some old junk data taking up space, deleted it to save money.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific technical root cause, real ₹ number, verified correctness, AND the separate mystery finding clearly flagged without touching it. 'Deleted junk data' — dangerous — we edhuvume delete did not do, that option factually wrong AND against instruction.",
+      "ren_correct": "This correct report — specific, verified, and correctly flags the separate mystery without acting on it.",
+      "ren_wrong": "This report either vague-a is there, or real finding-a dismiss does, or we do not action (delete) claim does."
+    }
+  ],
+  "act_number": 1,
+  "act_title": "Buckets and Object Fundamentals",
+  "builds_layer": "Object Store Layer"
+}

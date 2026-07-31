@@ -1,0 +1,242 @@
+{
+  "lesson_id": "C3.2a",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 13,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nGood find on that dangling route last time — don't touch it yet, I still want to understand it before we act on it.\n\nNext: I want a full subnet map. FoodQuick's VPC has three subnets, one per AZ, and near as I can tell nobody ever actually decided which of them should be public and which should be private — they're just whatever the default VPC handed us on day one. I need to know exactly what's running where, and what's actually reachable from the internet right now. Start there.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nGood work. foodquick-orders-db is out of the public subnet, the security group is down to a single SG-based rule, and the private route table holds — no path to the internet from there anymore.\n\nOne more thing from your report: that 10.50.0.0/16 route pointing to a peering connection that doesn't exist anymore. That's a real thread now, not just noise — something on the other end of that connection USED to talk to this VPC. I want to know what, before we touch it. Keep it flagged. We'll come back to it.\n\nNext up: single points of failure. This whole setup runs like it'll never have a bad day. Let's find out what actually happens when an AZ goes down.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.2a-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.2a",
+      "scenario": "Priya Nair's next line in FQ-156: 'Before we build a real network, I want you to map every subnet in FoodQuick's current VPC — what's actually running in each one, and which subnets can be reached directly from the internet.' You open the VPC console. FoodQuick is still running in the same default VPC from C3.1 — three subnets, one in each ap-south-1 AZ, all created automatically when the account was made.",
+      "question": "What is the fastest, most reliable way to determine whether a subnet is 'public' or 'private' — without relying on what its name suggests?",
+      "options": [
+        "A) Check the subnet's name in the console — if it's called \"public-subnet\", it's public",
+        "B) Check the subnet's route table — if it has a route sending 0.0.0.0/0 traffic to an Internet Gateway, it's public",
+        "C) Check if the subnet's CIDR block itself is a \"public\" IP range",
+        "D) Check if any EC2 instance currently in the subnet has a public IP attached"
+      ],
+      "correct_index": 1,
+      "explanation": "Subnet name inga a label only — AWS atha pathathai kavalaaipapadaaathau. Real answer route in table iraukaku: 0.0.0.0/0 → Internet Gateway route irundha, that subnet public. CIDR block never decides public/private — 172.31.x.x private-range CIDR even then route in table IGW route irundha, that subnet effectively public.",
+      "ren_correct": "Correct! Route table source of truth — name not, CIDR not.",
+      "ren_wrong": "Nee namela check panra logic wrong. Route in table what route is there — paaru, that decide does."
+    },
+    {
+      "id": "C3.2a-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.2a",
+      "question": "A FoodQuick engineer is deciding where to place four resources: the Application Load Balancer, a NAT Gateway, the order-service EC2 instances, and the orders PostgreSQL database. Which of these belongs in a PUBLIC subnet?",
+      "options": [
+        "A) The orders PostgreSQL database — the analytics team needs to reach it",
+        "B) The order-service EC2 instances — they handle customer traffic directly",
+        "C) The Application Load Balancer and the NAT Gateway — they need to send or receive traffic to and from the internet",
+        "D) All four resources — public subnets are just the \"main\" subnet in a VPC"
+      ],
+      "correct_index": 2,
+      "explanation": "ALB customer traffic in internet irundhu receive must do, NAT Gateway private for subnet outbound internet access must give — both need IGW route needed, so public subnet correct place. Order-service EC2 ALB maoolamaaa traffic receive pananaum, direct internet exposure thaevaaiyailala. DB kuda analytics team direct access to do must not — VPN or bastion moolamaaa, not app tier maoolamaaa.",
+      "ren_correct": "Nice — public for subnet must go — deciding 'internet's direct reachability' in base, 'whether it is important' — not.",
+      "ren_wrong": "A bit think — public subnet — 'important resource'-oda meaning not. Internet's direct talk need to resources only in public must be."
+    },
+    {
+      "id": "C3.2a-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.2a",
+      "question": "A FoodQuick engineer notices subnet-cc33 has \"Auto-assign public IPv4 address: Yes\" enabled in its subnet settings, and worries this alone makes the subnet public. Is that setting by itself what makes a subnet public?",
+      "options": [
+        "A) Yes — any subnet with this setting enabled is a public subnet, regardless of anything else",
+        "B) No — this setting only controls whether new instances launched in the subnet automatically get a public IP; it doesn't create a route to the internet by itself. The subnet is only actually public if its route table also sends 0.0.0.0/0 to an Internet Gateway",
+        "C) No — this setting is deprecated and has no effect in modern AWS accounts",
+        "D) Yes, but only for EC2 — RDS instances ignore this setting entirely"
+      ],
+      "correct_index": 1,
+      "explanation": "This in T1 we saw route-table's rule still deepen does. Auto-assign public IP setting also route table also two different different settings — for instance public IP giving a topic, that for IP actual internet path to be — deciding still different topic (route table). Rendum sernthu a subnet real public will be.",
+      "ren_correct": "Correct-u — two different settings — is clear unaku.",
+      "ren_wrong": "Setting name paathu confuse aagatha. Route table final decider, this vera setting."
+    },
+    {
+      "id": "C3.2a-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.2a",
+      "scenario": "You pull FoodQuick's actual VPC console output to map the problem before proposing any fix.",
+      "broken_config": "FoodQuick VPC (vpc-0a1b2c3d4e5f, ap-south-1) — Default VPC, CIDR 172.31.0.0/16\n\nSubnets:\n├── subnet-aa11 (ap-south-1a) — 172.31.0.0/20 — Route Table: rtb-main\n├── subnet-bb22 (ap-south-1b) — 172.31.16.0/20 — Route Table: rtb-main\n└── subnet-cc33 (ap-south-1c) — 172.31.32.0/20 — Route Table: rtb-main\n\nrtb-main (Main Route Table, associated with ALL 3 subnets):\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n└── 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 (flagged in C3.1 — unresolved)\n\nEC2 / RDS placement:\n├── order-service (EC2 ×3, ASG) — subnet-aa11, subnet-bb22\n├── notification-worker (EC2 ×1) — subnet-cc33\n└── foodquick-orders-db (RDS PostgreSQL, Multi-AZ OFF) — subnet-aa11\n\nVPC Peering Connections (console, current):\n└── (none found — 0 active peering connections in this account/region)",
+      "what_to_find": [
+        "All three subnets share the same route table, and that route table sends 0.0.0.0/0 to an Internet Gateway — every subnet in this VPC is technically public, there is no private subnet at all",
+        "foodquick-orders-db sits in subnet-aa11, which is public — a production database is directly reachable from the internet path if its security group ever allows it",
+        "There is no dedicated private subnet in this account yet — public/private was never a decision anyone made, it's just the default VPC's default behavior",
+        "The 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 route flagged in C3.1 is still present, unchanged",
+        "The Peering Connections list shows ZERO active peering connections in this account — meaning pcx-0e4a9f2b1c8d3a1f2 doesn't exist anymore. This is new: the mystery route once pointed to a REAL peering connection that someone deleted without removing the route"
+      ],
+      "correct_fix": "Target state: at least 2 new private subnets (one per AZ used by app tier), each with its own route table containing NO 0.0.0.0/0 → IGW route. Move foodquick-orders-db into a private subnet via its DB Subnet Group. Leave the 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 route untouched for now — update the investigation note to record that this peering connection ID does not appear in the account's current peering connections, confirming it was deleted at some point in the past without cleanup.",
+      "explanation": "5 problems found — mainly two kinds: (1) architecture problem — private subnet the concept did not even exist, so DB public in subnet sit does, (2) mystery thread deepens — 10.50.0.0/16 route ippo 'unexplained' only not, 'confirmed dangling, once pointed to a real peering connection' — specific happened. This in C3.1 therinja clue's next data point."
+    },
+    {
+      "id": "C3.2a-T5",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C3.2a",
+      "scenario": "Before reporting the fix, Priya asks for one line in the incident postmortem doc on what was actually at stake while foodquick-orders-db sat in a public subnet. The DB stores PII and order history for roughly 40,000 daily orders. You pull a comparable case for context: a mid-size Bengaluru fintech had a similarly internet-reachable database found by an automated scanner in 2024, resulting in a customer-data exposure and a ₹9.4 lakh regulatory notice.",
+      "question": "FoodQuick's exposure was never actually exploited — the security group happened to still block external access even though the subnet itself was technically public. What's the most accurate way to state this risk in the postmortem?",
+      "solution": "The subnet being public did not by itself mean the DB was breached — the security group rule was the only thing standing in the way, and in this case it held. The accurate framing: 'FoodQuick had zero architectural barrier against DB exposure — only a single security group rule stood between the internet and a database holding PII for ~40,000 daily orders. One misconfigured SG change would have made it fully reachable — the same pattern that cost a comparable Bengaluru fintech ₹9.4 lakh in regulatory exposure in 2024.' State the real risk (a missing architectural boundary, a single point of failure), not a false claim that a breach actually happened.",
+      "explanation": "Security in postmortem precision is important — do not overclaim a breach that did not happen. But 'nothing happened' — saying also wrong — what the real risk iseans 'architectural barrier eh without was there', that honestly-ah, ₹ stakes's must say."
+    },
+    {
+      "id": "C3.2a-T6",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.2a",
+      "question": "Arrange these steps in the correct order to move foodquick-orders-db into a private subnet safely, with no downtime and no leftover exposure.",
+      "items": [
+        "Modify the RDS instance's DB subnet group to include the new private subnets",
+        "Update security group rules so only the app tier's security group (not a CIDR range) can reach the DB on its port",
+        "Create a new private subnet in each AZ where the DB should live",
+        "Verify DB connectivity from the app tier and confirm the DB subnet has zero route to the Internet Gateway",
+        "Create a dedicated private route table (no 0.0.0.0/0 → IGW route) and associate it with the new subnets"
+      ],
+      "correct_order": [
+        2,
+        4,
+        0,
+        1,
+        3
+      ],
+      "explanation": "Subnet first create must do, then for that route table associate must do — or that subnet default main route for table poidum (IGW route ulla), we plan wrongly will become. Then DB subnet group modify, security group tighten, last verify. Order change, a step we unnoticed still-public in state sikkidum."
+    },
+    {
+      "id": "C3.2a-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2a",
+      "scenario": "You're implementing the first two steps of the plan — creating the private subnets and their route table. karthik-dev asks: 'Should I put the new private subnet in the same 3 AZs as the public ones, or is 1 private subnet enough since it's just the DB for now?'",
+      "question": "What's the right guidance to give karthik-dev, thinking about how RDS actually uses subnet groups?",
+      "options": [
+        "A) One private subnet is enough right now — you can always add more AZs later without any consequence",
+        "B) RDS DB Subnet Groups require at least 2 subnets in 2 different AZs, even for a single-AZ instance today — so create private subnets in at least 2 AZs from the start",
+        "C) Match exactly 3 AZs like the public subnets, no fewer no more — AWS requires symmetry between public and private subnet counts",
+        "D) It doesn't matter — subnet groups are an EC2-only concept, not used by RDS"
+      ],
+      "correct_index": 1,
+      "explanation": "RDS DB Subnet Group — hard requirement — needs a minimum of 2 AZs, that instance even if Multi-AZ is not ON right now. This Multi-AZ failover decision's different topic (that next lesson topic) — this subnet group's basic AWS constraint only.",
+      "ren_correct": "Correct — this Multi-AZ failover is not about, subnet group's basic rule about.",
+      "ren_wrong": "A bit off track. RDS subnet group AWS-level hard requirement vachurukku — 1 AZ podhaadhu."
+    },
+    {
+      "id": "C3.2a-T8",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2a",
+      "scenario": "The DB security group currently allows inbound Postgres (port 5432) from 172.31.0.0/16 — the entire VPC CIDR. Priya flags this during review: 'Moving the DB to a private subnet fixes internet exposure. But this SG rule still means EVERY instance in this VPC — including future dev or test instances — can reach the production DB directly.'",
+      "question": "What's the better security group configuration for the DB's inbound rule?",
+      "options": [
+        "A) Leave it as-is — private subnet placement alone is enough protection",
+        "B) Narrow the CIDR to just the private app subnets' specific ranges",
+        "C) Reference the app tier's security group ID as the source instead of any CIDR range, so only instances actually in that SG can connect — regardless of which subnet they're later moved to",
+        "D) Remove the inbound rule entirely and only allow connections via a VPN tunnel"
+      ],
+      "correct_index": 2,
+      "explanation": "CIDR-based rule —, that CIDR in range varra edhu vendalum access we can do — even a wrongly launch did dev instance. SG-to-SG reference did, specific that SG attach do be instances only connect to do can, subnet change rule automatic correctly will be. This foundational least-privilege pattern — deep SG vs NACL comparison in next will come in lesson will come.",
+      "ren_correct": "Nice — SG-to-SG reference is the durable pattern, CIDR range vida better.",
+      "ren_wrong": "CIDR range narrow even if done, in future edho a instance that in range vanathaaa, that problem again will come. SG-to-SG reference real fix."
+    },
+    {
+      "id": "C3.2a-T9",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2a",
+      "scenario": "karthik-dev needs SSH access to debug the notification-worker EC2 instance directly, without exposing that instance to the internet. He proposes setting up a bastion host (jump box) for the team to use.",
+      "question": "Where should the bastion host itself be placed?",
+      "options": [
+        "A) In the same private subnet as notification-worker, since it's only used internally by the team",
+        "B) In a public subnet, since the team needs to reach it directly from the internet, and it acts as the single controlled entry point into the private subnets",
+        "C) It doesn't need subnet placement — bastion hosts run outside the VPC entirely",
+        "D) In a separate, fully isolated VPC with no connection to FoodQuick's VPC at all"
+      ],
+      "correct_index": 1,
+      "explanation": "Bastion host's whole purpose — that a controlled, intentional 'front door'. That only public in subnet must be, so team members direct that reach we can do, then that maoolamaaa only private subnet's for instances poganum. This in T2 we saw 'what public in subnet poganum' concept a pudhu for resource extend doing.",
+      "ren_correct": "Correct — bastion is the one deliberate exception, it's SUPPOSED to be public.",
+      "ren_wrong": "Bastion host's whole point you missed — that specifically public must be, adhucontrolled entry point."
+    },
+    {
+      "id": "C3.2a-T10",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.2a",
+      "scenario": "You're creating the two new private subnets — subnet-dd44 in ap-south-1a and subnet-ee55 in ap-south-1b. You pick 172.31.0.0/24 for subnet-dd44 without checking what's already allocated in this VPC's 172.31.0.0/16 space.",
+      "error_shown": "An error occurred (InvalidSubnet.Conflict) when calling the CreateSubnet operation: The CIDR '172.31.0.0/24' conflicts with another subnet",
+      "diagnosis": "A VPC's CIDR block is one shared, finite address pool across every subnet in it. subnet-aa11 already owns 172.31.0.0/20, subnet-bb22 owns 172.31.16.0/20, and subnet-cc33 owns 172.31.32.0/20 — together these consume the entire 172.31.0.0/20 through 172.31.47.255 range. 172.31.0.0/24 falls completely inside subnet-aa11's already-allocated /20 block, so AWS rejects the create — CIDR ranges within one VPC can never overlap, even between subnets that will serve completely different purposes.",
+      "fix": "Map out what's already used before picking a new CIDR: 172.31.0.0/20, 172.31.16.0/20, and 172.31.32.0/20 are taken, so the next free /20 blocks start at 172.31.48.0/20. Create subnet-dd44 as 172.31.48.0/20 (ap-south-1a) and subnet-ee55 as 172.31.64.0/20 (ap-south-1b).",
+      "explanation": "This real mistake — subnet plan could not be done, CIDR calculator or manual math and you went ahead without conflicts like this will appear. VPC CIDR a single shared pool thought, already-used ranges list after doing then new subnet CIDR decide must do."
+    },
+    {
+      "id": "C3.2a-T11",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.2a",
+      "scenario": "Migration is done. Before reporting back to Priya, you run a final audit to confirm the fix actually holds end-to-end.",
+      "broken_config": "Post-migration audit — foodquick-orders-db:\n\nSubnets:\n├── subnet-dd44 (ap-south-1a) — 172.31.48.0/20 — Route Table: rtb-private (no 0.0.0.0/0 route) ✓\n└── subnet-ee55 (ap-south-1b) — 172.31.64.0/20 — Route Table: rtb-private (no 0.0.0.0/0 route) ✓\n\nRDS DB Subnet Group: foodquick-db-subnet-group → [subnet-dd44, subnet-ee55] ✓\n\nSecurity Group (sg-db-0091) — Inbound rules:\n├── Port 5432, Source: sg-app-tier-0033 (added this session) ✓\n└── Port 5432, Source: 172.31.0.0/16 (old rule — still present)\n\nrtb-main (still associated with subnet-aa11, subnet-bb22, subnet-cc33):\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n└── 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 (confirmed dangling — no active peering connection owns this ID)",
+      "what_to_find": [
+        "The old broad security group rule (172.31.0.0/16 on port 5432) was never removed — the new SG-based rule was added alongside it, not used to replace it, so any instance anywhere in the VPC can still reach the DB directly",
+        "The private subnets and route table are correctly configured — no route to the Internet Gateway — this part of the fix held",
+        "The 10.50.0.0/16 dangling route is still present and now confirmed to point to a deleted peering connection — correctly left untouched per Priya's standing instruction, flagged again for the ongoing investigation"
+      ],
+      "correct_fix": "Remove the 172.31.0.0/16 CIDR-based inbound rule from sg-db-0091, keeping only the sg-app-tier-0033 SG-based rule. Leave the 10.50.0.0/16 route in rtb-main exactly as-is — do not delete it — and carry the confirmed 'dangling, no owning peering connection' detail forward into the investigation notes for Priya.",
+      "explanation": "Half-done fix —, worse than having no fix- — old rule removed the old rule without adding the new one, net result same exposure will be. Verify step's whole point this: 'fixed' — say any residual gap leave we can doa — check doing."
+    },
+    {
+      "id": "C3.2a-T12",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.2a",
+      "scenario": "FoodQuick plans to add an ElastiCache caching layer and an internal admin dashboard next quarter — both need private subnets too. Priya asks you to plan the private subnet CIDR strategy now, not when those services actually get built.",
+      "options": [
+        "A) Keep just the 2 private subnets created today — add more later only when a new service actually needs one",
+        "B) Reserve a broader private subnet CIDR range now (e.g. carve out a /18) and allocate smaller /20 subnets from it over time for compute, cache, and admin tiers — even though only the DB uses it today",
+        "C) Put ElastiCache and the admin dashboard in the same public subnets as the ALB, since they're described as \"internal-only\" anyway",
+        "D) Create a brand new VPC for each new internal service to keep everything fully isolated"
+      ],
+      "correct_index": 1,
+      "explanation": "T7's CIDR conflict error already kaatichu — plan without doing subnet create do, easy address space run out will happen not overlap will come. Already a broader private range reserve after doing, then avasiyam that is there like sub-carve doing, future subnet for creation conflict-free will be. 'Internal-only' — for saying public in subnet podrthat correctly not — internet's direct talk without doing that is there anything private in subnet must be.",
+      "ren_correct": "Correct — CIDR planning ahead of time, that real engineering. Reactively subnet create while doing went, T7 like conflict error again again will come.",
+      "ren_wrong": "This we still better plan must do. Already address space reserve and you went ahead without, future services vandhutta CIDR conflict guaranteed."
+    },
+    {
+      "id": "C3.2a-T13",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2a",
+      "scenario": "Time to report back to Priya Nair on FQ-156. You've drafted four possible summaries of this session's work.",
+      "question": "Which report should you actually send?",
+      "options": [
+        "A) \"Fixed the DB subnet issue. All good now, ready for the next ticket.\"",
+        "B) \"Moved foodquick-orders-db to a dedicated private subnet with no route to the internet, tightened its security group to a single SG-based rule, and removed the old broad CIDR rule. Also re-confirmed the 10.50.0.0/16 static route from C3.1 — it points to a peering connection ID that no longer exists in this account, so it's now confirmed dangling. Leaving it in place per your note until we understand who used to own the other end.\"",
+        "C) \"Deleted the mysterious 10.50.0.0/16 route since it wasn't doing anything anyway, and moved the DB to a private subnet.\"",
+        "D) \"The subnet setup was already fine, no changes were needed.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Good report — specific must be — exactly what we changed, — must be stated clearly. Not only that — Priya explicit 'don't touch the mystery route yet' — said, that respectnarthat also professional judgment's part — we a without overriding the investigation lead's instruction, findings update panradhu.",
+      "ren_correct": "This correct report — specific-ah, honest-ah, and Priya's instruction respect does like is there.",
+      "ren_wrong": "This report vague is there or we authority without a decision (mystery route like deleting) it has taken. Both are wrong."
+    }
+  ],
+  "act_number": 2,
+  "act_title": "Public vs Private Subnets",
+  "builds_layer": "Subnet Placement Layer"
+}

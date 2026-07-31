@@ -1,0 +1,224 @@
+{
+  "lesson_id": "C3.3",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nTime to wire this properly. Right now foodquick-orders-db sits in a private subnet with a route table that has no internet route at all — not even outbound. That's fine for a database that only talks to the app tier. But it won't be fine the moment anything in a private subnet needs to reach the internet — a package update, an external payment API, anything.\n\nWe need a real NAT Gateway, wired correctly, and I want you to actually understand why it has to sit where it does — this is one people get backwards constantly.\n\nAlso — while you're in the route tables, take another look at that 10.50.0.0/16 entry. I pulled some traffic logs out of curiosity. Tell me what you see.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nNAT Gateway's live, correctly placed, correctly routed — private subnet resources can reach the internet outbound now, and nothing can reach them unsolicited from outside. That part's done right.\n\nThe flow logs you found are the real news here. Something in this account tried to reach 10.50.13.4 four times in the last six weeks — a specific address inside that mystery 10.50.0.0/16 range, not just random noise. That's not an old, dead artifact anymore. Something in FoodQuick's infrastructure is STILL actively trying to talk to whatever used to be on the other end of that peering connection. I want to know what's making that call before we do anything else with this route.\n\nNext: security groups and NACLs. We've been leaning on security groups this whole time — let's understand where they stop being enough.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.3-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.3",
+      "scenario": "You check the current routing setup. rtb-main (associated with subnet-aa11, bb22, cc33) has a route to igw-0f9e8d7c6b5a4 for 0.0.0.0/0. rtb-private (associated with subnet-dd44, subnet-ee55, holding foodquick-orders-db) has only the local VPC route — nothing else. There is no NAT Gateway anywhere in this account yet.",
+      "question": "Right now, if any resource in subnet-dd44 or subnet-ee55 (the private subnets) tried to reach an external service on the internet — say, to download a security patch — what would happen?",
+      "options": [
+        "A) It would work fine, since private subnets automatically get outbound-only internet access by default",
+        "B) It would fail completely — there's no route out to the internet at all from these subnets right now, inbound OR outbound, since no NAT Gateway exists yet",
+        "C) It would work, but only for HTTPS traffic — HTTP would be blocked automatically",
+        "D) It would work only if the resource has an Elastic IP attached"
+      ],
+      "correct_index": 1,
+      "explanation": "Private for subnet 'automatic outbound access' — anything not — that default behavior not. Route in table any route irundhaal only any traffic poga can. Now in rtb-private local route only is there — veliye poga anything vazhi not, NAT Gateway create doing vaikkum varaikkum.",
+      "ren_correct": "Correct — 'private subnet' — for saying 'automatic outbound access' — meaning not. Explicit route must be.",
+      "ren_wrong": "A bit wrong. Private for subnet anything automatic kidaikathu — route in table explicit route without, anything veliye poga cannot."
+    },
+    {
+      "id": "C3.3-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.3",
+      "question": "How is an Internet Gateway (IGW) different from a NAT Gateway, in terms of the direction traffic can flow?",
+      "options": [
+        "A) They're functionally identical — IGW is just the older name for the same feature",
+        "B) An IGW allows traffic BOTH ways (inbound and outbound) — this is why resources in a public subnet can be reached directly from the internet. A NAT Gateway only allows OUTBOUND-initiated traffic — resources behind it can reach the internet, but nothing on the internet can initiate a connection TO them",
+        "C) An IGW is outbound-only, and a NAT Gateway is bidirectional — the reverse of the real behavior",
+        "D) Both are outbound-only; neither ever allows inbound connections"
+      ],
+      "correct_index": 1,
+      "explanation": "IGW bidirectional — that public subnet resources in internet irundhu directly reach to do can. NAT Gateway ONE direction only — private subnet's resource for internet must go — can, but in internet irundhu anything that resource directly start to do cannot. This exact difference — 'both allow internet access' — confuse do not do, direction is important.",
+      "ren_correct": "Correct — direction key difference, bidirectional vs outbound-only.",
+      "ren_wrong": "IGW um NAT Gateway also same not — direction reverse thoughthikitiya. IGW bidirectional, NAT outbound-only."
+    },
+    {
+      "id": "C3.3-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.3",
+      "question": "A NAT Gateway's entire job is to give PRIVATE subnet resources outbound internet access. Given that, which subnet should the NAT Gateway itself actually be created in?",
+      "options": [
+        "A) The same private subnet it's serving — that way it's close to the resources that need it",
+        "B) A PUBLIC subnet — the NAT Gateway itself needs its own route to an Internet Gateway to reach the internet on behalf of the private subnet; if it were placed in a private subnet, it would have no internet access itself and couldn't do its job",
+        "C) It doesn't matter which subnet, since NAT Gateways aren't actually placed inside any specific subnet",
+        "D) A completely separate VPC dedicated only to NAT Gateways"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact mistake pattern — 'private for subnet serve does, so private in subnet must be' — ninaikkardhu intuitive thonum, but wrong. NAT Gateway ITSELF ku IGW route needed, adhukakaaaka that PUBLIC in subnet must be. Private in subnet kept, for that reason internet access without, anything serve to do cannot.",
+      "ren_correct": "Correct — this in real-world very common mistake, but logic clearly purinjachairaukaku unaku.",
+      "ren_wrong": "This exact common mistake — NAT Gateway 'serves' private subnets, but that ITSELF public in subnet must be, or for that reason internet access not."
+    },
+    {
+      "id": "C3.3-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.3",
+      "scenario": "You map the complete current routing state before making any changes.",
+      "broken_config": "rtb-main (associated with subnet-aa11, subnet-bb22, subnet-cc33):\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n└── 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 (unresolved since C3.1)\n\nrtb-private (associated with subnet-dd44, subnet-ee55):\n└── 172.31.0.0/16 → local\n (no other routes — no internet access at all, inbound or outbound)\n\nNAT Gateways in this account: NONE",
+      "what_to_find": [
+        "No NAT Gateway exists anywhere in the account yet — this is why rtb-private has no outbound route to add in the first place",
+        "rtb-private currently has zero internet access of any kind — this is technically 'safe' but will break the moment any private-subnet resource needs a legitimate outbound connection (patches, external APIs, etc.)",
+        "The 10.50.0.0/16 route is still present in rtb-main, unchanged since C3.1, still officially unexplained"
+      ],
+      "correct_fix": "Create a NAT Gateway in a public subnet (subnet-aa11), allocate it an Elastic IP, then add a route to rtb-private: 0.0.0.0/0 → the new NAT Gateway's ID. Leave the 10.50.0.0/16 route in rtb-main untouched for now — continue the standing investigation rather than resolving it here.",
+      "explanation": "Two kinds of gap — (1) legitimate, expected gap: NAT Gateway still create did not do, so private for subnet outbound access not, this today fix must do. (2) that standing mystery route, unchanged, still in investigation is there."
+    },
+    {
+      "id": "C3.3-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.3",
+      "question": "Arrange the correct order of steps to give the private subnets working outbound internet access.",
+      "items": [
+        "Add a route to rtb-private: 0.0.0.0/0 → the new NAT Gateway's ID",
+        "Allocate an Elastic IP for the NAT Gateway to use",
+        "Create the NAT Gateway inside a PUBLIC subnet (subnet-aa11), attaching the allocated Elastic IP",
+        "Verify a resource in the private subnet can now successfully reach an external endpoint",
+        "Confirm the private subnet is still NOT reachable from the internet inbound (NAT Gateway should never allow unsolicited inbound)"
+      ],
+      "correct_order": [
+        1,
+        2,
+        0,
+        3,
+        4
+      ],
+      "explanation": "NAT Gateway create for doing earlier Elastic IP needed, that attach after doing NAT Gateway create must do. Then private route in table route add must do. Then outbound velai does — verify must do, LAST — is importanta — inbound still block to be — confirm must do, NAT Gateway accidentally inbound open did not do.",
+      "ren_correct": "Nice sequencing — outbound verify do, inbound still blocked to be — explicit confirm doing real thoroughness.",
+      "ren_wrong": "Order again paaru — Elastic IP without NAT Gateway create to do cannot, that first needed."
+    },
+    {
+      "id": "C3.3-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.3",
+      "scenario": "karthik-dev is about to create the NAT Gateway and asks: 'Should I put this in subnet-dd44, since that's the private subnet it's actually going to serve? Feels like it should live close to what it's helping.'",
+      "question": "How should you respond?",
+      "options": [
+        "A) Yes, that's correct — placing it in the private subnet it serves is the standard pattern",
+        "B) No — the NAT Gateway must go in a PUBLIC subnet (subnet-aa11 or subnet-bb22), because it needs its own route to the Internet Gateway to function. If placed in subnet-dd44, the NAT Gateway itself would have no internet access, and every private-subnet resource behind it would still have no outbound access either.",
+        "C) It doesn't matter — NAT Gateway placement has no effect on whether it works",
+        "D) Yes, but only if subnet-dd44 also gets its own separate route to the Internet Gateway first"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact spec mistake we in T3 paathom, real in scenario apply doing. karthik-dev's logic intuitive (\"serve doingkaku close must be\") but technically wrong — NAT Gateway ITSELF ku internet access needed, that public in subnet only kidaikkum.",
+      "ren_correct": "Correct — intuitive feel vida technical requirement follow must do. NAT Gateway public in subnet only velai does.",
+      "ren_wrong": "This exact common mistake did you do. NAT Gateway private in subnet kept, for that reason internet access without poidum."
+    },
+    {
+      "id": "C3.3-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.3",
+      "scenario": "The NAT Gateway is created correctly in subnet-aa11 with an Elastic IP attached. Before testing, you check rtb-private one more time.",
+      "question": "The NAT Gateway now exists and is healthy. Is that alone enough for private-subnet resources to reach the internet?",
+      "options": [
+        "A) Yes — once a NAT Gateway exists anywhere in the VPC, all private subnets automatically start using it",
+        "B) No — a healthy NAT Gateway existing is not enough by itself. rtb-private still needs an explicit route (0.0.0.0/0 → the NAT Gateway's ID) added to it — without that route, traffic has no instruction to reach the NAT Gateway at all",
+        "C) Yes, but only after rebooting every instance in the private subnets",
+        "D) No — NAT Gateways only start working 24 hours after creation"
+      ],
+      "correct_index": 1,
+      "explanation": "NAT Gateway create doing um, route in table that use do — explicit sollradhu also two different steps. NAT Gateway exist even if done, in rtb-private that point doing route even if not, for traffic vazhi theriyaathu. This exact mistake — 'resource create I did, so velai must do' — assume doing.",
+      "ren_correct": "Correct — resource create doing um, route in table wire doing um two different necessary steps.",
+      "ren_wrong": "NAT Gateway create doing only podhathu — route in table explicit point must do, or that use aagave aagathu."
+    },
+    {
+      "id": "C3.3-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.3",
+      "scenario": "You test outbound connectivity from a temporary EC2 instance you've launched in subnet-dd44 (private subnet, alongside the DB) to confirm the NAT Gateway setup works before relying on it.",
+      "error_shown": "curl: (28) Failed to connect to api.razorpay.com port 443: Connection timed out",
+      "diagnosis": "The NAT Gateway itself was created correctly in the public subnet with a working Elastic IP — but the 0.0.0.0/0 → nat-gateway-id route was never actually added to rtb-private. The NAT Gateway exists and is healthy, but nothing in the private subnet's route table points to it, so outbound traffic has no path out at all — it just times out with no route to try.",
+      "fix": "Add the missing route to rtb-private: 0.0.0.0/0 → nat-0d3f8a2b1c9e4f7a6 (the NAT Gateway's ID). Re-test the same curl command — it should now succeed once the route table actually directs traffic to the NAT Gateway.",
+      "explanation": "This in T7 we saw exact scenario, real symptom looking. Connection timeout —, 'something is blocking' — ninaikkalam, but real reason ROUTE ilalaaathathathau — SG not, NACL not, route in table entry only missing. Route missing —, error message specific 'blocked' — solladhu, that just silently timeout will happen — this debug for doing thrainjukanum needed real pattern."
+    },
+    {
+      "id": "C3.3-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.3",
+      "scenario": "Fix confirmed working. Before reporting back, Priya asked you to also pull the VPC Flow Logs and look specifically at what's actually been happening around that unexplained 10.50.0.0/16 route.",
+      "broken_config": "VPC Flow Logs — filtered for destination 10.50.0.0/0/16, last 6 weeks:\n\n2026-06-18 03:14:02 | REJECT | src: 172.31.32.14 (notification-worker, subnet-cc33) | dst: 10.50.13.4 | port: 443\n2026-06-25 03:14:07 | REJECT | src: 172.31.32.14 (notification-worker, subnet-cc33) | dst: 10.50.13.4 | port: 443\n2026-07-02 03:14:04 | REJECT | src: 172.31.32.14 (notification-worker, subnet-cc33) | dst: 10.50.13.4 | port: 443\n2026-07-09 03:14:09 | REJECT | src: 172.31.32.14 (notification-worker, subnet-cc33) | dst: 10.50.13.4 | port: 443\n\n(All 4 attempts REJECTed — the route exists but the peering connection it targets doesn't, so the traffic has nowhere to actually go)",
+      "what_to_find": [
+        "This is not random background noise — the exact same source (notification-worker, subnet-cc33), exact same destination (10.50.13.4, a single specific IP inside the mystery range), and roughly the exact same time of day (03:14) repeats on a consistent weekly cadence",
+        "This means something on notification-worker — likely a scheduled job (cron, systemd timer, or similar) — is still actively configured to reach 10.50.13.4 on port 443, on a recurring schedule, even though whatever used to be on the other end is long gone",
+        "The route itself was never the mystery — the mystery is WHY notification-worker still thinks something at 10.50.13.4 exists and is still trying, weekly, to reach it",
+        "This is a real, new lead (Act 3's deepening of the thread) — the next real step is finding what job/config on notification-worker is making this call, not touching the route table itself"
+      ],
+      "correct_fix": "Do not delete or modify the 10.50.0.0/16 route yet. Escalate the specific new finding to Priya: notification-worker is the source, 10.50.13.4 is the specific target, weekly at ~03:14, all REJECTed. This narrows the investigation from \"an old unexplained route\" to \"a specific still-running scheduled job on a specific instance that still expects something to be there.\"",
+      "explanation": "This real investigation moment — we still solve did not do, but mystery ippo a bit sharp happened. 'Who edhukku try after doing irukanga'-nnu therinjidichu, but 'edhu that in 10.50.13.4 was there, ippa yen that job still run aagudhu'-nnu still theriyala. This real investigation's feel — every in step a bit a bit clearly will happen, but immediate solve aagathu."
+    },
+    {
+      "id": "C3.3-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.3",
+      "scenario": "Priya asks for a recommendation on NAT Gateway redundancy: should FoodQuick use one shared NAT Gateway for all 3 AZs, or one NAT Gateway per AZ?",
+      "options": [
+        "A) One shared NAT Gateway is always sufficient — NAT Gateways are inherently multi-AZ by design",
+        "B) One NAT Gateway PER AZ, with each AZ's private subnets routing to the NAT Gateway in their OWN AZ — this avoids cross-AZ data transfer charges and means losing one AZ doesn't take down outbound internet access for the other AZs' private subnets too",
+        "C) No NAT Gateway should ever be used — private subnets should just be given public IPs instead when they need internet access",
+        "D) A single NAT Gateway shared across AZs is fine for cost, and the cross-AZ risk doesn't matter since NAT Gateways never fail"
+      ],
+      "correct_index": 1,
+      "explanation": "NAT Gateway a single AZ resource — that multi-AZ automatically not (this RDS Multi-AZ's different topic, confuse do not do). Single shared NAT Gateway — , that AZ goes down, ELLA AZ's private subnets also outbound access izhakakum — exactly we in C3.2b we saw 'single point of failure' pattern thraumpa. Per-AZ NAT Gateway — , cost a bit adhigam, but real resilience + no cross-AZ data transfer charges.",
+      "ren_correct": "Correct — NAT Gateway also AZ-level single point of failure aaga can, this in C3.2b we saw pattern's extension.",
+      "ren_wrong": "NAT Gateway multi-AZ automatically not — this RDS Multi-AZ's confuse do not do. Single shared NAT Gateway — that AZ down but ella private subnets also affect will happen."
+    },
+    {
+      "id": "C3.3-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C3.3",
+      "scenario": "Ravi flags NAT Gateway costs in the monthly AWS bill review — they're higher than he expected. A NAT Gateway costs roughly ₹2.80/hour (~₹2,000/month) just to exist, PLUS roughly ₹3.20 per GB of data processed through it — separate from any data transfer charges. FoodQuick's private-subnet workloads currently process about 400GB/month through the NAT Gateway.",
+      "question": "What's the actual monthly cost breakdown, and is 3 NAT Gateways (one per AZ, per the redundancy recommendation) proportionally reasonable?",
+      "solution": "Per NAT Gateway: ~₹2,000/month base + (400GB × ₹3.20 ≈ ₹1,280/month data processing) ≈ ₹3,280/month per gateway if all traffic ran through one. Spread across 3 NAT Gateways (one per AZ), the ₹2,000 base cost triples to ~₹6,000/month, while the ~₹1,280 data processing cost gets split across the 3 based on which AZ's traffic uses which gateway — total data cost stays roughly the same (~₹1,280/month combined), it's just distributed. Total for 3 NAT Gateways: roughly ₹7,280/month, versus ~₹3,280/month for a single shared one — an extra ~₹4,000/month for AZ-level resilience. Reasonable, given a single shared NAT Gateway failing takes down outbound access for the entire VPC's private subnets at once.",
+      "explanation": "NAT Gateway's cost 2 parts — fixed hourly cost + per-GB data processing cost, both koodadai real bill will come. 3 NAT Gateways — base cost multiply will happen, but resilience's real value's in opposite paathu, reasonable trade-off."
+    },
+    {
+      "id": "C3.3-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.3",
+      "scenario": "Time to report back to Priya on this piece of FQ-156, including what the flow logs turned up.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"NAT Gateway is set up and working. Also checked the mystery route — nothing new to report.\"",
+        "B) \"NAT Gateway created in subnet-aa11 (public), Elastic IP attached, rtb-private now routes 0.0.0.0/0 to it — confirmed outbound works, confirmed inbound is still blocked. On the flow logs: found a recurring weekly REJECT pattern — notification-worker (subnet-cc33) trying to reach 10.50.13.4 on port 443, same time each week for at least 6 weeks. This looks like a scheduled job on that instance still configured to reach something at that address. Recommend investigating notification-worker's scheduled jobs/cron next, rather than touching the route itself.\"",
+        "C) \"NAT Gateway done. Deleted the 10.50.0.0/16 route since the flow logs show it's not going anywhere real anyway.\"",
+        "D) \"Everything's working. The flow logs had some old entries but they're probably nothing.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report —, technical fix-ai clearly summarize must do, AND investigation's new, specific finding-ai (source, destination, pattern) precisely report must do — 'nothing new' — says wrong (real finding is there), 'delete I did' — says authority without action eduthadhu, 'probably nothing' — dismiss doing real pattern-ai miss does.",
+      "ren_correct": "This correct report — technical fix clear-ah, investigation finding specific-ah, no overclaiming, no unauthorized action.",
+      "ren_wrong": "This report either real finding-ai miss does, or authority without route delete doing like decision it has taken."
+    }
+  ],
+  "act_number": 4,
+  "act_title": "Security Groups That Actually Scope",
+  "builds_layer": "Traffic Control Layer"
+}

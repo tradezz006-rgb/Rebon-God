@@ -1,0 +1,236 @@
+{
+  "lesson_id": "C3.6",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nLast piece of this ticket. Right now foodquick.in doesn't actually exist as far as AWS is concerned — the mobile app is hardcoded to call foodquick-alb-1a2b3c4d5e.ap-south-1.elb.amazonaws.com directly. If that ALB is ever recreated for any reason, that name changes, and the app breaks instantly for every user, everywhere, with no way to fix it without an app store release.\n\nSet up a real hosted zone for foodquick.in. And Ravi mentioned he wants to canary a new checkout flow soon — a small percentage of traffic first, not everyone at once — so keep routing policies in mind while you're in there, not just the domain itself.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nfoodquick.in is live and correctly configured — ALIAS at the apex, CNAME where it actually belongs, weighted routing ready for Ravi's canary rollout, and a real failover path with health checks if the primary ever goes down. The mobile app can be updated to use the real domain instead of the raw ALB name whenever the app team is ready.\n\nI want to say something now that this ticket's actually closing: what started as 'clean up the network' turned into understanding this VPC was never actually designed — and by the end, you traced an 8-month-old mystery back to a cancelled delivery pilot nobody finished cleaning up after. That's the real work. Every piece of this network is now something you understand, not something you inherited blind.\n\nRavi's going to loop you in on FQ-171 next — compute's been sized on guesses since day one, and it shows. See you there.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.6-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.6",
+      "scenario": "You check FoodQuick's current setup: there is no Route 53 hosted zone at all. The mobile app calls foodquick-alb-1a2b3c4d5e.ap-south-1.elb.amazonaws.com directly — the raw, auto-generated ALB DNS name.",
+      "question": "What's the real risk of the mobile app hardcoding the ALB's own auto-generated DNS name instead of a custom domain?",
+      "options": [
+        "A) There's no real risk — ALB DNS names never change once assigned",
+        "B) If the ALB is ever deleted and recreated for any reason (migration, disaster recovery, infrastructure changes), AWS assigns it a brand new DNS name — the app would need a full app-store release to update every user, with no way to fix it server-side in the meantime",
+        "C) The only risk is slightly worse performance compared to using a custom domain",
+        "D) Raw ALB DNS names cost extra money to use, unlike custom domains"
+      ],
+      "correct_index": 1,
+      "explanation": "ALB delete after doing recreate did (anything for reason), AWS new DNS name gives. in App that hardcode if we had doneal, app store release without doing to fix cannot — that naala varaikkum app completely broken will be. Custom domain use did, DNS record only update after doing poidum, app code anything touch without doing.",
+      "ren_correct": "Correct — hardcoded infrastructure names — , that infrastructure maaruna app-ai break does.",
+      "ren_wrong": "A bit wrong. ALB recreate but DNS name maaru can — that risk real is there, in app hardcode if done it was that directly affect does."
+    },
+    {
+      "id": "C3.6-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.6",
+      "question": "What does a Route 53 hosted zone actually represent?",
+      "options": [
+        "A) A physical AWS data center dedicated to DNS services",
+        "B) A container for all the DNS records belonging to a specific domain (e.g. foodquick.in) — it's where you define what foodquick.in, www.foodquick.in, checkout.foodquick.in, etc. actually point to",
+        "C) A billing construct with no actual technical function",
+        "D) A single DNS record — one hosted zone equals exactly one record"
+      ],
+      "correct_index": 1,
+      "explanation": "Hosted zone — a domain's ella DNS records also that is there container — foodquick.in, www.foodquick.in, checkout.foodquick.in, all indha zone's records. A hosted in zone multiple records will be, a record not.",
+      "ren_correct": "Correct — hosted zone — container, records for that ulla will be.",
+      "ren_wrong": "Hosted zone-ai single record you thought. That a domain's ALL records's container."
+    },
+    {
+      "id": "C3.6-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.6",
+      "question": "You need www.foodquick.in to point to the ALB. Which record type is the standard, correct choice for a SUBDOMAIN (not the root/apex domain itself)?",
+      "options": [
+        "A) A CNAME record, pointing www.foodquick.in to the ALB's DNS name — this is the standard pattern for subdomains",
+        "B) An A record with a manually-typed static IP address of the ALB",
+        "C) A hosted zone record — hosted zones themselves are a record type",
+        "D) There's no valid record type for subdomains, only for the root domain"
+      ],
+      "correct_index": 0,
+      "explanation": "Subdomain (www.foodquick.in) ku CNAME standard, correct choice — that ALB's DNS for name point does. This apex/root domain (foodquick.in only, www without) ku different rule — adhai next in task let us lookam.",
+      "ren_correct": "Correct — for subdomain CNAME standard pattern.",
+      "ren_wrong": "Static IP A record use do not — ALB IPs maarikittu will be. for Subdomain CNAME correct."
+    },
+    {
+      "id": "C3.6-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.6",
+      "scenario": "Before creating records, you map out exactly what needs to exist in the new hosted zone.",
+      "broken_config": "Current state:\n├── Hosted zone for foodquick.in: DOES NOT EXIST\n├── Mobile app config: hardcoded to foodquick-alb-1a2b3c4d5e.ap-south-1.elb.amazonaws.com\n└── No DNS records of any kind for FoodQuick's domain\n\nRequirements gathered from Priya and Ravi:\n├── foodquick.in (apex/root) should resolve to the main ALB\n├── www.foodquick.in should also resolve to the main ALB\n├── Ravi wants to canary a new checkout flow soon (weighted routing needed later)\n└── A failover path is wanted in case the primary ALB becomes unhealthy",
+      "what_to_find": [
+        "No hosted zone exists yet — this needs to be created before any records can be added",
+        "The apex domain (foodquick.in) and the www subdomain both need records, but they may need DIFFERENT record types since one is the root domain and one is a subdomain",
+        "Weighted routing and failover/health checks aren't needed immediately, but the hosted zone and record structure should be set up in a way that doesn't need to be redone when those are added later"
+      ],
+      "correct_fix": "Create the hosted zone for foodquick.in first. Add the apex record using the correct type for a root domain (covered in the next steps — CNAME is not valid at the apex). Add www.foodquick.in as a standard CNAME to the ALB. Design the record structure now so weighted/failover routing can be layered on later without restructuring what already exists.",
+      "explanation": "This real project planning — all at the same time build to do is not needed, but future requirements (weighted routing, failover) thinking, ippo correctly foundation podanum, then easy extend we can do."
+    },
+    {
+      "id": "C3.6-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.6",
+      "question": "Arrange the correct order to get foodquick.in and www.foodquick.in both resolving to the ALB.",
+      "items": [
+        "Create the hosted zone for foodquick.in in Route 53",
+        "Update the domain registrar's nameserver records to point to the new hosted zone's nameservers",
+        "Add an ALIAS record for the apex (foodquick.in) pointing to the ALB",
+        "Add a CNAME record for www.foodquick.in pointing to the ALB",
+        "Verify both foodquick.in and www.foodquick.in resolve correctly from an external network"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Hosted zone first create must do, then domain in registrar nameservers point must do (or zone exist even if done also, internet that use do not do). Then records add must do, last external verify must do.",
+      "ren_correct": "Nice sequencing — zone first, registrar nameservers next, records after, verify last.",
+      "ren_wrong": "Order again paaru — in registrar nameservers point without doing, hosted zone create did only podhathu, internet that kandupidikkaathu."
+    },
+    {
+      "id": "C3.6-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.6",
+      "scenario": "You're about to add the record for the apex domain (foodquick.in, no www) pointing to the ALB. karthik-dev suggests using a CNAME, same as you're about to do for www.foodquick.in.",
+      "question": "Can foodquick.in (the apex/root domain itself) use a CNAME record, the same way www.foodquick.in does?",
+      "options": [
+        "A) Yes — CNAME works identically at the apex and at any subdomain",
+        "B) No — DNS specifications don't allow a CNAME record to exist at the zone apex, because the apex must also hold other required record types (like NS and SOA records), and a CNAME can't coexist with other records on the same name. Route 53's ALIAS record type exists specifically to solve this — it behaves like a CNAME but is allowed at the apex",
+        "C) No — the apex domain can never point to an ALB under any circumstances, only to a fixed IP address",
+        "D) Yes, but only if the hosted zone is configured in 'legacy mode'"
+      ],
+      "correct_index": 1,
+      "explanation": "This real DNS specification rule (Route 53-specific not, DNS standard's rule) — in apex NS/SOA records already will be, CNAME that same in name different anything record's also exist to do cannot. Route 53's ALIAS record idhai solve doingku specific design did feature — CNAME like behave does, but in apex allow will happen.",
+      "ren_correct": "Correct — this DNS's fundamental rule, ALIAS for apex real solution.",
+      "ren_wrong": "in Apex CNAME velai do not do — this DNS spec's rule. ALIAS for apex correct solution."
+    },
+    {
+      "id": "C3.6-T7",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.6",
+      "scenario": "Despite the explanation, karthik-dev goes ahead and tries to create a CNAME record for foodquick.in (the apex) anyway, out of habit from setting up www.foodquick.in the same way moments earlier.",
+      "error_shown": "An error occurred (InvalidChangeBatch) when calling the ChangeResourceRecordSets operation: RRSet of type CNAME with DNS name foodquick.in. is not permitted at apex in zone foodquick.in.",
+      "diagnosis": "This is exactly the DNS apex restriction from the previous task, now hit as a real API error instead of a hypothetical. Route 53 is enforcing the same rule every DNS provider does — a CNAME cannot exist at the zone apex alongside the zone's own required NS and SOA records.",
+      "fix": "Delete the failed CNAME attempt and create an ALIAS record instead for foodquick.in, targeting the ALB. ALIAS records are a Route 53-specific feature that behave like a CNAME (resolving to the ALB's current address) but ARE permitted at the zone apex.",
+      "explanation": "This exact spec mistake — 'CNAME used on root/apex domain instead of ALIAS.' Real AWS error message exact kaatuthu yean that velai do not do. This classic mistake — for subdomain CNAME velai do-nnu, for apex also adhe pattern apply we can do — ninaikkardhu."
+    },
+    {
+      "id": "C3.6-T8",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.6",
+      "scenario": "Ravi is ready to canary the new checkout flow: 'Send about 10% of traffic to the new checkout-service-v2 endpoint, and keep 90% on the existing checkout-service-v1. I want to watch error rates before we go further.'",
+      "question": "Which Route 53 routing policy fits this requirement?",
+      "options": [
+        "A) Simple routing — it always returns the same single answer, with no way to split traffic by percentage",
+        "B) Weighted routing — you assign a relative weight to each record (e.g. 90 and 10), and Route 53 returns each answer roughly in that proportion, which is exactly the gradual-canary pattern being asked for",
+        "C) Latency-based routing — this routes based on which endpoint is geographically closest/fastest for the user, not based on any percentage split",
+        "D) Failover routing — this only ever sends traffic to a backup when the primary is unhealthy, it doesn't do a percentage split"
+      ],
+      "correct_index": 1,
+      "explanation": "Weighted routing exact for this fit will happen — relative weight (90, 10) kuduthu, Route 53 that in proportion traffic split does. Latency routing geography base does, failover a primary/backup for pattern only, Simple routing split to do mudiyaathu. Weighted canary for release standard pattern.",
+      "ren_correct": "Correct — weighted routing gradual canary for rollout exact fit.",
+      "ren_wrong": "A bit wrong policy therndhu edutthiya. Percentage split is needed — weighted routing — latency um failover also different for purpose."
+    },
+    {
+      "id": "C3.6-T9",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.6",
+      "scenario": "Separately, Priya wants a failover path: if the primary ALB in ap-south-1 ever becomes unhealthy, foodquick.in should automatically start resolving to a backup static maintenance page hosted in S3, instead of leaving users staring at a broken app.",
+      "question": "What does Route 53 need, beyond just a failover routing policy, to actually know WHEN to switch to the backup?",
+      "options": [
+        "A) Nothing else — failover routing policies automatically detect ALB health with no additional configuration",
+        "B) A Route 53 Health Check — configured to periodically check the primary ALB's health endpoint (e.g. /health); Route 53 uses the health check's pass/fail status to decide whether to keep serving the primary record or switch to the secondary",
+        "C) A CloudWatch Alarm is the only way to trigger DNS failover — Route 53 has no health-checking feature of its own",
+        "D) Failover routing works purely based on which record was created first, not on any health signal"
+      ],
+      "correct_index": 1,
+      "explanation": "Failover routing policy only podum, 'when switch must do' — therinjukka Health Check is needed — that periodically primary's /health endpoint-ai check does, that fail but Route 53 automatic secondary for record switch does. Health check without, failover for policy anything signal not.",
+      "ren_correct": "Correct — failover policy + health check both sernthu real automatic failover velai does.",
+      "ren_wrong": "Health check needed — you missed. Failover policy only poduthu, adhuku A signal (health check) is needed when switch must do — theriyanum."
+    },
+    {
+      "id": "C3.6-T10",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.6",
+      "scenario": "Everything's built. Final audit before reporting back to Priya.",
+      "broken_config": "Hosted zone: foodquick.in (Z1A2B3C4D5E6F7)\n\nRecords:\n├── foodquick.in — ALIAS → foodquick-alb-1a2b3c4d5e.ap-south-1.elb.amazonaws.com ✓\n├── www.foodquick.in — CNAME → foodquick-alb-1a2b3c4d5e.ap-south-1.elb.amazonaws.com ✓\n├── checkout.foodquick.in — WEIGHTED:\n│ ├── Record A: checkout-service-v1 target, weight 90\n│ └── Record B: checkout-service-v2 target, weight 10\n├── foodquick.in — FAILOVER (secondary use case):\n│ ├── PRIMARY: main ALB, associated Health Check hc-primary-ab12 (checks /health every 30s)\n│ └── SECONDARY: S3 static maintenance page bucket\n└── Registrar nameservers: updated to match the hosted zone's 4 assigned nameservers ✓\n\nExternal verification:\n├── dig foodquick.in → resolves to ALB ✓\n├── dig www.foodquick.in → resolves to ALB ✓\n├── checkout.foodquick.in traffic split observed: ~91%/9% over a sample window ✓ (close enough to 90/10 to be expected statistical variance)\n└── Simulated primary health check failure → foodquick.in correctly began resolving to the S3 maintenance page within the health check's failure threshold ✓",
+      "what_to_find": [
+        "The apex uses ALIAS (not CNAME) — correctly avoids the InvalidChangeBatch error from earlier",
+        "www uses CNAME — correct, since it's a subdomain, not the apex",
+        "Weighted routing for the canary is configured with sensible weights (90/10) and verified close to that split in practice",
+        "Failover is wired correctly with an actual health check attached, and was verified with a real simulated failure, not just assumed to work",
+        "Nameservers are correctly updated at the registrar — without this, none of the above would actually be reachable from the internet"
+      ],
+      "correct_fix": "No further changes needed — every piece is verified working, including the failover under simulated failure, which is the most important thing to actually test rather than assume.",
+      "explanation": "This 'recognize this is already correct' verify task — all build is already done, but REAL verification (dig commands, simulated failure test) proof, 'config looks right' — assume doing not."
+    },
+    {
+      "id": "C3.6-T11",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.6",
+      "scenario": "Priya asks you to match the right Route 53 routing policy to three different future scenarios FoodQuick is likely to face as it grows.",
+      "cases": {
+        "case_1": "FoodQuick expands to serve customers from both ap-south-1 (Mumbai) and a new ap-southeast-1 (Singapore) region, and wants each user automatically served from whichever region responds fastest for them",
+        "case_2": "FoodQuick wants to gradually roll out a redesigned home page to a small percentage of users first, watching metrics before a full rollout",
+        "case_3": "FoodQuick wants automatic protection against an entire region going down, with traffic automatically shifting to the surviving region without any manual DNS changes"
+      },
+      "correct_answers": {
+        "case_1": "Latency-based routing — routes each user to whichever endpoint has the lowest latency for them specifically, ideal for genuinely multi-region setups serving different geographies",
+        "case_2": "Weighted routing — same pattern as the checkout canary in this lesson, splitting traffic by percentage between the old and new versions",
+        "case_3": "Failover routing with health checks on both regions — automatically shifts all traffic to the surviving region's endpoint the moment the primary region's health check fails, no manual intervention needed"
+      },
+      "explanation": "Moonu different different problem, moonu different different routing policy — latency (geography-based speed), weighted (percentage-based rollout), failover (health-based automatic switch). This correct match doing real architecture judgment, ore policy ellathukum use doing not.",
+      "ren_correct": "Correct — moonu vithamana problem-kum exact fit but policy therndhu edutthiya.",
+      "ren_wrong": "Ovva case also different vithamana problem — geography speed, percentage rollout, region-level failure. Ovvoruthukkum correct policy different different will be, think again."
+    },
+    {
+      "id": "C3.6-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.6",
+      "scenario": "Time for the final report closing out FQ-156 entirely — this is the last piece of the whole networking rebuild.",
+      "question": "Which report should you send to Priya?",
+      "options": [
+        "A) \"DNS is set up. FoodQuick has a real domain now.\"",
+        "B) \"foodquick.in hosted zone live: ALIAS at the apex (avoided the CNAME-at-apex error karthik-dev hit), CNAME for www, weighted routing ready for Ravi's checkout canary (90/10, verified in practice), and failover to an S3 maintenance page with a real health check — tested with a simulated failure, not just assumed. Nameservers updated at the registrar and externally verified with dig. This closes out FQ-156 — from the original loose default VPC through the resolved QuickCourier mystery to now having a fully designed, documented network.\"",
+        "C) \"Set up some DNS records. Should be working.\"",
+        "D) \"Everything about the network is now perfect and will never need attention again.\""
+      ],
+      "correct_index": 1,
+      "explanation": "This whole ticket-ai close doing report — specific-ah, verified-ah, and honest must be. 'Perfect, never need attention again' overclaim — in engineering anything permanent 'done forever' — solla mudiyaathu. This correct report whole FQ-156 journey-ai um properly acknowledge does.",
+      "ren_correct": "This correct closing report — specific, verified, and honestly scoped, properly closing out the whole ticket.",
+      "ren_wrong": "This report either vague is there or overclaim does ('perfect forever'). Real closing report evidence's, honestly-scoped must be."
+    }
+  ],
+  "act_number": 7,
+  "act_title": "DNS That Survives Rebuilds",
+  "builds_layer": "Name Resolution Layer"
+}

@@ -1,0 +1,330 @@
+{
+  "lesson_id": "C6.1",
+  "lesson_title": "CloudWatch Metrics and Logs",
+  "section_id": "CS6",
+  "section_name": "Monitoring",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C5.4 — EFS and Glacier Vault Lock",
+  "student_will_learn": [
+    "Explain what a CloudWatch namespace, metric, log group, and log stream are",
+    "Write a CloudWatch Logs Insights query to search across log data",
+    "Build a basic CloudWatch dashboard combining metrics from multiple sources",
+    "Configure a log retention policy on a log group",
+    "Identify why unmanaged log retention silently accumulates unnecessary storage cost"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Storage முடிஞ்சிடுச்சு, இப்போ ஒரு புது ticket - FQ-203, Deepak Menon-கிட்ட இருந்து, FoodQuick-ஓட DevOps lead. அவங்க கவலை நேரடி - 'நம்ம company outages-ஐ, internal monitoring-ல இருந்து அல்ல, Twitter-ல customers complain பண்றதுல இருந்து தான் தெரிஞ்சுக்கறோம். இது மாற வேணும்'. இதுதான் இன்னைக்கு நாம ஆரம்பிக்கப் போற CS6 Monitoring session - CloudWatch Metrics மற்றும் Logs-ல இருந்து ஆரம்பிக்கிறோம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS6 · Lesson C6.1",
+        "CloudWatch Metrics and Logs",
+        "Ticket FQ-203 — Deepak Menon, DevOps Lead"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Namespaces, Metrics, Log Groups, and Log Streams",
+      "ava_speaks": "CloudWatch, AWS-ஓட central monitoring service - இதுல ரெண்டு முக்கிய data types இருக்கும். Metrics: numeric measurements, time-கூட track ஆகும் (example: CPUUtilization, RequestCount) - இது 'Namespace' என்ற category-க்குள்ள organize ஆகும் (AWS/EC2, AWS/RDS, மாதிரி). Logs: text-based event records - இது 'Log Group' (example: /foodquick/app-server) என்ற container-க்குள்ள இருக்கும், ஒவ்வொரு Log Group-க்குள்ளயும், 'Log Stream' (பொதுவா ஒரு specific instance அல்லது task-க்கு ஒரு stream) இருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Metrics vs Logs — Two Different Data Types"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Metrics",
+            "Logs"
+          ],
+          "rows": [
+            [
+              "Numeric, time-series data (CPU %, request count)",
+              "Text-based event records (error messages, request details)"
+            ],
+            [
+              "Organized by Namespace (e.g. AWS/EC2)",
+              "Organized by Log Group, then Log Stream"
+            ],
+            [
+              "Good for dashboards, alarms, trends",
+              "Good for debugging specific events, searching for patterns"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "A log group is a container for related log streams (e.g. all instances of one app server fleet); a log stream is typically one source (e.g. one specific instance) writing into that group."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "FoodQuick-ஓட 5 app server instances, ஒரு log group-க்குள்ள logs write பண்றாங்க. இதுல எத்தனை log streams இருக்கும்?",
+          "options": [
+            "A) ஒரே ஒரு log stream, எல்லாருக்கும் shared",
+            "B) பொதுவா 5 log streams - ஒவ்வொரு instance-க்கும் தனி stream",
+            "C) Log streams-க்கும் instances-க்கும் எந்த relation-மும் இல்ல",
+            "D) 25 log streams (5 instances x 5 something)"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! பொதுவா, ஒவ்வொரு instance (அல்லது source)-க்கும் தனி log stream இருக்கும், எல்லாருமே ஒரே log group-க்குள்ளதான் - இது organize பண்ண உதவும்.",
+          "ava_wrong": "இல்ல, பொதுவா ஒவ்வொரு instance-க்கும் தனி log stream இருக்கும், இதுல எல்லாமே ஒரே log group-க்குள்ள - ஒரு single shared stream இல்ல."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "CPUUtilization metric-ஐ track பண்ணணும், ஒரு specific error message-ஐ search பண்ணணும். இதுக்கு எந்த CloudWatch feature use பண்றது?",
+          "options": [
+            "A) ரெண்டுக்கும் Metrics use பண்ணனும்",
+            "B) CPUUtilization-க்கு Metrics, error message search-க்கு Logs (Logs Insights)",
+            "C) ரெண்டுக்கும் Logs use பண்ணனும்",
+            "D) இது CloudWatch-ல சாத்தியமே இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Numeric trend track பண்ண Metrics, specific text content search பண்ண Logs (Logs Insights query use பண்ணி) - இது ரெண்டு வேற purposes-க்கு design பண்ணப்பட்ட features.",
+          "ava_wrong": "இல்ல, CPUUtilization ஒரு numeric metric - அது Metrics-ல தான் track ஆகும். Error message search பண்றது Logs-ஓட வேலை, Logs Insights query use பண்ணி."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Cost of Finding Out From Twitter",
+      "ava_speaks": "FoodQuick-ஓட real problem - ஒரு production incident நடக்கும்போது, internal team-க்கு தெரியறதுக்கு முன்னாடி, customers Twitter-ல complain பண்ண ஆரம்பிச்சிடுவாங்க. ஒரு recent outage, checkout page 40 நிமிஷம் broken-ஆ இருந்துச்சு, ஆனா team-க்கு அது தெரிஞ்சது ஒரு customer tweet flag ஆனப்பிறகுதான் - internal monitoring எதுவும் proactively alert பண்ணல. Freshworks, Zoho மாதிரி companies, centralized logging, dashboards, alarms எல்லாம் Day-1-லேயே set பண்ணி, இந்த 'customer finds out first' pattern-ஐ முழுசா தவிர்க்கறாங்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Reactive vs Proactive Monitoring"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "FoodQuick's Current State",
+            "Where Monitoring Should Be"
+          ],
+          "rows": [
+            [
+              "Team learns about outages from customer tweets",
+              "Team gets alerted automatically within minutes of an issue starting"
+            ],
+            [
+              "No centralized way to search logs across servers",
+              "CloudWatch Logs Insights lets any engineer search all logs in seconds"
+            ],
+            [
+              "No single view of system health",
+              "A dashboard shows key metrics at a glance, catching problems before they escalate"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Searching Logs and Building a Basic Dashboard",
+      "ava_speaks": "karthik-dev இப்போ Logs Insights use பண்ணி, ஒரு specific error-ஐ search பண்றான், அப்புறம் ஒரு basic dashboard build பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "CloudWatch",
+        "steps": [
+          {
+            "ava_narration": "CloudWatch Console-ல Logs Insights-க்கு போய், log group-ஆ '/foodquick/app-server' select பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "CloudWatch Console → Logs → Logs Insights",
+              "field": "Log group",
+              "value": "/foodquick/app-server",
+              "highlight": "Log group selector",
+              "result": "The query editor is now scoped to search across all log streams in this group"
+            }
+          },
+          {
+            "ava_narration": "ஒரு query எழுதுறோம் - கடந்த 1 மணி நேரத்துல வந்த எல்லா 500 errors-ஐயும் கண்டுபிடிக்க.",
+            "console_action": {
+              "type": "fill",
+              "path": "Logs Insights query editor",
+              "field": "Query",
+              "value": "fields @timestamp, @message | filter @message like /500/ | sort @timestamp desc | limit 50",
+              "highlight": "Query editor",
+              "result": "The query searches across every log stream in the group simultaneously, returning matching entries in seconds"
+            }
+          },
+          {
+            "ava_narration": "Query run பண்றோம் - இது results-ஐ காட்டுது, எந்த instance-ல, எப்போ இந்த errors வந்துச்சுனு உடனே தெரியுது - manual-ஆ ஒவ்வொரு instance-ல்யும் log file தேட வேண்டாம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Run query button",
+              "highlight": "Query results table",
+              "result": "Matching 500 errors appear with timestamps and full message content, sourced from across the entire fleet"
+            }
+          },
+          {
+            "ava_narration": "இப்போ Dashboards-க்கு போய், 'Create dashboard' click பண்றோம், name 'foodquick-app-health' கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "CloudWatch Console → Dashboards → Create dashboard",
+              "field": "Dashboard name",
+              "value": "foodquick-app-health",
+              "highlight": "Dashboard name field",
+              "result": "A new, empty dashboard is created"
+            }
+          },
+          {
+            "ava_narration": "Widgets add பண்றோம் - ALB-ஓட RequestCount, TargetResponseTime, ASG-ஓட CPUUtilization, எல்லாத்தையும் ஒரே பக்கத்துல காண.",
+            "console_action": {
+              "type": "select",
+              "path": "Add widget",
+              "field": "Metrics",
+              "value": "ALB RequestCount, ALB TargetResponseTime, ASG CPUUtilization",
+              "highlight": "Widget metric selection",
+              "result": "A single dashboard now shows request volume, response time, and CPU load together, giving an at-a-glance system health view"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The team can now search logs across the entire fleet in seconds via Logs Insights, and see key system health metrics at a glance on a single dashboard.",
+          "what_to_notice": "Logs Insights query, ஒவ்வொரு log stream-ஐயும் தனித்தனியா தேடற வேலையை நீக்கிடுச்சு - ஒரே query, முழு fleet-ஐயும் search பண்ணும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How CloudWatch Organizes Metrics and Logs",
+      "ava_speaks": "இந்த diagram பாரு - Metrics-ஓட Namespace hierarchy-க்கும், Logs-ஓட Log Group/Stream hierarchy-க்கும் உள்ள structure.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "METRICS:",
+            "  Namespace: AWS/EC2",
+            "    Metric: CPUUtilization (per-instance dimension)",
+            "    Metric: NetworkIn",
+            "",
+            "LOGS:",
+            "  Log Group: /foodquick/app-server",
+            "    Log Stream: i-0abc123 (app-server-1's logs)",
+            "    Log Stream: i-0def456 (app-server-2's logs)",
+            "    Log Stream: i-0ghi789 (app-server-3's logs)",
+            "",
+            "Logs Insights queries search across ALL streams in a group at once."
+          ]
+        },
+        "ava_narration": "Metrics namespace-ல organize ஆகும், logs group/stream-ல organize ஆகும் - ரெண்டும் வேற hierarchy, ஆனா ரெண்டும் CloudWatch-ல தான் centrally live ஆகும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Write a Logs Insights Query for a Specific Incident",
+      "instruction": "FoodQuick-ஓட ஒரு specific customer, order #45782-க்கு ஒரு payment failure ஆச்சுனு complain பண்ணி இருக்காங்க. இந்த order-ஓட logs-ஐ கண்டுபிடிக்க ஒரு Logs Insights query எழுது.",
+      "scenario": "Deepak Menon, இந்த specific incident-ஐ investigate பண்ணணும்னு request பண்ணி இருக்காங்க. Payment service logs, '/foodquick/payment-service' log group-ல இருக்கு.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "CloudWatch Console → Logs → Logs Insights, log group set to /foodquick/payment-service",
+        "current_configuration": "No query has been run yet"
+      },
+      "requirements": [
+        "Write a query that filters log messages containing the order ID '45782'",
+        "Include @timestamp and @message fields in the output",
+        "Sort results by timestamp so the sequence of events is clear",
+        "Limit results to a reasonable number (e.g. 20) to keep the output focused"
+      ],
+      "hints": [
+        "'filter @message like /45782/' pattern, message content-ல ஒரு specific string தேட உதவும்",
+        "'sort @timestamp asc' use பண்ணா, events chronological order-ல வரும் - incident-ஐ trace பண்ண இது helpful",
+        "Query structure: fields @timestamp, @message | filter [condition] | sort [field] | limit [number]"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A query like 'fields @timestamp, @message | filter @message like /45782/ | sort @timestamp asc | limit 20' successfully returns the log entries related to this specific order",
+        "ava_correct": "Correct! இப்போ இந்த order-ஓட complete event sequence-ஐ, chronological order-ல பார்க்க முடியும் - payment failure exactly எங்க நடந்துச்சுனு trace பண்ணலாம்.",
+        "ava_wrong": "Query syntax-ஐ ஒரு தடவை check பண்ணு - filter condition order ID-ஐ correctly match பண்றானு, sort field @timestamp-ஆ இருக்கானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "18 Months of Logs Nobody Ever Set to Expire",
+      "ava_speaks": "ananya-analyst, ஒரு cost review பண்றப்போ, ஒரு shocking finding கண்டுபிடிச்சாங்க - FoodQuick-ஓட app server log group, launch day-ல இருந்தே, ஒரு log retention policy-யும் set பண்ணாம, 18 மாசமா logs accumulate பண்ணிட்டே இருந்துச்சு.",
+      "setup": "When FoodQuick's app servers were first set up to send logs to CloudWatch, no one explicitly configured a log retention policy on the log group — CloudWatch's default behavior is to retain logs indefinitely (Never Expire) unless a retention period is explicitly set.",
+      "what_happened": "18 months later, the /foodquick/app-server log group has accumulated a massive volume of log data, the overwhelming majority of which is many months old and has never been queried even once, yet is still being stored (and paid for) at full cost.",
+      "broken_config": "Log group: /foodquick/app-server\nRetention setting: Never Expire (the default, never explicitly changed)\nData volume: 18 months of continuous application logs from a growing fleet of instances\nQuery access pattern: logs older than 30 days queried essentially never, per CloudWatch Logs Insights usage history",
+      "error_shown": "Cost Explorer finding: CloudWatch Logs storage cost has grown to a significant recurring monthly line item, with the vast majority of stored data being 90+ days old and never accessed.",
+      "the_real_problem": "'Never Expire' ஒரு silent default - யாரும் actively இதை choose பண்ணல, ஆனா set பண்ணாம விட்டா, இதுதான் நடக்கும். Logs, debugging-க்கு most valuable-ஆ இருக்கறது recent data-ல தான் - 18 மாசம் பழைய application logs, almost எப்போவும் access பண்ணப்படாது, ஆனா அது full storage cost-ஐ தொடர்ந்து generate பண்ணிட்டே இருக்கும்.",
+      "fix": {
+        "corrected_config": "Set an explicit retention policy on the log group — e.g. 30 days for high-volume application logs (matching the actual observed access pattern), with longer retention only for log groups that have a specific compliance or audit requirement.",
+        "result": "Storage cost drops significantly going forward, with no loss of practical debugging capability, since logs beyond 30 days were essentially never being used anyway."
+      },
+      "lesson": "CloudWatch Logs default 'Never Expire' retention - இது ஒரு active decision இல்ல, ஒரு unset default. ஒவ்வொரு log group create பண்றப்போவும், retention period-ஐ explicit-ஆ set பண்றது, unnecessary long-term storage cost-ஐ தடுக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Metrics, Logs, and Retention Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A compliance-critical audit log group needs to be retrievable for exactly 7 years per regulatory requirement, but is almost never queried after the first 90 days. Should the retention policy be set to 90 days to save cost?",
+          "answer": "No — regulatory retention requirements override the 'rarely queried' cost argument. The retention policy must match the compliance requirement (7 years), not the query access pattern. Cost optimization here should look at moving old data to a cheaper export destination (like S3 with lifecycle policies) rather than deleting it early."
+        },
+        {
+          "question": "A team wants to know the average CPU utilization across their entire fleet over the last week, at a glance, without running a query each time. Metrics dashboard or Logs Insights?",
+          "answer": "A metrics dashboard — this is exactly the numeric, time-series trend use case metrics and dashboards are built for. Logs Insights is for searching and filtering text log content, not for visualizing continuous numeric trends."
+        },
+        {
+          "question": "An engineer sets a log group's retention to 1 day, assuming this saves the most cost. What debugging capability does this likely sacrifice?",
+          "answer": "The ability to investigate any issue reported more than a day after it happened — a very common scenario, since customers or teams often don't notice or report problems immediately. A 1-day retention is usually too aggressive; a more balanced retention (like 30 days) preserves useful debugging window while still controlling cost."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Build Monitoring Before They Need It, Not After",
+      "ava_speaks": "Real companies-ல, Deepak Menon மாதிரி DevOps leads, monitoring-ஐ ஒரு afterthought-ஆ treat பண்ண மாட்டாங்க - அது new service launch பண்றதோட ஒரு mandatory part.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Require every new log group to have an explicit retention policy set as part of the launch checklist, never left at the 'Never Expire' default",
+          "detail": "இது ananya-analyst-ஓட 18-month discovery மாதிரி surprises-ஐ முன்னாடியே தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Build a baseline dashboard for every new service before it goes live, not after the first incident",
+          "detail": "இது FoodQuick-ஓட 'Twitter-ல தெரிஞ்சுக்கறோம்' problem-ஐ நேரடியா தீர்க்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Establish standard, reusable Logs Insights queries for common investigation patterns (errors by service, requests by customer ID), documented for the whole team",
+          "detail": "இது ஒவ்வொரு engineer-மும் ஒரு query-ஐ scratch-ல இருந்து எழுத வேண்டிய தேவையை குறைக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "CloudWatch Logs Insights saved queries",
+          "use": "Common investigation patterns-ஐ save பண்ணி, team-ல எவரும் reuse பண்ண உதவும் - ஒவ்வொரு தடவையும் query-ஐ புதுசா எழுத வேண்டாம்"
+        },
+        {
+          "tool": "CloudWatch Dashboards (shared across team)",
+          "use": "System health-ஐ ஒரே central place-ல, ஒவ்வொரு engineer-மும் instantly பார்க்க உதவும், proactive-ஆ issues கண்டுபிடிக்க"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம CloudWatch namespaces, log groups, log streams, Logs Insights queries, dashboards எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, log retention policy explicit-ஆ set பண்ணாம விட்டா, unnecessary storage cost silently accumulate ஆகும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம CloudWatch Alarms மற்றும் SNS பார்ப்போம் - proactive-ஆ team-க்கு alert பண்றது எப்படினு.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C6.1 — Summary",
+      "points": [
+        "✓ Metrics are numeric time-series data organized by namespace; logs are text records organized by log group and stream",
+        "✓ CloudWatch Logs Insights queries search across all log streams in a group at once, in seconds",
+        "✓ Dashboards combine metrics from multiple sources into a single at-a-glance system health view",
+        "✓ CloudWatch Logs defaults to 'Never Expire' retention unless a policy is explicitly set",
+        "✓ Unmanaged log retention silently accumulates storage cost for data that's rarely, if ever, queried again"
+      ],
+      "coming_next": "Lesson C6.2: CloudWatch Alarms and SNS"
+    }
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "lesson_id": "C3.6",
+  "lesson_title": "Route 53 DNS",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C3.5 — VPC Peering and Transit Gateway",
+  "student_will_learn": [
+    "Explain what a hosted zone is and how it holds DNS records for a domain",
+    "Choose the correct record type (A, CNAME, or ALIAS) for a given situation",
+    "Explain why an apex domain requires an ALIAS record instead of a CNAME",
+    "Configure routing policies (latency, weighted, failover) for different traffic needs",
+    "Explain how a Route 53 health check enables automatic failover"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம network path பத்தி பேசினோம் - VPCs, subnets, gateways, peering. ஆனா ஒரு user 'foodquick.in' type பண்ணும்போது, அது எப்படி correct server-ஐ கண்டுபிடிக்குதுனு நாம பார்க்கல. இதுதான் Route 53 - AWS-ஓட DNS service. இதுதான் CS3-ஓட கடைசி lesson - இதுக்கு அப்புறம் நாம compute layer-க்கு போவோம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.6",
+        "Route 53 DNS",
+        "Ticket FQ-156 — closing out with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Hosted Zones and DNS Record Types",
+      "ava_speaks": "Route 53-ல ஒரு 'hosted zone' ஒரு domain-க்கு (example: foodquick.in) எல்லா DNS records-ஐயும் வெச்சிருக்கும். A record ஒரு domain name-ஐ நேரடியா ஒரு IP address-கூட map பண்ணும். CNAME record ஒரு domain name-ஐ இன்னொரு domain name-கூட map பண்ணும் - IP இல்ல. ALIAS record AWS-ஓட ஒரு special record type - அது CNAME மாதிரி தான் behave பண்ணும், ஆனா apex/root domain-ல (foodquick.in, www இல்லாம) use பண்ண முடியும் - CNAME அதுல use பண்ண முடியாது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "A vs CNAME vs ALIAS"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Record Type",
+            "Points To",
+            "Works on Apex Domain?"
+          ],
+          "rows": [
+            [
+              "A",
+              "An IP address directly",
+              "Yes"
+            ],
+            [
+              "CNAME",
+              "Another domain name",
+              "No — DNS spec forbids this"
+            ],
+            [
+              "ALIAS (AWS-specific)",
+              "An AWS resource (ALB, CloudFront, S3 website, etc.)",
+              "Yes"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "The apex domain (foodquick.in, no subdomain) can never use a CNAME record — this is a DNS protocol rule, not an AWS limitation. ALIAS exists specifically to solve this for AWS resources."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "foodquick.in (apex domain, no www) ஐ ஒரு Application Load Balancer-கூட point பண்ணணும். எந்த record type use பண்ணணும்?",
+          "options": [
+            "A) A record, ALB-ஓட IP address வெச்சு",
+            "B) CNAME record, ALB-ஓட DNS name வெச்சு",
+            "C) ALIAS record, ALB-ஐ target-ஆ வெச்சு",
+            "D) இது Route 53-ல possible இல்ல"
+          ],
+          "correct_index": 2,
+          "ava_correct": "Correct! ALIAS record தான் correct choice - apex domain-ல CNAME use பண்ண முடியாது, ALB-க்கு fixed IP கிடையாது (அது change ஆகிட்டே இருக்கும்), அதனால ALIAS தான் இதுக்கான தீர்வு.",
+          "ava_wrong": "இல்ல, யோசி - apex domain-ல CNAME use பண்ண முடியாது (DNS rule). ALB-க்கு fixed IP-மும் இல்ல, அதனால A record-மும் practical இல்ல. ALIAS record தான் இந்த situation-க்கான AWS-ஓட solution."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "www.foodquick.in-ஐ, foodquick.in-கூட ஒரே மாதிரி resource-ஐ point பண்ண, எந்த record type பொதுவா use பண்றது?",
+          "options": [
+            "A) www ஒரு subdomain-ஆ இருக்கறதால, CNAME வேணும்னாலும் use பண்ணலாம், ALIAS-மும் use பண்ணலாம்",
+            "B) www-க்கு record வேணுமே வேண்டாம்",
+            "C) www ஒரு apex domain, CNAME use பண்ண முடியாது",
+            "D) www-க்கு MX record தான் use பண்ணணும்"
+          ],
+          "correct_index": 0,
+          "ava_correct": "Sari! www.foodquick.in ஒரு subdomain-ஆ இருக்கறதால, CNAME rule அதுக்கு apply ஆகாது - CNAME-ஆவும் ALIAS-ஆவும் use பண்ணலாம், ஆனா AWS resources-க்கு consistency-க்காக பொதுவா ALIAS-ஏ recommend பண்றாங்க.",
+          "ava_wrong": "இல்ல, www ஒரு apex domain இல்ல - அது ஒரு subdomain. Apex domain rule (CNAME forbidden) www-க்கு apply ஆகாது - ஆனா practice-ல பொதுவா ALIAS-ஏ use பண்றாங்க AWS resources-க்கு."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Apex Domain Mistake That Broke a Launch Day",
+      "ava_speaks": "Apex domain-ல CNAME use பண்ண try பண்றது, DNS-ல மிக common mistake-ல ஒண்ணு. ஒரு early-stage Indian fintech startup, launch day அன்னு, root domain-ஐ நேரடியா load balancer-கூட CNAME வெச்சு point பண்ண try பண்ணி, DNS validation error வந்து, launch-ஏ 3 மணி நேரம் delay ஆச்சு - marketing campaign already live ஆயிடுச்சு, users landing page-ஐ access பண்ண முடியாம இருந்தாங்க. Correct fix, ALIAS record-க்கு switch பண்றதுதான், ஆனா அது கண்டுபிடிக்கவே அவங்களுக்கு விலைமதிப்பற்ற நேரம் ஆச்சு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Apex CNAME Mistake — Launch Day Timeline"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "9:00 AM",
+              "Marketing campaign goes live, driving traffic to the apex domain"
+            ],
+            [
+              "9:05 AM",
+              "DNS provider rejects the CNAME record on the apex domain — validation error"
+            ],
+            [
+              "9:05 AM - 12:00 PM",
+              "Domain is unreachable while the team diagnoses the DNS error"
+            ],
+            [
+              "12:00 PM",
+              "Switched to an ALIAS record, domain resolves correctly — 3 hours of a live campaign wasted"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up Route 53 Records for FoodQuick",
+      "ava_speaks": "karthik-dev இப்போ foodquick.in-க்கு ஒரு hosted zone-ல, apex domain-க்கும் www subdomain-க்கும் correct records set பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "Route 53",
+        "steps": [
+          {
+            "ava_narration": "Route 53 Console-ல Hosted Zones-க்கு போய், foodquick.in hosted zone-ஐ open பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Route 53 Console → Hosted zones → foodquick.in",
+              "highlight": "foodquick.in hosted zone",
+              "result": "The list of existing DNS records for foodquick.in opens"
+            }
+          },
+          {
+            "ava_narration": "'Create record' click பண்ணி, apex domain-க்கு record create பண்றோம் - record name காலியா விட்டுடுறோம் (அதுதான் apex-ஐ குறிக்கும்), type ALIAS, target-ஆ FoodQuick-ஓட Application Load Balancer select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create record form",
+              "field": "Record name, Record type, Route traffic to",
+              "value": "(blank for apex), A - Alias to Application Load Balancer, foodquick-alb",
+              "highlight": "Alias toggle and target selector",
+              "result": "foodquick.in now resolves directly to the Application Load Balancer via an ALIAS record"
+            }
+          },
+          {
+            "ava_narration": "இப்போ www subdomain-க்கு ஒரு record create பண்றோம் - record name 'www', type ALIAS, அதே ALB-ஐ target-ஆ வெச்சு, consistency-க்காக.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create record form",
+              "field": "Record name, Record type, Route traffic to",
+              "value": "www, A - Alias to Application Load Balancer, foodquick-alb",
+              "highlight": "Record name field showing 'www'",
+              "result": "www.foodquick.in also resolves to the same Application Load Balancer"
+            }
+          },
+          {
+            "ava_narration": "FoodQuick-ஓட email service-க்காக, ஒரு CNAME record add பண்றோம் - 'mail.foodquick.in' -ஐ third-party email provider-ஓட domain-கூட point பண்ணி. இது subdomain-ஆ இருக்கறதால CNAME use பண்ணலாம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create record form",
+              "field": "Record name, Record type, Value",
+              "value": "mail, CNAME, mail-provider.example.net",
+              "highlight": "Record type dropdown showing CNAME",
+              "result": "mail.foodquick.in now correctly points to the third-party mail provider using a standard CNAME"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "foodquick.in and www.foodquick.in both resolve to the Application Load Balancer using ALIAS records, while mail.foodquick.in uses a standard CNAME since it's a subdomain pointing to a non-AWS provider.",
+          "what_to_notice": "Apex domain-க்கு ALIAS use பண்ணினோம், subdomain-க்கு CNAME use பண்ணினோம் - ரெண்டும் சரியான choices, ஏன்னா apex-ல CNAME rule apply ஆகும், subdomain-ல ஆகாது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How a Health Check Triggers Automatic Failover",
+      "ava_speaks": "இந்த diagram பாரு - Route 53 health check ஒரு endpoint-ஐ periodic-ஆ ping பண்ணும், அது unhealthy-ஆ மாறினா, automatic-ஆ traffic-ஐ backup endpoint-க்கு redirect பண்ணும்.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Normal operation:",
+            "  Route 53 health check --pings every 30s--> Primary ALB (ap-south-1)",
+            "  DNS query for foodquick.in --> resolves to Primary ALB",
+            "",
+            "Primary ALB fails 3 consecutive health checks:",
+            "  Route 53 marks Primary as unhealthy",
+            "  DNS query for foodquick.in --> resolves to Secondary ALB (backup region) instead",
+            "",
+            "Primary recovers:",
+            "  Health checks pass again",
+            "  DNS query for foodquick.in --> resolves back to Primary ALB"
+          ]
+        },
+        "ava_narration": "இந்த automatic failover-க்கு application code-ல எந்த மாற்றமும் தேவை இல்ல - Route 53 level-லேயே இது நடக்கும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Set Up Failover Routing for FoodQuick",
+      "instruction": "FoodQuick-ஓட primary ALB fail ஆனா, automatic-ஆ ஒரு backup ALB-க்கு traffic redirect ஆகணும்nு Failover routing policy configure பண்ணு.",
+      "scenario": "Priya Nair, FoodQuick-ஓட main domain-க்கு high availability வேணும்னு request பண்ணி இருக்காங்க - primary region (ap-south-1) fail ஆனா, automatic-ஆ backup region (ap-south-2)-க்கு switch ஆகணும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "Route 53 Console → Hosted zones → foodquick.in → Create record",
+        "current_configuration": "A single ALIAS record exists pointing only to the primary ALB, with no health check or failover configuration"
+      },
+      "requirements": [
+        "Create a health check monitoring the primary ALB's endpoint",
+        "Create a primary record with Failover routing policy set to 'Primary', associated with the health check",
+        "Create a secondary record with Failover routing policy set to 'Secondary', pointing to the backup ALB",
+        "Confirm both records share the same record name (foodquick.in) so Route 53 can choose between them"
+      ],
+      "hints": [
+        "Health check இல்லாம Failover routing policy வேலை செய்யாது - Route 53 எப்படி primary healthy-ஆ இருக்கானு தெரிஞ்சுக்கும்?",
+        "Primary மற்றும் Secondary records ரெண்டுமே ஒரே record name (foodquick.in) வெச்சிருக்கணும் - இதுதான் Route 53-க்கு இவை ரெண்டும் ஒரே failover pair-ஓட பகுதின்னு தெரியப்படுத்தும்",
+        "Secondary record-க்கு health check தேவை இல்ல - அது backup-ஆ இருக்கறதால"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A health check exists on the primary ALB, and two records (both named foodquick.in) with Failover routing policy — one Primary tied to the health check, one Secondary pointing to the backup ALB",
+        "ava_correct": "Correct! இப்போ primary ALB fail ஆனா, automatic-ஆ Route 53 traffic-ஐ backup ALB-க்கு redirect பண்ணும் - manual intervention தேவை இல்ல.",
+        "ava_wrong": "ஏதோ ஒரு பீஸ் மிச்சம் இருக்கு போல - health check இருக்கானு, ரெண்டு records-மும் ஒரே record name வெச்சிருக்கானு, primary/secondary correctly set பண்ணியிருக்கானு check பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Apex Domain CNAME Rejection",
+      "ava_speaks": "ananya-analyst, Priya Nair-ஓட request-ல foodquick.in apex domain-ஐ ஒரு CDN provider-கூட directly connect பண்ண try பண்றாங்க. Console-ல ஒரு error வருது - CNAME record apex-ல create பண்ண முடியாதுனு.",
+      "setup": "ananya-analyst attempts to point the apex domain foodquick.in directly to a CDN provider's domain, using a standard CNAME record, following documentation written for a generic DNS provider (not AWS-specific).",
+      "what_happened": "Route 53 rejects the record creation attempt with a validation error, since CNAME records are not permitted on the zone apex per the DNS specification (RFC 1912) — this isn't an AWS-specific restriction, it applies to any standards-compliant DNS provider.",
+      "broken_config": "Attempted record:\n{\n  \"name\": \"foodquick.in\" (the apex, blank subdomain),\n  \"type\": \"CNAME\",\n  \"value\": \"cdn-provider.example.net\"\n}",
+      "error_shown": "Route 53 console error: RRSet of type CNAME with DNS name foodquick.in is not permitted at apex in zone foodquick.in.",
+      "the_real_problem": "CNAME records apex domain-ல forbid பண்ணப்பட்டிருக்கு DNS spec-லயே - இது AWS-ஓட restriction இல்ல, universal DNS rule. காரணம் என்னனா, apex domain-ல வேற record types-மும் (like MX for email) இருக்கும், CNAME இருந்தா அவை conflict ஆகும் - DNS spec அதை தடுக்குது.",
+      "fix": {
+        "corrected_config": "{\n  \"name\": \"foodquick.in\" (the apex, blank subdomain),\n  \"type\": \"A - Alias to a CDN distribution\",\n  \"value\": \"cdn-provider.example.net\" (via the ALIAS mechanism, if the provider supports it, or CloudFront for AWS-native CDN)\n}",
+        "result": "The apex domain now correctly resolves through the ALIAS mechanism, which behaves like a CNAME under the hood but is permitted at the zone apex."
+      },
+      "lesson": "Apex domain-ல CNAME use பண்ண முடியாதுன்னு generic DNS documentation படிக்கும்போது தெரியாம போகலாம் - AWS resources-க்கு எப்போவும் ALIAS தான் apex domain-ல correct choice."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — DNS Configuration Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "FoodQuick wants users in Mumbai and users in Singapore to each hit the nearest regional server for lower latency, without manually configuring anything per-user. Which Route 53 routing policy fits?",
+          "answer": "Latency-based routing. Route 53 automatically resolves each user's query to the region with the lowest network latency for them, based on where the query originates from — exactly the behavior described."
+        },
+        {
+          "question": "FoodQuick is testing a new version of their app and wants 10% of traffic to go to the new version while 90% stays on the stable version, without users choosing anything. Which routing policy fits?",
+          "answer": "Weighted routing. It lets you assign relative weights to multiple records with the same name, splitting traffic by percentage — ideal for gradual rollouts and A/B-style testing."
+        },
+        {
+          "question": "A team sets up Failover routing with a Secondary record, but forgets to attach a health check to the Primary record. What breaks?",
+          "answer": "Failover never triggers. Without a health check on the Primary, Route 53 has no way to know it's unhealthy, so it will keep sending traffic to the Primary even during an outage — the Secondary record sits unused no matter what happens."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How DNS Changes Are Managed Safely in Production",
+      "ava_speaks": "Real companies-ல, DNS changes ரொம்ப carefully பண்றாங்க - ஒரு தப்பான record, முழு domain-ஐயும் unreachable ஆக்கிடும். Priya Nair மாதிரி architects, இந்த process follow பண்றாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Lower the TTL (Time To Live) on a record well before making a planned change",
+          "detail": "Low TTL இருந்தா, DNS caches quickly refresh ஆகும் - தப்பா ஏதாவது ஆனா, fix-ஐ fast-ஆ propagate பண்ண முடியும்"
+        },
+        {
+          "step": 2,
+          "action": "Test DNS changes in a non-production hosted zone or with a temporary subdomain first",
+          "detail": "இது apex domain மாதிரி high-risk changes-ஐ direct-ஆ production-ல முதல் தடவை try பண்றதை தவிர்க்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Monitor health checks and DNS query logs after any change to confirm the expected routing behavior",
+          "detail": "Route 53-ஓட own health check dashboard, மாற்றம் expected படி வேலை செய்யுதானு verify பண்ண உதவும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "Route 53 Health Checks dashboard",
+          "use": "Endpoint health status-ஐ real-time-ல monitor பண்ணி, failover trigger ஆகுமா இல்லையான்னு proactive-ஆ தெரிஞ்சுக்க உதவும்"
+        },
+        {
+          "tool": "dig / nslookup command-line tools",
+          "use": "DNS records propagate ஆனதா, correct-ஆ resolve ஆகுதான்னு directly verify பண்ண உதவும் - console-ஐ மட்டும் நம்பாம"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம hosted zones, A/CNAME/ALIAS records, apex domain rule, routing policies, health checks எல்லாம் கத்துக்கிட்டோம். இதுகூட CS3 Networking முடிஞ்சிடுச்சு - VPC-ல இருந்து ஆரம்பிச்சு, subnets, multi-AZ, gateways, security, peering, DNS வரைக்கும் full networking foundation-ஐ கட்டிட்டோம். Priya Nair-ஓட FQ-156 ticket-ஓட முதல் phase complete. அடுத்த session-ல நாம CS4 Compute-க்கு போவோம் - EC2 instances பத்தி.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.6 — Summary",
+      "points": [
+        "✓ A hosted zone holds all DNS records for a domain in Route 53",
+        "✓ A records point to IPs, CNAME records point to other domain names, ALIAS records point to AWS resources",
+        "✓ The apex domain can never use a CNAME — ALIAS exists specifically to solve this for AWS resources",
+        "✓ Routing policies (latency, weighted, failover) control how Route 53 chooses between multiple records",
+        "✓ A health check is required for Failover routing to actually detect and respond to an outage"
+      ],
+      "coming_next": "Session CS4: Compute — starting with C4.1, EC2 Instance Types"
+    }
+  }
+}

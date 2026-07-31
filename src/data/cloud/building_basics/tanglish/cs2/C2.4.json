@@ -1,0 +1,325 @@
+{
+  "lesson_id": "C2.4",
+  "lesson_title": "IAM Roles for Services",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C2.3 — Least Privilege in Practice",
+  "student_will_learn": [
+    "Explain why services and applications use IAM Roles instead of IAM Users",
+    "Attach an IAM Role to an EC2 instance through an instance profile",
+    "Create a Lambda execution role with the exact permissions the function needs",
+    "Configure a cross-account trust policy so one account can assume a role in another",
+    "Debug an AccessDenied error caused by a missing or incomplete execution role"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-la நாம IAM policies பத்தி பேசினோம் - யாருக்கு என்ன access குடுக்கணும்nu. அது எல்லாம் IAM Users-க்கு. ஆனா ஒரு EC2 instance S3-ல இருக்கற file படிக்கணும்nu இருந்தா, அதுக்கு யார் access குடுக்கறது? EC2-க்கு username password கிடையாதே. இதுதான் இன்னைக்கு நாம கத்துக்கப் போற IAM Roles.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.4",
+        "IAM Roles for Services",
+        "How applications get AWS permissions without a username or password"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "IAM Role = Trust Policy + Permission Policy",
+      "ava_speaks": "IAM Role-ஐ ஒரு 'temporary badge' மாதிரி நினைச்சுக்கோங்க. IAM User-ku permanent access keys இருக்கும், Role-ku அப்படி எதுவும் இல்ல. ஒரு trusted entity - EC2 ஆகவோ, Lambda ஆகவோ, வேற ஒரு AWS account ஆகவோ - அது Role-ஐ 'assume' பண்ணும்போது, AWS தற்காலிகமா credentials குடுக்கும். இது automatic-ஆ 1-12 மணி நேரத்துல expire ஆயிடும். Role-ல ரெண்டு parts இருக்கும்: Trust Policy - யார் assume பண்ணலாம், Permission Policy - assume பண்ணின பிறகு என்ன பண்ணலாம்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "A Role Has Two Separate Policies"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Trust Policy",
+            "Permission Policy"
+          ],
+          "rows": [
+            [
+              "Controls WHO can assume the role",
+              "Controls WHAT the role can do once assumed"
+            ],
+            [
+              "Example: only ec2.amazonaws.com can assume this role",
+              "Example: this role can read from a specific S3 bucket"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Credentials issued by assuming a role are temporary and auto-expire — they are never hardcoded anywhere."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "IAM User-க்கும் IAM Role-க்கும் main difference என்ன?",
+          "options": [
+            "A) Role-ku temporary credentials, User-ku permanent credentials",
+            "B) Role-ku console access கிடையாது, User-ku இருக்கும்",
+            "C) இரண்டும் ஒண்ணுதான், பேரு மட்டும் வேற",
+            "D) Role ஒரு group-ஓட subtype"
+          ],
+          "correct_index": 0,
+          "ava_correct": "Correct! Role-ல credentials temporary-ஆ இருக்கும், automatic-ஆ expire ஆயிடும். இதுதான் security-க்கு best practice.",
+          "ava_wrong": "இல்ல, யோசி - Role assume பண்ணும்போது AWS ஒரு fixed time-க்கு மட்டும் credentials குடுக்கும். User-ku access keys create பண்ணா அது நிரந்தரமா இருக்கும், நாம delete பண்ணற வரைக்கும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Trust Policy எதை control பண்ணுது?",
+          "options": [
+            "A) Role assume பண்ணிட்ட பிறகு என்ன பண்ணலாம்",
+            "B) யார் இந்த role-ஐ assume பண்ணலாம்",
+            "C) Role-ஐ யார் delete பண்ணலாம்",
+            "D) Role-ஓட billing cost"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Trust Policy = 'entry gate'. யாருக்கு இந்த role உள்ள வர permission இருக்குனு check பண்ணுது.",
+          "ava_wrong": "இல்ல, அது Permission Policy வேலை. Trust Policy வேற - அது 'யார் உள்ள வரலாம்'nu மட்டும் சொல்லும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Cost of Hardcoded Access Keys",
+      "ava_speaks": "Real startups-ல, access keys code-ல hardcode பண்றது ஒரு பெரிய security disaster. ஒரு early-stage startup, access keys-ஐ accidentally GitHub public repo-ல commit பண்ணிட்டாங்க. வெறும் 40 நிமிஷத்துல automated bots அந்த keys-ஐ கண்டுபிடிச்சு crypto mining instances launch பண்ணி, ₹18 லட்சம் bill வந்துச்சு. Role பயன்படுத்தினா இந்த risk-ஏ இல்ல - keys code-ல எழுதவே தேவை இல்ல. Razorpay மாதிரி companies-ல, 'no hardcoded credentials' code review-லயே reject ஆயிடும் ஒரு hard rule.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Hardcoded Keys vs IAM Roles"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Access keys committed to a public GitHub repo",
+              "Bots scan and find leaked keys within minutes"
+            ],
+            [
+              "Keys used to launch crypto-mining instances",
+              "₹18 lakh in unauthorized charges within 40 minutes"
+            ],
+            [
+              "If IAM Role had been used instead",
+              "No long-term keys existed to leak — nothing to steal"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Attaching an IAM Role to an EC2 Instance",
+      "ava_speaks": "karthik-dev FoodQuick-ல ஒரு EC2 instance setup பண்றான் - அது S3-ல இருக்கற product images படிக்கணும். பாரு எப்படி பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "IAM",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல IAM Console-ல Roles-க்கு போய், 'Create role' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM Console → Roles → Create role",
+              "highlight": "Create role button",
+              "result": "Role creation wizard opens"
+            }
+          },
+          {
+            "ava_narration": "Trusted entity type-ல 'AWS Service' select பண்ணி, use case-ல 'EC2' தேர்ந்தெடுக்கிறோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Trusted entity type",
+              "field": "Use case",
+              "value": "EC2",
+              "highlight": "EC2 use case option",
+              "result": "Trust policy is auto-generated allowing ec2.amazonaws.com to assume this role"
+            }
+          },
+          {
+            "ava_narration": "Permission policy-ல AmazonS3ReadOnlyAccess attach பண்றோம் - இது read-only, delete/write permission கொடுக்காது.",
+            "console_action": {
+              "type": "select",
+              "path": "Add permissions",
+              "field": "Policy",
+              "value": "AmazonS3ReadOnlyAccess",
+              "highlight": "AmazonS3ReadOnlyAccess checkbox",
+              "result": "Policy is attached to the role being created"
+            }
+          },
+          {
+            "ava_narration": "Role name 'foodquick-ec2-s3read-role'nu கொடுத்து, create பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Role name",
+              "field": "Role name",
+              "value": "foodquick-ec2-s3read-role",
+              "highlight": "Role name input field",
+              "result": "Role is created and appears in the Roles list"
+            }
+          },
+          {
+            "ava_narration": "இப்போ EC2 launch பண்றப்போ, Advanced Details-ல 'IAM instance profile' dropdown-ல இந்த role-ஐ select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "EC2 → Launch instance → Advanced details → IAM instance profile",
+              "field": "IAM instance profile",
+              "value": "foodquick-ec2-s3read-role",
+              "highlight": "IAM instance profile dropdown",
+              "result": "The launched EC2 instance can now call S3 without any access keys configured on it"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The EC2 instance boots with the role attached, and any application running on it can read from the S3 bucket immediately using aws s3 ls without any credential setup.",
+          "what_to_notice": "Developer எதுவும் manual-ஆ config பண்ண வேண்டாம் - role attach பண்ணின உடனே, instance-ல run ஆகற app automatic-ஆ access பெறும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How the Instance Gets Temporary Credentials",
+      "ava_speaks": "இந்த diagram பாரு - EC2 boot ஆகும்போது, attached role இருந்தா, automatic-ஆ AWS STS (Security Token Service)-கிட்ட இருந்து temporary credentials பெறுது. Developer எதுவும் manual-ஆ config பண்ண வேண்டாம்.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "EC2 instance boots",
+            "        |",
+            "checks attached instance profile (foodquick-ec2-s3read-role)",
+            "        |",
+            "requests temporary credentials from AWS STS",
+            "        |",
+            "STS validates the trust policy, issues short-lived credentials",
+            "        |",
+            "application calls S3 API using those credentials",
+            "        |",
+            "IAM checks the permission policy -> Allow (read-only)"
+          ]
+        },
+        "ava_narration": "இந்த credentials automatic-ஆ refresh ஆகும், அதனால developer எப்போவும் manual-ஆ rotate பண்ண வேண்டாம்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Create a Lambda Execution Role",
+      "instruction": "FoodQuick-ல ஒரு Lambda function-க்கு, DynamoDB table-ல order status update பண்ண ஒரு execution role create பண்ணு.",
+      "scenario": "FoodQuick-ல ஒரு Lambda function இருக்கு - அது ஒவ்வொரு order status change-க்கும், foodquick-orders என்ற DynamoDB table-ஐ update பண்ணணும். இப்போ இந்த Lambda-க்கு role இல்ல, அதனால deploy பண்ணா error வரும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "IAM Console → Roles → Create role",
+        "current_configuration": "No execution role exists yet for this Lambda function"
+      },
+      "requirements": [
+        "Select 'AWS Service' as the trusted entity type",
+        "Choose 'Lambda' as the use case so the trust policy allows lambda.amazonaws.com",
+        "Attach a permission policy that allows dynamodb:UpdateItem on the foodquick-orders table",
+        "Name the role foodquick-order-lambda-role"
+      ],
+      "hints": [
+        "Use case dropdown-ல Lambda தேர்ந்தெடுத்தா, trust policy automatic-ஆ correct-ஆ set ஆகும்",
+        "AmazonDynamoDBFullAccess use பண்ணாம, custom policy-ல dynamodb:UpdateItem மட்டும் scope பண்ணu - least privilege",
+        "Role name-ல தெளிவா function-ஐ குறிக்கற பேரு வெச்சிக்கோ, மற்ற roles-கூட confuse ஆகாம இருக்க"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A role named foodquick-order-lambda-role exists with a trust policy allowing lambda.amazonaws.com and a permission policy scoped to dynamodb:UpdateItem on foodquick-orders",
+        "ava_correct": "Super! இப்போ Lambda function deploy பண்ணா, DynamoDB table-ஐ update பண்ண முடியும்.",
+        "ava_wrong": "கொஞ்சம் கவனி - trust policy-ல lambda.amazonaws.com இருக்கானu, permission policy-ல dynamodb:UpdateItem மட்டும் இருக்கானu check பண்ணu, முழு DynamoDB access குடுக்காம."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Lambda AccessDenied After Deployment",
+      "ava_speaks": "priya-dev ஒரு Lambda function deploy பண்ணிட்டா - அது order confirmation email அனுப்ப SES use பண்ணணும். ஆனா deploy பண்ணின உடனே, CloudWatch logs-ல access error வருது.",
+      "setup": "priya-dev writes and deploys a Lambda function that should send an order confirmation email through Amazon SES whenever a new FoodQuick order is placed.",
+      "what_happened": "The function deploys successfully and triggers correctly, but every invocation fails at the point where it tries to call SES, and no email is sent.",
+      "broken_config": "Lambda execution role attached: foodquick-order-lambda-role\nPermission policy on that role only includes:\n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"logs:CreateLogGroup\", \"logs:CreateLogStream\", \"logs:PutLogEvents\"],\n  \"Resource\": \"*\"\n}",
+      "error_shown": "AccessDeniedException: User: arn:aws:sts::123456789012:assumed-role/foodquick-order-lambda-role/foodquick-order-confirm is not authorized to perform: ses:SendEmail on resource: arn:aws:ses:ap-south-1:123456789012:identity/foodquick.in because no identity-based policy allows the ses:SendEmail action",
+      "the_real_problem": "priya function code-ஐ சரியா எழுதினா, role-மும் attach பண்ணினா - ஆனா அந்த role-ல basic CloudWatch Logs permission மட்டும் இருந்துச்சu, அது Lambda console default-ஆ கொடுக்கறது. SES permission add பண்ண மறந்துட்டா. Role attach பண்றது ஒரு காரியம், அந்த role-ல சரியான permissions இருக்கறது வேற காரியம்.",
+      "fix": {
+        "corrected_config": "Add to the role's permission policy:\n{\n  \"Effect\": \"Allow\",\n  \"Action\": \"ses:SendEmail\",\n  \"Resource\": \"arn:aws:ses:ap-south-1:123456789012:identity/foodquick.in\"\n}",
+        "result": "The Lambda function can now successfully call ses:SendEmail, and order confirmation emails are delivered on every invocation."
+      },
+      "lesson": "Role attach பண்ணிருக்கறது permission இருக்கும்nu அர்த்தம் இல்ல - role-ல exact-ஆ என்ன permissions இருக்குனu எப்போவும் verify பண்ணu."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Roles in Practice",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சu சொல்லu.",
+      "challenges": [
+        {
+          "question": "An EC2 instance needs to read from one specific S3 bucket only. Should the attached role use AmazonS3FullAccess or a custom policy scoped to that one bucket?",
+          "answer": "Custom policy scoped to the one bucket. AmazonS3FullAccess gives access to every bucket in the account, including buckets this instance has no business touching — that's a least-privilege violation waiting to become an incident."
+        },
+        {
+          "question": "A Lambda function's execution role has the right permissions today, but next month it needs to also read from a new SQS queue. Do you create a brand new role, or update the existing role's permission policy?",
+          "answer": "Update the existing role's permission policy. Roles are meant to evolve with what the service needs — creating a new role for every small addition just creates untracked duplicates."
+        },
+        {
+          "question": "A dev account's CI/CD pipeline needs to deploy resources into a prod account. Should the pipeline use long-term IAM user credentials for the prod account, or assume a role in the prod account?",
+          "answer": "Assume a role. Long-term credentials for another account sitting in a CI/CD system is a major leak risk — assuming a role with a scoped trust policy and an ExternalId is the standard cross-account pattern."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Role Chaining in Real CI/CD Pipelines",
+      "ava_speaks": "நிஜ companies-ல, dev, staging, prod எல்லாம் தனி தனி AWS accounts-ஆ வெச்சu, deploy pipeline ஒவ்வொரு account-லயும் role assume பண்ணி deploy பண்ணும் - இது 'role chaining' எனப்படும். Single powerful credential வெச்சிருக்கிறதுக்கு பதிலா, ஒவ்வொரு boundary-லயும் தனி role, தனி permission.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Define a deploy role in the prod account with a trust policy that only allows the dev account's CI/CD role to assume it",
+          "detail": "இது prod-ஐ protect பண்ணுதu - dev account compromise ஆனாலும், trust policy-ல specific role மட்டும்தான் assume பண்ண முடியும்"
+        },
+        {
+          "step": 2,
+          "action": "Add an ExternalId condition to the trust policy",
+          "detail": "இது 'confused deputy' attack-ஐ தடுக்கும் - யாராவது role ARN-ஐ மட்டும் தெரிஞ்சிட்டா, ExternalId இல்லாம assume பண்ண முடியாது"
+        },
+        {
+          "step": 3,
+          "action": "CI/CD pipeline calls sts:AssumeRole to get temporary prod credentials for the duration of the deployment only",
+          "detail": "Deploy முடிஞ்ச உடனே credentials expire ஆயிடும் - permanent access எப்போவும் இல்ல"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS STS (Security Token Service)",
+          "use": "Role assume பண்றப்போ temporary credentials issue பண்ணுதu, இதுதான் இந்த முழு pattern-ஓட core"
+        },
+        {
+          "tool": "GitHub Actions with OIDC",
+          "use": "CI/CD pipelines-ல long-term AWS keys store பண்ணாம, GitHub-க்கும் AWS-க்கும் இடையே direct trust set பண்ணி role assume பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கu நாம IAM Roles முழுசா கத்துக்கிட்டோம் - EC2 instance roles, Lambda execution roles, cross-account assume-role எல்லாம். இப்போ உனக்கு தெரியும் ஏன் services-க்கu access keys வேண்டாம்nu, எப்படி AccessDenied errors debug பண்றதுnu. அடுத்த lesson-ல நாம MFA, password policies, AWS Organizations, அப்புறம் Service Control Policies பத்தி பேசுவோம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.4 — Summary",
+      "points": [
+        "✓ IAM Roles provide temporary credentials to trusted entities — no long-term keys",
+        "✓ EC2 instance roles work through instance profiles attached at launch",
+        "✓ Lambda execution roles must have every permission the function needs, not just a default role",
+        "✓ Cross-account access uses trust policies with sts:AssumeRole, often with an ExternalId for extra safety",
+        "✓ AccessDenied usually means the role exists but is missing a specific permission"
+      ],
+      "coming_next": "Lesson C2.5: MFA, Password Policies, and AWS Organizations"
+    }
+  }
+}

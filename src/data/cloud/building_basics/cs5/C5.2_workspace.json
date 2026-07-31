@@ -1,0 +1,225 @@
+{
+  "lesson_id": "C5.2",
+  "ticket": "FQ-189",
+  "sender": "Meera Iyer (VP of Finance, CFO's Office)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-189 — Meera Iyer (VP of Finance, CFO's Office)\n\nOur security team's routine review flagged a bucket showing as publicly accessible — foodquick-driver-documents. I'm told this holds driver ID and license documents from the onboarding flow. I need to know how long this has been public and whether it's actually been accessed by anyone who shouldn't have.\n\nWhile you're in there — take a proper look at bucket policies and permissions across the account. I still want to understand who or what is writing to that other bucket we flagged.\n\n— Meera",
+  "arc_outro": "Meera Iyer — FQ-189 update:\nSix weeks of public exposure is serious, and I appreciate you not downplaying that just because nothing definitive turned up in the access logs — 'we can't rule it out' is the honest answer, and that's what I needed to hear, not false reassurance. Pre-signed URLs for the document viewer instead of a public bucket makes sense, and I like that there's now a real rule about Block Public Access instead of trusting people to remember to turn it back on.\nAnd now we know something — an old service role still has write access to that growing bucket, even though nothing currently in our account seems to use it. That's a real thread now, not just a mystery. Let's keep pulling on it.\n — Meera",
+  "tasks": [
+    {
+      "id": "C5.2-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C5.2",
+      "scenario": "You confirm foodquick-driver-documents is indeed publicly readable. Before doing anything else, you need to establish the actual timeline and exposure window.",
+      "question": "What should you check first to understand the real scope of this issue?",
+      "options": [
+        "A) Immediately re-enable Block Public Access without checking anything else, since speed matters most",
+        "B) Check when Block Public Access was actually disabled (via CloudTrail or console history) and what the bucket policy currently allows, to establish exactly how long real exposure existed and what was actually accessible during that window",
+        "C) Assume this has always been the bucket's normal configuration and no incident response is needed",
+        "D) Ask the driver onboarding team to confirm whether any drivers have complained about identity theft, before checking any AWS configuration"
+      ],
+      "correct_index": 1,
+      "explanation": "This 'when did this start, what was actually exposed' — establish doing first — this incident response's foundation. Udane re-enable doing (option A) reasonable step but, timeline/scope first therinjikkaama, how much serious-a treat must do — theriyathu.",
+      "ren_correct": "Correct — timeline and scope first establish doing, incident response's foundation.",
+      "ren_wrong": "A bit think again — 'always been this way' — assume doing dangerous. Actual timeline first check must do."
+    },
+    {
+      "id": "C5.2-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.2",
+      "question": "S3's Block Public Access (BPA) setting is described as a 'master switch.' What does that actually mean in practice?",
+      "options": [
+        "A) BPA is just one setting among many, with no special precedence over bucket policies or ACLs",
+        "B) BPA overrides and blocks public access even if a bucket policy or ACL explicitly tries to grant it — it acts as an account-level or bucket-level safety net that takes precedence, meaning a permissive bucket policy alone is NOT enough to make something public if BPA is still enabled",
+        "C) BPA only affects new objects uploaded after it's enabled, never existing objects",
+        "D) BPA must be individually configured per-object, not per-bucket or per-account"
+      ],
+      "correct_index": 1,
+      "explanation": "BPA master switch — says exact-a this — bucket policy explicit-a public access grant do, BPA enabled-a irundha, that override does, public access block will happen. This safety net — bucket policy mistake even if done, BPA protect does.",
+      "ren_correct": "Correct — BPA override does, bucket policy permissive-a even if.",
+      "ren_wrong": "A bit think again — BPA just one setting not, that real override power is there bucket for policy mela."
+    },
+    {
+      "id": "C5.2-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.2",
+      "question": "What's the actual security benefit of a pre-signed URL compared to making an S3 object fully public?",
+      "options": [
+        "A) There's no real difference — a pre-signed URL is functionally identical to making the object public forever",
+        "B) A pre-signed URL grants TEMPORARY access to a specific object, expiring after a duration YOU choose when generating it — the object itself stays private, and access requires possessing that specific, time-limited URL, unlike a fully public object which anyone can access indefinitely with no expiration at all",
+        "C) Pre-signed URLs can only be used for uploading, never for reading/downloading objects",
+        "D) Pre-signed URLs automatically notify AWS Security every time they're used"
+      ],
+      "correct_index": 1,
+      "explanation": "Pre-signed URL — object private-a will be, but TEMPORARY, time-limited access gives (duration we choose doing, generate doesbothu). This fully public-a if it was different — public — indefinite, anything access to do can, expiration anything not.",
+      "ren_correct": "Correct — pre-signed URL temporary, object private-a remain will happen. This real security benefit.",
+      "ren_wrong": "A bit think again — pre-signed URL and fully-public both vera. Pre-signed URL temporary, expiration we set doing."
+    },
+    {
+      "id": "C5.2-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.2",
+      "scenario": "You pull the actual history of foodquick-driver-documents.",
+      "broken_config": "CloudTrail history for foodquick-driver-documents:\n├── 6 weeks ago: Block Public Access DISABLED by karthik-dev (comment in change log: \"temp for testing doc viewer feature\")\n├── Bucket policy at that time: allows s3:GetObject to Principal: \"*\" (public), added same day\n└── No record of BPA ever being re-enabled since\n\nBucket contents: driver ID card scans and license images, ~2,400 objects\n\nS3 server access logging: was NOT enabled during this window, so there's no definitive log of who actually accessed which objects during the 6 weeks",
+      "what_to_find": [
+        "Both BPA disabled AND an explicit public-read bucket policy were needed together to make this actually public — this wasn't an accident of one setting alone, someone deliberately configured both",
+        "The stated intent (\"temp for testing\") never had a corresponding re-enable step, or any reminder/expiration built into the process — it just relied on someone remembering, which didn't happen",
+        "Because server access logging wasn't enabled during the exposure window, there's no way to definitively confirm or rule out whether any unauthorized external party actually accessed anything during those 6 weeks",
+        "This is a real, serious exposure of sensitive identity documents for 6 weeks — the honest current answer is 'we cannot rule out access,' not 'nothing happened' and not 'we know exactly what happened'"
+      ],
+      "correct_fix": "Immediately re-enable Block Public Access and remove the public-read bucket policy. Enable S3 server access logging going forward so this kind of question is answerable in the future. Report the honest uncertainty (access cannot be ruled out) to Meera and legal/compliance as appropriate, rather than either overclaiming a breach or underclaiming that nothing happened.",
+      "explanation": "This exact spec mistake — BPA temporarily disable after doing, re-enable doing marandhuduchu. Logging without irundhadhala, definitive answer therla — this honestly report must do, guess do not anything in direction."
+    },
+    {
+      "id": "C5.2-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C5.2",
+      "question": "Arrange the correct order to secure the bucket and properly support the legitimate document viewer feature going forward.",
+      "items": [
+        "Re-enable Block Public Access on the bucket immediately",
+        "Remove the public-read bucket policy entirely",
+        "Enable S3 server access logging so future questions like this are answerable",
+        "Implement pre-signed URLs (generated server-side, short expiration) for the document viewer feature's legitimate access need",
+        "Verify the document viewer feature still works correctly using pre-signed URLs, and that direct public access is now blocked"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Urgent security fix first (BPA re-enable, policy remove), then logging enable must do for future, then legitimate for feature proper solution (pre-signed URLs) implement must do, LAST-a verify must do all velai does.",
+      "ren_correct": "Nice sequencing — urgent fix first, then logging, then the proper legitimate-access solution, verify last.",
+      "ren_wrong": "Order again paaru — security fix (BPA re-enable) important-a first must do, then legitimate for feature proper solution build must do."
+    },
+    {
+      "id": "C5.2-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.2",
+      "scenario": "Implementing the document viewer feature with pre-signed URLs, karthik-dev suggests generating each URL with a 7-day expiration, reasoning 'that way drivers don't have to reload the page as often.'",
+      "question": "Is a 7-day expiration a reasonable choice for a document viewer that displays sensitive ID documents?",
+      "options": [
+        "A) Yes — longer expiration is always more convenient with no meaningful downside",
+        "B) No — a 7-day expiration on a URL granting access to sensitive ID documents means anyone who obtains that URL (through a shared link, browser history, a compromised device, etc.) has a full week of access. The expiration should be as short as practically possible for the actual use case (e.g., minutes, generated fresh each time the page loads), not chosen for UI convenience",
+        "C) No — pre-signed URLs cannot have an expiration longer than 60 seconds under any circumstances",
+        "D) It doesn't matter — pre-signed URL expiration has no relationship to security risk"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact spec's 'no expiration set'-oda spirit — technically expiration set do if (7 days), practical that very over-permissive-a is there sensitive for documents. URL anything vazhi leak but (shared link, browser history, compromised device), 7 days full access kidaikkum. Expiration practically-possible minimum-a must be, UI for convenience not.",
+      "ren_correct": "Correct — expiration UI for convenience not, actual security for need base must do, very short-a must be sensitive for data.",
+      "ren_wrong": "A bit think again — longer expiration convenience gives but real security risk is there. Sensitive for documents expiration very short-a must be."
+    },
+    {
+      "id": "C5.2-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.2",
+      "scenario": "ananya-analyst asks whether server-side encryption (SSE) would have prevented the driver-documents exposure, since she's heard encryption is a key S3 security feature.",
+      "question": "Would enabling encryption on the bucket have prevented this specific exposure?",
+      "options": [
+        "A) Yes — encryption would have made the objects completely inaccessible to anyone, including the public bucket policy that was granted",
+        "B) No — S3 server-side encryption protects data at rest from unauthorized access to the underlying storage infrastructure, but it does NOT prevent access through a legitimate-looking API request that's actually authorized by a (mistakenly permissive) bucket policy. If the bucket policy allows public GetObject, AWS transparently decrypts and serves the object to that request regardless of encryption being enabled",
+        "C) Yes, but only if AWS KMS keys are used instead of SSE-S3",
+        "D) Encryption and access control are the same feature in S3, so this question doesn't really make sense"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, important distinction — encryption at rest protection storage infrastructure-a unauthorized in access irundhu protect does, but bucket policy explicit-a public GetObject allow if we had done, AWS transparent-a decrypt after doing serve does that authorized (but mistakenly permissive) for request. Encryption and access control different different concerns.",
+      "ren_correct": "Correct — encryption at-rest protection gives, but permissive bucket policy's problem-a solve what was done.",
+      "ren_wrong": "A bit think again — encryption and access control different different topic. Bucket policy public access allow if we had done, encryption even if data serve will happen."
+    },
+    {
+      "id": "C5.2-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C5.2",
+      "scenario": "While reviewing what evidence might exist about the exposure window, you check any available third-party signals — search engine caches, security scanner reports FoodQuick subscribes to, and internal WAF logs (which DO have retention covering this window, unlike S3 access logs).",
+      "error_shown": "WAF logs show 3 requests to foodquick-driver-documents.s3.amazonaws.com from IP ranges associated with known internet-wide scanning services (not identified individuals), during the exposure window — no way to confirm what, if anything, was actually retrieved by these requests, or whether any human ever saw the results",
+      "diagnosis": "This is genuinely ambiguous evidence — automated internet-wide scanners constantly probe for exactly this kind of exposed bucket, and their presence doesn't confirm a human attacker found or misused anything specific. But it also doesn't rule it out. Scanners are often how exposures like this GET discovered by bad actors in the first place, so this raises the real risk level without providing a definitive answer either way.",
+      "fix": "Report this finding accurately: automated scanner activity was detected during the exposure window, which is common and doesn't confirm data was actually misused, but does mean the exposure was likely visible to automated discovery tools, raising (not eliminating) the risk that a human actor also became aware of it. Recommend legal/compliance make the final call on driver notification requirements based on this honest risk assessment, not a false certainty in either direction.",
+      "explanation": "This real incident response nuance — ambiguous evidence-a paathu, over-react (definite breach — says) or under-react (nothing happened — says) both wrong. Honest-a risk level report doing, that uncertainty's, real professional judgment."
+    },
+    {
+      "id": "C5.2-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.2",
+      "scenario": "Turning to the growing mystery bucket, you review its bucket policy and IAM permissions as part of the broader S3 security audit Meera asked for.",
+      "broken_config": "foodquick-legacy-exports bucket policy:\n├── Principal: arn:aws:iam::xxxxxxxxxxxx:role/legacy-export-service-role\n├── Actions allowed: s3:PutObject, s3:GetObject\n└── No public access — this bucket was never publicly exposed, unlike the driver documents bucket\n\nIAM role \"legacy-export-service-role\":\n├── Created: over 2 years ago\n├── Attached to: no currently-running EC2 instance, Lambda function, or ECS task found in the account\n└── Last IAM Access Advisor activity: shows this role's permissions HAVE been used recently (within the last 7 days) — something is actively assuming this role and using it, even though no obviously-attached compute resource currently exists for it",
+      "what_to_find": [
+        "This bucket was never publicly exposed — this is a completely separate, distinct issue from the driver-documents incident, correctly not conflated with it",
+        "The IAM role granting write access is old (2+ years) and isn't attached to any currently-visible compute resource in the account",
+        "Despite that, IAM Access Advisor shows the role IS being actively used recently — something, somewhere, is still assuming this role and writing to the bucket, even though it's not obviously attached to anything visible",
+        "This narrows the mystery meaningfully: it's not a dangling permission nobody uses — it's an ACTIVELY used role with no visible owner, which is a different and arguably more urgent kind of unknown than a simple leftover"
+      ],
+      "correct_fix": "Do not modify or revoke this role's permissions yet. Escalate this specific, narrowed finding to Meera: an actively-used IAM role with write access to the mystery bucket exists, but no visible compute resource in the account appears to be using it — the next step is finding WHAT is actually assuming this role (possibly a resource in a different account, a scheduled Lambda not showing up in the expected view, or something else not yet checked).",
+      "explanation": "This Act 2 deepening — dead artifact not, ACTIVELY used role, but visible owner not. This real, narrowed clue — 'nobody uses this' — vera, 'something invisible-a use does' — vera. Investigation still continue must do, touch do not."
+    },
+    {
+      "id": "C5.2-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C5.2",
+      "scenario": "Meera asks for a standing policy going forward: how should the team handle legitimate needs to temporarily adjust bucket security settings for testing?",
+      "options": [
+        "A) Never allow any temporary security setting changes under any circumstances, even for legitimate testing needs",
+        "B) Require Block Public Access to be ON by default for every bucket without exception, and any genuine need to test public-style access must use a separate, clearly-labeled temporary test bucket (never production data) with a mandatory calendar reminder or automated re-check to catch any exception that outlives its stated purpose",
+        "C) Continue allowing ad-hoc temporary changes on production buckets as before, trusting people to remember to revert them",
+        "D) Only allow temporary security changes on Fridays, so there's a full weekend to notice if something goes wrong"
+      ],
+      "correct_index": 1,
+      "explanation": "Complete ban impractical (genuine testing needs will be), but 'trust people to remember' already we we saw exact failure mode. Balanced answer: default-secure (BPA on always), genuine for testing separate non-production bucket use must do, AND automated check/reminder — 'temporary' permanent-a aagamust not.",
+      "ren_correct": "Correct — balanced policy, default-secure, separate test buckets, automated reminder — 'temporary' forever will happen problem-a solve does.",
+      "ren_wrong": "A bit extreme-a you thought — complete ban um 'trust people' um both wrong. Balanced, default-secure-with-automated-check policy real answer."
+    },
+    {
+      "id": "C5.2-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C5.2",
+      "scenario": "Meera asks for the real business risk framing of the driver-documents exposure, for her report to legal and the board. A comparable Indian gig-economy platform faced a documented ₹42 lakh regulatory penalty and mandatory user notification costs after a similar identity-document exposure was confirmed exploited last year.",
+      "question": "How should this be framed, given FoodQuick's own exposure has ambiguous (not confirmed) evidence of actual misuse?",
+      "solution": "Frame it accurately: unlike the comparable case, FoodQuick has no confirmed evidence of actual exploitation — the honest finding is 'exposure occurred, misuse cannot be ruled out.' The ₹42 lakh comparable case illustrates the realistic scale of consequences IF misuse is later confirmed or presumed by regulators, which is why this deserves serious, prompt remediation and honest disclosure now rather than being downplayed — not a claim that FoodQuick will face the same penalty, but a concrete reason this needed urgent, real fixing rather than a quiet patch.",
+      "explanation": "This real risk communication, we already in C4.4 we saw same discipline — comparable incident number giving scale convey for doing, but FoodQuick specifically that exact outcome face does — claim do not."
+    },
+    {
+      "id": "C5.2-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.2",
+      "scenario": "Time to report back to Meera on this piece of FQ-189.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the public bucket issue. Everything's secure now.\"",
+        "B) \"foodquick-driver-documents was publicly exposed for 6 weeks (BPA disabled for testing, never re-enabled) — re-secured immediately, pre-signed URLs (short expiration) implemented for the legitimate document viewer need, logging now enabled. Access logs weren't enabled during the window, so we cannot rule out unauthorized access; WAF logs show automated scanner activity during that period, raising but not confirming risk — recommend legal/compliance make the notification call. Standing policy added: BPA on by default, separate test buckets for any temporary exception, with automated re-check. Separately, on the growing mystery bucket: found an actively-used (not dangling) IAM role with write access, but no visible owning compute resource — narrowed, not yet resolved.\"",
+        "C) \"There was a security issue but it's handled now, no further details needed.\"",
+        "D) \"Confirmed no one accessed the exposed documents, so no further action is needed on that front.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — full honest incident scope (including the genuine uncertainty about access), the real fix, the structural policy, AND the mystery's new narrowed finding. Option D dangerous — we definitively 'no one accessed' — confirm to do mudiyala, that overclaim wrong and potentially legally risky.",
+      "ren_correct": "This correct report — honest about uncertainty, complete fix, structural policy, and the mystery's real progress.",
+      "ren_wrong": "This report either vague-a is there or false certainty claim does ('confirmed no one accessed') — we that certainty without irundhom, honestly report must do."
+    }
+  ],
+  "act_number": 3,
+  "act_title": "S3 Security That Holds",
+  "builds_layer": "Object Security Layer"
+}

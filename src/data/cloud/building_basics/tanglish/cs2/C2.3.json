@@ -1,0 +1,341 @@
+{
+  "lesson_id": "C2.3",
+  "lesson_title": "Least Privilege in Practice — Finding and Fixing Privilege Creep",
+  "section_id": "CS2",
+  "section_name": "Identity and Access Management",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C2.2 — Writing IAM Policies",
+  "student_will_learn": [
+    "What privilege creep is and why it happens to every AWS account over time",
+    "How to use IAM Access Advisor to find unused permissions",
+    "How to use IAM Access Analyzer to detect externally accessible resources",
+    "How to conduct a quarterly access review",
+    "Why removing unused permissions matters even if they were never misused"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இது வரைக்கும் policies எப்படி எழுதுறதுன்னu கத்துக்கிட்டீங்க. ஆனா ஒரு real problem இருக்கu — நேரம் போற போது, permissions accumulate ஆகும். ஒரு developer 6 மாசத்துக்கu முன்னாடi ஒரு project-க்காக RDS access வாங்கினாரu, அந்த project முடிஞ்சuடுச்சu, ஆனா permission remove ஆகல. இது தான் 'privilege creep.' இன்னைக்கu அதை எப்படி கண்டுபிடிக்கறது, எப்படி clean பண்றதுன்னu பாப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS2 · Lesson C2.3",
+        "Least Privilege in Practice",
+        "Finding and Fixing Privilege Creep"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Why Permissions Accumulate Like Dust",
+      "ava_speaks": "Least privilege-ன்னா, ஒரு நபருக்கu, அவங்க வேலைக்கu தேவையான exact permissions மட்டும் கொடுக்கறது. அதுக்கu மேல ஒண்ணும் இல்ல. இது கேக்க easy-ஆ இருக்கும், ஆனா practice-ல ரொம்ப கஷ்டம். ஏன்னா — developer join ஆகும்போது EC2 access வாங்குறாரu. 6 மாசம் கழிச்சu, data team-க்கu move ஆகi S3 access வாங்குறாரu. 1 வருஷம் கழிச்சu, DevOps project-க்காக RDS access வாங்குறாரu. இப்போ அவரu data team-ல தான் வேலை பாக்குறாரu, ஆனா அவங்க IAM permissions-ல EC2 admin, S3 full, RDS access எல்லாம் இன்னும் இருக்கu. இது தான் 'privilege creep' — காலப்போக்கில permissions சேர்ந்தே போகும், ஒருபோதும் குறையாது. இதை fight பண்ண AWS-ல 2 tools இருக்கu. IAM Access Advisor — ஒவ்வொரு permission எப்போ last use ஆச்சுன்னu காட்டும். IAM Access Analyzer — வெளியிலிருந்து யாராவது access பண்ண முடியுமான்னu தெரியாத resources-ஐ கண்டுபிடிக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "How Privilege Creep Happens"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Timeline",
+            "Role",
+            "Permissions Added"
+          ],
+          "rows": [
+            [
+              "Month 0",
+              "Joins as Backend Developer",
+              "EC2 read, S3 read"
+            ],
+            [
+              "Month 6",
+              "Moved to Data Team project",
+              "+ S3 full access"
+            ],
+            [
+              "Month 12",
+              "Helped with DevOps migration",
+              "+ RDS admin access"
+            ],
+            [
+              "Month 18 (today)",
+              "Working only on Data Team tasks",
+              "Still has EC2, S3 full, RDS admin — most unused"
+            ]
+          ]
+        },
+        {
+          "type": "write_definition_box",
+          "text": "IAM Access Advisor: Shows the last-used date for every service permission a user or role has. Not used in 90+ days = candidate for removal.\n\nIAM Access Analyzer: Scans your account for resources accessible from outside — finds unintended external exposure."
+        },
+        {
+          "type": "write_important_note",
+          "text": "Rule: An unused permission is not neutral. It is attack surface with zero benefit. If it's not being used, remove it."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "Using IAM Access Advisor, you see a user's EC2 permissions were last used 180 days ago. They currently work as a data engineer with no EC2 responsibilities. What should you do?",
+          "options": [
+            "A) Leave it — they might need it again someday",
+            "B) Remove the EC2 permission — unused for 180 days and not relevant to their current role",
+            "C) Ask them to use it at least once a month to justify keeping it",
+            "D) Upgrade it to EC2 admin access in case they need more control later"
+          ],
+          "correct_index": 1,
+          "ava_correct": "சரியா சொன்னீங்க! 180 நாள் unused, current role-க்கும் தேவையில்ல — remove பண்றது தான் correct move. தேவைப்பட்டா, easy-ஆ திரும்ப add பண்ணலாம்.",
+          "ava_wrong": "இல்ல. 'Might need it someday' — இது தான் privilege creep-ன் root cause. Unused permission எந்த benefit-உம் தராது, ஆனா risk-ஐ increase பண்ணும். Remove பண்ணுங்க."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "What is the key difference between IAM Access Advisor and IAM Access Analyzer?",
+          "options": [
+            "A) They are the same tool with two different names",
+            "B) Access Advisor shows what a user/role can access and when they last used it. Access Analyzer finds resources exposed to outside the account.",
+            "C) Access Advisor is for EC2 only, Access Analyzer is for S3 only",
+            "D) Access Analyzer replaced Access Advisor and does the same thing better"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Access Advisor — internal usage history பாக்கும். Access Analyzer — external exposure கண்டுபிடிக்கும். Rendu வேற வேற purpose.",
+          "ava_wrong": "இல்ல, இரண்டும் வேற வேற tools. Access Advisor — 'இந்த user எப்போ இந்த permission use பண்ணாரu' காட்டும். Access Analyzer — 'இந்த resource வெளியிலிருந்து யார் access பண்ண முடியும்' கண்டுபிடிக்கும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The 18-Month-Old Permission That Cost 2 Lakh Records",
+      "ava_speaks": "ஒரு fintech company-ல நடந்த incident. Junior developer ஒருத்தருக்கu, 18 மாசத்துக்கu முன்னாடi ஒரு one-time migration project-க்காக DynamoDB full access கொடுத்தாங்க. அந்த project 2 வாரத்துல முடிஞ்சuடுச்சu, ஆனா permission remove ஆகல. அவரu தற்போது வேற project-ல தான் வேலை பாக்குறாரu, DynamoDB touch பண்றதே இல்ல. ஒரு நாள், அவரu account phishing attack-ல compromise ஆச்சu. Attacker-க்கu அவங்க entire permission set கிடைச்சிடுச்சu — including அந்த 18-மாசம் பழைய DynamoDB access. Attacker 20 லட்சம் customer records DynamoDB-ல இருந்தu read பண்ணிட்டாரu. அந்த permission அன்னைக்கே remove பண்ணi இருந்தா, breach அந்த அளவu பெரிசா இருந்திருக்காது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Fintech Breach: 18-Month-Old Unused Permission"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Event",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Permission granted",
+              "18 months ago, for a 2-week migration project"
+            ],
+            [
+              "Permission actually used",
+              "Only during those original 2 weeks"
+            ],
+            [
+              "Permission removed",
+              "Never — accumulated silently"
+            ],
+            [
+              "Account compromised",
+              "Phishing attack on the developer"
+            ],
+            [
+              "Damage caused",
+              "20 lakh customer records read from DynamoDB"
+            ],
+            [
+              "If permission had been removed",
+              "Attacker's access would have stopped at what the current role actually needed"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Running an Access Advisor Audit",
+      "ava_speaks": "இப்போ FoodQuick-ல ஒரு developer-ன் account-ஐ audit பண்ணப் போறோம். Console-க்கu போவோம்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "IAM",
+        "steps": [
+          {
+            "ava_narration": "IAM → Users → karthik-dev-ஐ கிளிக் பண்ணுங்க. Access Advisor tab-க்கu போவோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "IAM → Users → karthik-dev → Access Advisor tab",
+              "highlight": "Access Advisor tab",
+              "result": "Table shows every AWS service karthik-dev has permission for, with 'Last accessed' column"
+            }
+          },
+          {
+            "ava_narration": "இந்த list-ஐ பாருங்க. S3 — 2 நாள் முன்னாடi use ஆச்சu. EC2 — 4 நாள் முன்னாடi. RDS — 'Not accessed in tracking period' காட்டுதu.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Access Advisor results table",
+              "highlight": "RDS row showing 'Not accessed'",
+              "result": "RDS identified as an unused permission — candidate for removal"
+            }
+          },
+          {
+            "ava_narration": "இந்த RDS permission எங்க இருந்தu வந்துச்சுன்னu பாக்கணும் — Permissions tab-ல policies list பாருங்க.",
+            "console_action": {
+              "type": "navigate",
+              "path": "karthik-dev → Permissions tab",
+              "highlight": "Attached policies list",
+              "result": "Shows RDS access came from an old 'Migration-Project-2024' custom policy still attached"
+            }
+          },
+          {
+            "ava_narration": "இப்போ அந்த old policy-ஐ detach பண்றோம். karthik-dev-க்கu இப்போ EC2 மற்றும் S3 access மட்டும் இருக்கும் — அவங்க actually use பண்ற services.",
+            "console_action": {
+              "type": "click",
+              "element": "Detach 'Migration-Project-2024' policy",
+              "result": "RDS access removed. karthik-dev now has only currently relevant permissions."
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Unused RDS permission identified and removed, leaving only actively-used permissions on karthik-dev's account",
+          "what_to_notice": "The permission wasn't malicious or a mistake when it was granted — it just outlived its purpose and nobody removed it."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Before and After the Audit",
+      "ava_speaks": "இந்த cleanup-க்கு முன்னாடியும் அப்புறமும் எப்படி இருந்துச்சுன்னu பாருங்க.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "BEFORE AUDIT:",
+            "karthik-dev permissions:",
+            "  EC2 (used 4 days ago)      ✓ active",
+            "  S3 (used 2 days ago)       ✓ active",
+            "  RDS (never accessed)       ⚠ unused — attack surface",
+            "",
+            "AFTER AUDIT:",
+            "karthik-dev permissions:",
+            "  EC2 (used 4 days ago)      ✓ active",
+            "  S3 (used 2 days ago)       ✓ active",
+            "  (RDS permission removed — reduced blast radius if compromised)"
+          ]
+        },
+        "ava_narration": "Functionality எதுவும் மாறல. karthik-dev தன்ன daily work continue பண்றாரu. ஆனா account compromise ஆனா, attacker இப்போ RDS தொட முடியாது."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Audit Before Parental Leave",
+      "instruction": "A developer is going on 3 months of parental leave. Audit their account before they leave.",
+      "scenario": "Ananya-analyst is going on leave for 3 months. Her current Access Advisor shows: S3 (used yesterday), DynamoDB read (used 3 days ago), EC2 full access (last used 210 days ago), IAM view access (last used 340 days ago). When she returns, her role will be exactly the same — data analysis only.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "IAM → Users → ananya-analyst → Access Advisor",
+        "current_configuration": "4 permissions visible with their last-accessed dates as described in the scenario"
+      },
+      "requirements": [
+        "Identify which permissions are actively used and should be kept",
+        "Identify which permissions are stale (200+ days unused) and should be removed",
+        "Remove the unused permissions",
+        "Document why each removed permission was safe to remove"
+      ],
+      "hints": [
+        "Permissions used within the last 30 days are almost always safe to keep",
+        "210 and 340 days unused, with no indication her role will change — these are clear removal candidates",
+        "When she returns in 3 months, if she genuinely needs EC2 or IAM access again, it can be re-added in minutes"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "S3 and DynamoDB permissions kept, EC2 and IAM view permissions removed with documented reasoning",
+        "ava_correct": "சரியா பண்ணீங்க! Active permissions தொடல, stale permissions remove பண்ணீங்க. இது தான் correct least-privilege hygiene — especially ஒருத்தர் long leave-ல இருக்கும்போது.",
+        "ava_wrong": "மறுபடி பாருங்க — 200+ நாள் unused permissions, role மாறாதுன்னu தெரிஞ்சும், அதை வெச்சிருக்க காரணமே இல்ல. அதை remove பண்ணுங்க."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Permission Nobody Remembered Granting",
+      "ava_speaks": "இது ரொம்ப dangerous வகை mistake — permission grant பண்ணி, அதை remove பண்றதை மறந்துடுறது.",
+      "setup": "A DevOps engineer was given iam:CreateUser and iam:AttachUserPolicy permissions temporarily to help set up the initial AWS account structure for FoodQuick. The setup was completed in week 1. Nobody removed the permission afterward.",
+      "what_happened": "8 months later, the DevOps engineer's laptop was compromised via a phishing email. Because they still had iam:CreateUser permission, the attacker created a brand new IAM user named 'aws-backup-service' and attached AdministratorAccess to it.",
+      "broken_config": "DevOps engineer's IAM policy still includes: { \"Effect\": \"Allow\", \"Action\": [\"iam:CreateUser\", \"iam:AttachUserPolicy\"], \"Resource\": \"*\" } — unused since week 1 but never removed",
+      "error_shown": "Security team discovers 'aws-backup-service' IAM user during a routine audit — a user nobody remembers creating, with full admin rights, active for 3 weeks",
+      "the_real_problem": "iam:CreateUser permission-ன்னா — attacker அதை use பண்ணி தன்னோட own persistent backdoor create பண்ணிடலாம். Original account secure பண்ணிட்டாலும், இந்த new user இருக்கறவரைக்கும் attacker-க்கu access இருக்கும்.",
+      "fix": {
+        "corrected_config": "Immediately remove iam:CreateUser and iam:AttachUserPolicy from the DevOps engineer's policy the moment initial setup is complete. Delete the 'aws-backup-service' backdoor user. Rotate all credentials the compromised account had access to.",
+        "result": "No standing ability for any compromised account to create new backdoor identities"
+      },
+      "lesson": "iam:CreateUser — இது most dangerous permissions-ல ஒண்ணu. Setup complete ஆன உடனே remove பண்ணணும். இது இருந்தா, ஒரு compromise persistent backdoor-ஆ மாறிடும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Quick Privilege Review Decisions",
+      "ava_speaks": "3 quick scenarios.",
+      "challenges": [
+        {
+          "question": "Your company is 3 years old, has 40 IAM users, and has never done a permission review. Where do you start?",
+          "answer": "Access Advisor, ஒவ்வொரு user-க்கும். 90+ நாள் unused permissions-ஐ முதல்ல list பண்ணுங்க — அது தான் biggest, easiest win. அப்புறம் role-based groups-க்கu migrate பண்ணுங்க."
+        },
+        {
+          "question": "A developer requests DynamoDB admin access 'just in case they need it for an upcoming project.' How do you respond?",
+          "answer": "Not yet. Project actually start ஆகும்போது, exact requirement தெரிஞ்சu, அப்போ scoped permission கொடுங்க. 'Just in case' permissions தான் privilege creep-ன் ஆரம்பம்."
+        },
+        {
+          "question": "Should permission reviews be a one-time cleanup or a recurring process?",
+          "answer": "Recurring — quarterly, minimum. Permissions தொடர்ந்து accumulate ஆகும். ஒரே தடவை clean பண்ணi விட்டா, 6 மாசத்துல திரும்ப அதே problem வரும்."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "The Quarterly Access Review Process",
+      "ava_speaks": "Mature cloud teams-ல, இது ஒரு calendar event — every 3 months, தவறாம நடக்கும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Pull Access Advisor data for every IAM user and role in the account",
+          "detail": "AWS provides an API to export this in bulk — no need to click through each user manually at scale."
+        },
+        {
+          "step": 2,
+          "action": "Flag anything unused for 90+ days",
+          "detail": "This is the standard threshold most security teams use — long enough to account for quarterly tasks, short enough to catch real creep."
+        },
+        {
+          "step": 3,
+          "action": "Confirm with the person or team owner before removing",
+          "detail": "Sometimes a permission is used rarely but intentionally — a quick check avoids breaking legitimate quarterly workflows."
+        },
+        {
+          "step": 4,
+          "action": "Remove confirmed-unused permissions and document the change",
+          "detail": "Keep a log — if something breaks later, you know exactly what changed and when."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "IAM Access Advisor API (GenerateServiceLastAccessedDetails)",
+          "use": "Bulk export access data for all users instead of checking one by one in the console."
+        },
+        {
+          "tool": "AWS IAM Access Analyzer",
+          "use": "Continuously scans for resources exposed outside the account — runs automatically, not just quarterly."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "இன்னைக்கu privilege creep-ஐ கண்டுபிடிக்கறதும், fix பண்றதும் கத்துக்கிட்டீங்க. Access Advisor, Access Analyzer — இரண்டு tools-ஓட வித்தியாசம் தெரியும் இப்போ. Unused permission-ன்னா அது neutral இல்ல, அது risk — இது தான் இன்னைக்குன்ன பெரிய takeaway. அடுத்த lesson-ல, services-க்கu roles எப்படி design பண்றதுன்னu இன்னும் deep-ஆ போவோம் — cross-account access உட்பட.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C2.3 — Summary",
+      "points": [
+        "✓ Privilege creep: permissions accumulate over time, rarely get removed",
+        "✓ IAM Access Advisor shows last-used date for every permission",
+        "✓ IAM Access Analyzer finds resources exposed outside the account",
+        "✓ Unused permission = zero benefit, real risk. Remove it.",
+        "✓ iam:CreateUser is one of the most dangerous permissions to leave unattended"
+      ],
+      "coming_next": "Lesson C2.4: IAM Roles for Services — EC2, Lambda, and Cross-Account Access"
+    }
+  }
+}

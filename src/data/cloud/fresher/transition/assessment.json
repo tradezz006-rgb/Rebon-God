@@ -1,0 +1,197 @@
+{
+  "id": "fresher_to_building_basics",
+  "title": "Fresher Transition Assessment",
+  "ren_intro": "நீங்க CS1 and CS1B complete பண்ணீங்க. இப்போ ஒரு quick check பண்றோம் — உங்களுக்கு Building Basics-க்கு ready-ஆ இருக்கீங்களா-ன்னு. இது 10 questions, 15 minutes. Honest-ஆ answer பண்ணுங்க — Ren knows where to send you next.",
+  "duration_minutes": 15,
+  "total_questions": 10,
+  "pass_threshold": 7,
+  "sections": [
+    {
+      "section": "CS1 — Cloud Fundamentals",
+      "tests": "C1.1 through C1.5",
+      "questions": 4
+    },
+    {
+      "section": "CS1B — Service Awareness",
+      "tests": "C1B.1 through C1B.5",
+      "questions": 6
+    }
+  ],
+  "questions": [
+    {
+      "id": "TA-01",
+      "source_lesson": "C1.2",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "A developer built an Indian food delivery app. Users in Mumbai are reporting the app is very slow — API calls take 240ms instead of the expected 12ms. The app is working correctly. What is the single most likely cause?",
+      "options": [
+        "A) The app code has performance bugs that need to be fixed",
+        "B) The EC2 instance type is too small and needs to be upgraded",
+        "C) The server is deployed in the wrong AWS region — likely us-east-1 instead of ap-south-1",
+        "D) The database is not indexed properly"
+      ],
+      "correct_index": 2,
+      "explanation": "240ms ஆனா physics problem. 12ms ஆனா ap-south-1. Code optimize பண்ணி latency fix பண்ண முடியாது — region மாத்தினா instant fix.",
+      "if_wrong_route_to": "C1.2"
+    },
+    {
+      "id": "TA-02",
+      "source_lesson": "C1.4",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "A startup's AWS bill for their first month was ₹4.7 lakh. They expected ₹12,000. What should they have set up on Day 1 to avoid this surprise?",
+      "options": [
+        "A) A CloudWatch dashboard showing EC2 CPU usage",
+        "B) Budget alerts in AWS Billing with email notifications at ₹10,000 and ₹30,000",
+        "C) An S3 lifecycle policy to reduce storage costs",
+        "D) Reserved Instances to lock in lower pricing"
+      ],
+      "correct_index": 1,
+      "explanation": "Budget alerts = first thing. Day 1-லயே set பண்ணணும். Cost Explorer weekly review + alerts = surprise bills வராது.",
+      "if_wrong_route_to": "C1.4"
+    },
+    {
+      "id": "TA-03",
+      "source_lesson": "C1.5",
+      "type": "quiz",
+      "difficulty": "easy",
+      "question": "A fintech startup's PostgreSQL database was breached. Their developer said 'AWS is SOC 2 certified, so AWS is responsible for our security.' Is this correct?",
+      "options": [
+        "A) Yes — AWS certification covers all security including the database",
+        "B) No — AWS secures the physical data center. The developer's security group configuration that allowed open access is the customer's responsibility",
+        "C) Both AWS and the developer share equal responsibility for this breach",
+        "D) Yes — RDS is a managed service so AWS manages all security"
+      ],
+      "correct_index": 1,
+      "explanation": "Shared responsibility. AWS = physical data center. Security group (port 5432 open to 0.0.0.0/0) = customer responsibility. Developer's mistake, developer's problem.",
+      "if_wrong_route_to": "C1.5"
+    },
+    {
+      "id": "TA-04",
+      "source_lesson": "C1.3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "question": "You created 3 EC2 instances in AWS yesterday but they are not visible in the console today. What is the FIRST thing you check?",
+      "options": [
+        "A) Whether the instances were automatically terminated by AWS",
+        "B) The region selector in the top-right corner — you may be looking at the wrong region",
+        "C) AWS service health dashboard for outages",
+        "D) Your IAM permissions to verify you still have EC2 access"
+      ],
+      "correct_index": 1,
+      "explanation": "Region selector always first. 90% of 'my resources disappeared' problems = wrong region. Check it before panicking.",
+      "if_wrong_route_to": "C1.3"
+    },
+    {
+      "id": "TA-05",
+      "source_lesson": "C1B.1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "question": "Swiggy needs to run their order management backend — a Node.js application that handles API requests from 10 million users per day. Which AWS service is the right foundation for this?",
+      "options": [
+        "A) S3 — because it scales automatically and stores unlimited data",
+        "B) EC2 — a virtual server to run the Node.js application",
+        "C) CloudWatch — to monitor the application health",
+        "D) IAM — to manage who has access to the application"
+      ],
+      "correct_index": 1,
+      "explanation": "EC2 = virtual server. Application run பண்ண EC2 வேணும். S3 stores files, CloudWatch monitors, IAM manages access — but EC2 runs the actual code.",
+      "if_wrong_route_to": "C1B.1"
+    },
+    {
+      "id": "TA-06",
+      "source_lesson": "C1B.2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "question": "Zomato needs to store 50 million restaurant photos so their app can load them instantly. Which service is correct and why?",
+      "options": [
+        "A) EC2 — attach a large hard drive to an EC2 instance and store images there",
+        "B) RDS — store images as binary data in a database for fast retrieval",
+        "C) S3 — object storage designed for files like images, scales automatically",
+        "D) CloudWatch — stores media files with built-in CDN support"
+      ],
+      "correct_index": 2,
+      "explanation": "S3 = object storage. Images, videos, files — all S3. EC2-ல store பண்ணா instance terminate ஆனா data போகும். RDS-ல binary data = very bad idea.",
+      "if_wrong_route_to": "C1B.2"
+    },
+    {
+      "id": "TA-07",
+      "source_lesson": "C1B.3",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "A startup gave all 15 developers the root account login and password to 'keep things simple.' List the most critical problem with this approach.",
+      "options": [
+        "A) Root account can only support 5 concurrent logins — it will cause performance issues",
+        "B) Root account has unrestricted access to everything. If one developer's password leaks, an attacker has complete control of the entire AWS account with no limits",
+        "C) Root account login is slower than IAM user login, reducing developer productivity",
+        "D) AWS limits root account usage to 3 actions per day for security"
+      ],
+      "correct_index": 1,
+      "explanation": "Root account = master key. One leak = full account takeover. Attacker can launch anything, delete everything, run up unlimited bills. ₹12 lakh in 47 minutes — this already happened to real startups.",
+      "if_wrong_route_to": "C1B.3"
+    },
+    {
+      "id": "TA-08",
+      "source_lesson": "C1B.4",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "A fintech company stores customer transaction data on a database server. They want ONLY their application servers to access this database — not the internet, not other AWS customers, not even their developers' laptops. Which AWS concept enables this?",
+      "options": [
+        "A) S3 bucket policies — restrict who can access storage by IAM role",
+        "B) VPC with the database in a private subnet — accessible only from within the private network",
+        "C) CloudWatch alarms — alert when unauthorized access is attempted",
+        "D) IAM — create a user with database permissions and share those credentials with the app"
+      ],
+      "correct_index": 1,
+      "explanation": "VPC private subnet. Internet reach பண்ண முடியாது. Only application servers (same VPC) can reach the database. This is the foundation of secure architecture.",
+      "if_wrong_route_to": "C1B.4"
+    },
+    {
+      "id": "TA-09",
+      "source_lesson": "C1B.5",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "PhonePe's payment API went down at 2am. Users discovered it at 8am when they couldn't pay for groceries. The engineering team found out from Twitter complaints. What should have been set up to catch this in minutes instead of hours?",
+      "options": [
+        "A) A static status page showing system health updated every 30 minutes",
+        "B) CloudWatch alarms monitoring API response times and error rates — triggering PagerDuty alerts to on-call engineers when thresholds breach",
+        "C) A daily 9am email report of system health metrics from the previous day",
+        "D) IAM audit logs showing all API calls made by users"
+      ],
+      "correct_index": 1,
+      "explanation": "CloudWatch alarm + PagerDuty = engineer gets called within 60 seconds of failure. 2am problem detected 2am. Not 8am. This is what real on-call infrastructure looks like.",
+      "if_wrong_route_to": "C1B.5"
+    },
+    {
+      "id": "TA-10",
+      "source_lesson": "C1.1",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "question": "A startup is planning their infrastructure. They expect normal traffic of 100 users/day but huge spikes of 50,000 users/day during product launches (3-4 times per year). They have a budget of ₹2 lakh/month. Physical servers or cloud — and why?",
+      "options": [
+        "A) Physical servers — one-time cost is always cheaper than monthly cloud bills",
+        "B) Cloud — pay for 100 users/day normally, scale to 50,000 only during launches. Pay only for what you use.",
+        "C) Physical servers — cloud is not reliable enough for traffic spikes",
+        "D) Both — physical for normal traffic, cloud for spikes only"
+      ],
+      "correct_index": 1,
+      "explanation": "Cloud wins clearly here. Physical servers for 50,000 users = expensive hardware sitting idle 360 days/year. Cloud = scale on launch day, pay for normal capacity other days. Flipkart's Big Billion Days is exactly this pattern.",
+      "if_wrong_route_to": "C1.1"
+    }
+  ],
+  "scoring": {
+    "pass_score": 7,
+    "fail_score_max": 6,
+    "ren_pass_message": "நீங்க ready! Ren has unlocked Building Basics. First real ticket is waiting.",
+    "ren_fail_message": "Almost there. Let me show you exactly where to focus.",
+    "routing_logic": {
+      "description": "On fail, find all incorrect answers. Group them by source_lesson. Route to the lesson with the most wrong answers first.",
+      "example": "If TA-05, TA-06 wrong (both C1B) → route to C1B.1 first",
+      "max_remediation_lessons": 2
+    }
+  },
+  "after_pass": {
+    "unlock": "building_basics/cs2/C2.1a",
+    "ren_narration": "இப்போ real tickets start ஆகுது. No more theory. IAM-ல first real configuration பண்றோம். Welcome to Building Basics."
+  }
+}

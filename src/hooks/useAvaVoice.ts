@@ -1,0 +1,244 @@
+import { useState, useCallback, useEffect, useRef } from 'react';
+
+// ─── Sarvam AI Config ───────────────────────────────────────────────────────
+// Calls go to /api/sarvam-tts → Vite dev server middleware → api.sarvam.ai
+// (Node.js server-side call, no CORS issues ever)
+const SARVAM_PROXY_ENDPOINT = '/api/sarvam-tts';
+
+/**
+ * Sanitize text before sending to Sarvam:
+ *  - Replace "AVA" / "Ava" with "Ren"
+ *  - Strip any Tamil Unicode script (already romanized in JSON, just safety)
+ */
+function sanitizeForSarvam(text: string): string {
+  return text
+    .replace(/\bAVA\b/g, 'Ren')
+    .replace(/\bAva\b/g, 'Ren')
+    .replace(/\bava\b/g, 'ren')
+    .trim();
+}
+
+/**
+ * Call Sarvam AI Bulbul V3 via the Vite dev server middleware.
+ * Returns a data:audio/wav;base64,... URL ready for Audio() playback.
+ */
+async function callSarvamTTS(rawText: string): Promise<string> {
+  const text = sanitizeForSarvam(rawText);
+  if (!text) throw new Error('Empty text after sanitization');
+
+  // Sarvam has ~500 char limit per call
+  const MAX_CHARS = 490;
+  const chunks: string[] = [];
+
+  if (text.length <= MAX_CHARS) {
+    chunks.push(text);
+  } else {
+    // Split on sentence/clause boundaries
+    const parts = text.split(/(?<=[.!?।])\s+|(?<=,)\s+/);
+    let current = '';
+    for (const part of parts) {
+      if ((current + ' ' + part).trim().length > MAX_CHARS && current) {
+        chunks.push(current.trim());
+        current = part;
+      } else {
+        current = (current + ' ' + part).trim();
+      }
+    }
+    if (current) chunks.push(current);
+  }
+
+  // Generate audio for all chunks and return first (most content fits in one chunk)
+  const base64Parts: string[] = [];
+  for (const chunk of chunks) {
+    const res = await fetch(SARVAM_PROXY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inputs: [chunk],
+        target_language_code: 'ta-IN',
+        speaker: 'priya',
+        model: 'bulbul:v3',
+        speech_sample_rate: 22050,
+        enable_preprocessing: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Sarvam API ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    const audio = data.audios?.[0];
+    if (!audio) throw new Error('Sarvam returned no audio data');
+    base64Parts.push(audio);
+  }
+
+  // Return first chunk as data URL (covers ~99% of lesson text)
+  return `data:audio/wav;base64,${base64Parts[0]}`;
+}
+
+/**
+ * Romanizes Tamil script to phonetic English — used only inside Chrome TTS fallback.
+ */
+function romanizeTamilText(text: string): string {
+  if (!/[\u0B80-\u0BFF]/.test(text)) return text;
+  const cMap: Record<string, string> = {
+    'க': 'k', 'ங': 'ng', 'ச': 'ch', 'ஞ': 'nj', 'ட': 'd', 'ண': 'n',
+    'த': 'th', 'ந': 'n', 'ப': 'p', 'ம': 'm', 'ய': 'y', 'ர': 'r',
+    'ல': 'l', 'வ': 'v', 'ழ': 'zh', 'ள': 'l', 'ற': 'r', 'ன': 'n',
+    'ஜ': 'j', 'ஷ': 'sh', 'ஸ': 's', 'ஹ': 'h'
+  };
+  const vsMap: Record<string, string> = {
+    'ா': 'aa', 'ி': 'i', 'ீ': 'ee', 'ு': 'u', 'ூ': 'oo',
+    'ெ': 'e', 'ே': 'ae', 'ை': 'ai', 'ொ': 'o', 'ோ': 'oe', 'ௌ': 'au'
+  };
+  const svMap: Record<string, string> = {
+    'அ': 'a', 'ஆ': 'aa', 'இ': 'i', 'ஈ': 'ee', 'உ': 'u', 'ஊ': 'oo',
+    'எ': 'e', 'ஏ': 'ae', 'ஐ': 'ai', 'ஒ': 'o', 'ஓ': 'oe', 'ஔ': 'au'
+  };
+  let r = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (cMap[c] !== undefined) {
+      const n = text[i + 1];
+      if (n === '்') { r += cMap[c]; i++; }
+      else if (vsMap[n] !== undefined) { r += cMap[c] + vsMap[n]; i++; }
+      else { r += cMap[c] + 'a'; }
+    } else if (svMap[c] !== undefined) {
+      r += svMap[c];
+    } else if (c >= '\u0B80' && c <= '\u0BFF') {
+      continue;
+    } else {
+      r += c;
+    }
+  }
+  return r;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * useAvaVoice — Ren's voice hook.
+ *
+ * PRIMARY:  Sarvam AI Bulbul V3 · Speaker: Priya · Language: ta-IN
+ *           Called via /api/sarvam-tts (Vite Node.js middleware → no CORS)
+ *
+ * FALLBACK: Chrome/browser SpeechSynthesis — only if Sarvam call fails
+ *
+ * Pre-generated audio URLs (.mp3 / data: / http) are played directly
+ * without any API call (Pillar 1 of the 3-Pillar Voice Cache strategy).
+ */
+export const useAvaVoice = () => {
+  const [activeVoice, setActiveVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const cancelledRef = useRef(false);
+
+  // Load browser voices (only for Chrome TTS fallback)
+  useEffect(() => {
+    const load = () => {
+      if (!window.speechSynthesis) return;
+      const all = window.speechSynthesis.getVoices();
+      if (!all.length) return;
+      const noMale = all.filter(v => {
+        const n = v.name.toLowerCase();
+        return !n.includes('ravi') && !n.includes('david') && !n.includes('mark') &&
+               !n.includes('male') && !n.includes('guy');
+      });
+      const pool = noMale.length ? noMale : all;
+      const best =
+        pool.find(v => v.lang.includes('en-IN') && v.name.includes('Neerja')) ||
+        pool.find(v => v.lang.includes('en-IN') && v.name.includes('Google')) ||
+        pool.find(v => v.lang.includes('en-IN')) ||
+        pool.find(v => v.lang.includes('en-GB') && v.name.includes('Google')) ||
+        pool[0];
+      setActiveVoice(best ?? null);
+    };
+    load();
+    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = load;
+    return () => { if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  /** Stop all active audio immediately */
+  const stopAll = useCallback(() => {
+    cancelledRef.current = true;
+    if (activeAudioRef.current) { activeAudioRef.current.pause(); activeAudioRef.current = null; }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  }, []);
+
+  /** Play a data URL or CDN URL via HTML Audio element */
+  const playAudioUrl = useCallback((url: string, onEnd?: () => void) => {
+    const audio = new Audio(url);
+    activeAudioRef.current = audio;
+    audio.onended = () => { setIsSpeaking(false); activeAudioRef.current = null; onEnd?.(); };
+    audio.onerror = (e) => {
+      console.error('🔇 Audio playback error:', e);
+      setIsSpeaking(false); activeAudioRef.current = null; onEnd?.();
+    };
+    audio.play().catch(err => {
+      console.warn('⚠️ Audio.play() was blocked (autoplay policy):', err);
+      setIsSpeaking(false); activeAudioRef.current = null; onEnd?.();
+    });
+  }, []);
+
+  /** Chrome TTS — last-resort fallback only */
+  const chromeTTSFallback = useCallback((text: string, onEnd?: () => void) => {
+    if (!window.speechSynthesis) { onEnd?.(); return; }
+    // Always replace AVA→Ren even in fallback
+    const clean = sanitizeForSarvam(text);
+    const romanized = romanizeTamilText(clean);
+    const u = new SpeechSynthesisUtterance(romanized);
+    if (activeVoice) u.voice = activeVoice;
+    u.rate = 0.92;
+    u.pitch = 1.0;
+    u.onend = () => { setIsSpeaking(false); onEnd?.(); };
+    u.onerror = () => { setIsSpeaking(false); onEnd?.(); };
+    window.speechSynthesis.speak(u);
+    console.warn('⚠️ Using Chrome TTS fallback (Sarvam not available)');
+  }, [activeVoice]);
+
+  const speak = useCallback((text: string, onEnd?: () => void) => {
+    // Reset cancellation flag and stop whatever is playing
+    cancelledRef.current = false;
+    if (activeAudioRef.current) { activeAudioRef.current.pause(); activeAudioRef.current = null; }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    setIsSpeaking(true);
+
+    // ── PATH A: Already a playable URL (Pillar 1 pre-generated / cached CDN / data URI)
+    if (
+      text.startsWith('data:audio/') ||
+      text.startsWith('http://') ||
+      text.startsWith('https://') ||
+      text.endsWith('.mp3') ||
+      text.includes('/audio/lessons/')
+    ) {
+      console.log('▶️ Playing pre-generated audio (Pillar 1 cache hit)');
+      playAudioUrl(text, onEnd);
+      return;
+    }
+
+    // ── PATH B: Generate with Sarvam AI (Priya · bulbul:v3 · ta-IN) ──────────
+    const preview = text.substring(0, 60).replace(/\n/g, ' ');
+    console.log(`🎙️ [Sarvam] Generating Priya voice for: "${preview}..."`);
+
+    callSarvamTTS(text)
+      .then(dataUrl => {
+        if (cancelledRef.current) return; // stopped by user before audio arrived
+        console.log('✅ [Sarvam] Audio ready — playing Priya voice');
+        playAudioUrl(dataUrl, onEnd);
+      })
+      .catch(err => {
+        if (cancelledRef.current) return;
+        console.error('❌ [Sarvam] TTS failed — using Chrome TTS as fallback:', err.message);
+        chromeTTSFallback(text, onEnd);
+      });
+
+  }, [playAudioUrl, chromeTTSFallback]);
+
+  const stop = useCallback(() => {
+    stopAll();
+  }, [stopAll]);
+
+  return { speak, stop, activeVoice, isSpeaking, voices: [] };
+};

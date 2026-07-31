@@ -1,0 +1,312 @@
+{
+  "lesson_id": "C5.1a",
+  "lesson_title": "S3 Basics",
+  "section_id": "CS5",
+  "section_name": "Storage",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C4.6 — EC2 Pricing Models",
+  "student_will_learn": [
+    "Explain the bucket and object model that S3 is built on",
+    "Explain why S3 is not a filesystem, even though the console displays it that way",
+    "Explain how S3 uses key-based addressing instead of true folder hierarchies",
+    "Upload, retrieve, and organize objects using S3 keys correctly",
+    "Identify why treating S3 like a mounted local drive causes application problems"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Compute முடிஞ்சிடுச்சு, இப்போ ஒரு புது ticket - FQ-189, CFO-ஓட office-ல இருந்து. அவங்க கேள்வி நேரடி - 'நம்ம S3 storage bill, ஒவ்வொரு மாசமும் ஏன் அதிகரிச்சுட்டே இருக்கு, யாருக்கும் தெரியாதா?' இந்த கேள்விக்கு பதில் சொல்றதுக்கு முன்னாடி, S3 உண்மையில எப்படி வேலை செய்யும்னு நாம முழுசா புரிஞ்சுக்கணும் - அதுதான் இன்னைக்கு நாம ஆரம்பிக்கப் போற CS5 Storage session.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS5 · Lesson C5.1a",
+        "S3 Basics",
+        "Ticket FQ-189 — CFO's Office"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Buckets, Objects, and Keys — Not Files and Folders",
+      "ava_speaks": "S3 (Simple Storage Service) ஒரு 'bucket' மற்றும் 'object' model வெச்சிருக்கு. Bucket ஒரு top-level container - globally unique பேரு வெச்சிருக்கும். Object, அந்த bucket-க்குள்ள store பண்ண ஒரு file - அதுக்கு ஒரு 'key' இருக்கும், key தான் அந்த object-ஐ identify பண்றது. Console-ல key-ஐ 'products/images/pizza.jpg' மாதிரி காட்டும், அது folders மாதிரி தோணும் - ஆனா real-ஆ அது ஒரு single flat string தான், '/' character அதுல ஒரு regular character, path separator இல்ல. S3-க்கு உண்மையான folders கிடையாதே.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Flat Key Illusion"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "What the Console Shows",
+            "What's Actually Happening"
+          ],
+          "rows": [
+            [
+              "A folder icon 'products/', then 'images/' inside it",
+              "There is no folder object — just a flat list of keys that share a common prefix"
+            ],
+            [
+              "'products/images/pizza.jpg' looks like a nested file path",
+              "This is one single key string, stored in a flat namespace"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "S3 is an object store accessed via an HTTP API, not a filesystem you mount and read/write like a local disk — this distinction matters for how applications should be built to use it."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "S3 console-ல 'invoices/2026/january.pdf' ஒரு nested folder structure மாதிரி காட்டுது. இது technically என்ன?",
+          "options": [
+            "A) மூணு தனி nested folders, ஒவ்வொண்ணுக்கும் தனி object",
+            "B) ஒரே ஒரு object, 'invoices/2026/january.pdf' என்ற single flat key வெச்சு",
+            "C) ஒரு database table row",
+            "D) ஒரு EBS volume-ஓட subdirectory"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! இது ஒரே ஒரு object, ஒரே ஒரு key - '/' characters அந்த key string-ல இருக்கற regular characters தான், real folder hierarchy இல்ல.",
+          "ava_wrong": "இல்ல, S3-ல real nested folders கிடையாதே - console UI-க்காக அப்படி display பண்ணுது, ஆனா underneath, இது ஒரே ஒரு flat key string வெச்சிருக்கற ஒரே ஒரு object."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு engineer, S3 bucket-ஐ ஒரு network drive மாதிரி mount பண்ணி, application code-ல நேரடியா file operations (open, read, write) பண்ண try பண்றார். இது ஏன் S3-ஓட design-க்கு பொருந்தாது?",
+          "options": [
+            "A) S3-ல storage space limit இருக்கும்",
+            "B) S3 ஒரு filesystem இல்ல, ஒரு HTTP-based object store - traditional file operations semantics அதுக்கு பொருந்தாது",
+            "C) S3-ல files delete பண்ணவே முடியாது",
+            "D) S3, EC2-கூட மட்டும்தான் use பண்ண முடியும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! S3 fundamentally ஒரு HTTP API-based object store - filesystem semantics (partial writes, file locking, directory operations) அதுக்கு natural-ஆ பொருந்தாது. Applications, S3-ஐ அதோட own API (GET/PUT/DELETE)-ஐ வெச்சுதான் நேரடியா use பண்ணனும்.",
+          "ava_wrong": "இல்ல, storage space அல்லது delete limitation இல்ல - real issue, S3 ஒரு filesystem இல்ல. அது ஒரு HTTP-based object store, அதனால traditional file operations semantics நேரடியா அதுக்கு பொருந்தாது."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "When 'Mount It Like a Drive' Goes Wrong",
+      "ava_speaks": "ஒரு early-stage Indian startup, ஒரு third-party tool use பண்ணி S3 bucket-ஐ EC2-ல ஒரு local drive மாதிரி mount பண்ணிட்டாங்க, filesystem operations நேரடியா அதுல run பண்ண. அப்புறம் ஒரு batch job, thousands of small files simultaneously write பண்ண try பண்ணும்போது, performance drastically degrade ஆச்சு, சில writes silently fail-மும் ஆச்சு - ஏன்னா அந்த mount layer, S3-ஓட eventual consistency semantics-ஐ முழுசா correctly handle பண்ணல. இது ஒரு common trap - S3-ஐ 'ஒரு பெரிய hard drive'nு நினைப்பது, அதோட real behavior-ஐ கவனிக்காம.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Filesystem Mount vs Native S3 API"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Filesystem Mount Approach",
+            "Native S3 API Approach"
+          ],
+          "rows": [
+            [
+              "Performance degrades badly at high concurrency",
+              "Designed for high-concurrency access via HTTP requests"
+            ],
+            [
+              "Some writes can silently fail or behave unexpectedly",
+              "Clear success/failure per API call, application handles it explicitly"
+            ],
+            [
+              "Feels familiar but fights S3's actual design",
+              "Works with S3's actual object-store design"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Uploading and Organizing Objects With Proper Key Design",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட product images-ஐ, correct key design வெச்சு S3-ல upload பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "S3",
+        "steps": [
+          {
+            "ava_narration": "S3 Console-ல 'Create bucket' click பண்றோம், globally unique bucket name 'foodquick-product-images-prod' கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "S3 Console → Create bucket",
+              "field": "Bucket name",
+              "value": "foodquick-product-images-prod",
+              "highlight": "Bucket name input field",
+              "result": "A new S3 bucket is created — this name must be globally unique across all of AWS"
+            }
+          },
+          {
+            "ava_narration": "இப்போ 'Upload' click பண்ணி, ஒரு image file select பண்றோம். Key-ஆ 'restaurants/1234/menu-items/pizza-margherita.jpg' கொடுக்கிறோம் - இது ஒரு தெளிவான, organized naming convention.",
+            "console_action": {
+              "type": "fill",
+              "path": "Upload object → Key",
+              "field": "Key",
+              "value": "restaurants/1234/menu-items/pizza-margherita.jpg",
+              "highlight": "Key field showing the full path-like string",
+              "result": "The object is stored with this key — the console will display it as if nested in folders, but it's one flat key"
+            }
+          },
+          {
+            "ava_narration": "Console-ல 'restaurants/' folder-ஐ click பண்ணி browse பண்றோம் - இது ஒரு real navigation experience மாதிரி தோணும், ஆனா underneath, console வெறும் இந்த prefix-ஐ வெச்சு objects-ஐ filter பண்ணி காட்டுது.",
+            "console_action": {
+              "type": "click",
+              "path": "S3 Console → foodquick-product-images-prod → restaurants/",
+              "highlight": "The 'restaurants/' prefix folder icon",
+              "result": "The console filters and shows only objects whose key starts with 'restaurants/', simulating folder navigation"
+            }
+          },
+          {
+            "ava_narration": "AWS CLI-ல, 'aws s3 ls s3://foodquick-product-images-prod/restaurants/1234/' command run பண்ணி, இதே prefix-ஐ programmatically list பண்றோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Terminal → aws s3 ls s3://foodquick-product-images-prod/restaurants/1234/",
+              "highlight": "CLI command output",
+              "result": "Lists all objects whose key begins with the prefix 'restaurants/1234/', confirming the prefix-based listing behavior"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Objects are uploaded with a well-organized key naming convention that mimics folder structure in the console, while the underlying storage remains a flat key-value namespace.",
+          "what_to_notice": "'ls' command 'directory'-ஐ list பண்றது மாதிரி தோணுது, ஆனா அது real-ஆ ஒரு prefix-match query - S3-ல எந்த real directory-மும் இல்ல."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How S3's Flat Namespace Actually Looks",
+      "ava_speaks": "இந்த diagram பாரு - console-ல folders மாதிரி தோணுறதுக்கும், underlying reality-க்கும் உள்ள வித்தியாசம்.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "What the console shows (simulated folders):",
+            "  foodquick-product-images-prod/",
+            "    restaurants/",
+            "      1234/",
+            "        menu-items/",
+            "          pizza-margherita.jpg",
+            "",
+            "What actually exists (flat key-value store):",
+            "  Bucket: foodquick-product-images-prod",
+            "  Key: 'restaurants/1234/menu-items/pizza-margherita.jpg' -> [object data]",
+            "  (one single entry, no nested directory objects at all)"
+          ]
+        },
+        "ava_narration": "Console UI நமக்கு familiar-ஆ தெரிய, folder navigation simulate பண்ணுது - ஆனா application code எழுதும்போது, இது ஒரு flat key-value store-nு நினைவு வெச்சுக்கணும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Design Correct S3 Keys for a New Feature",
+      "instruction": "FoodQuick-ஓட ஒரு புது 'user-uploaded reviews with photos' feature-க்கு, correct S3 key naming convention design பண்ணு.",
+      "scenario": "Users, ஒரு order review-கூட photos upload பண்ண முடியும். ஒவ்வொரு review-க்கும் பல photos இருக்கலாம். Ravi, இந்த feature-க்கான storage structure design பண்ணணும்னு request பண்ணி இருக்காங்க - future-ல, ஒரு specific user-ஓட எல்லா review photos-ஐயும் easy-ஆ list பண்ண முடியணும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "S3 Console → foodquick-user-content bucket → Upload",
+        "current_configuration": "No key naming convention has been established for this feature yet"
+      },
+      "requirements": [
+        "Design a key structure that includes the user ID, the review ID, and a filename",
+        "Ensure the key structure allows listing all photos for a specific user via a single prefix query",
+        "Ensure the key structure allows listing all photos for a specific review via a single prefix query",
+        "Avoid any key design that would require scanning the entire bucket to find a specific user's photos"
+      ],
+      "hints": [
+        "Prefix-based listing-ஐ நினைவு வெச்சுக்கோ - key structure-ல user ID-ஐ ஆரம்பத்தில் வெச்சா, அந்த user-ஓட எல்லா content-ஐயும் ஒரே prefix query-ல list பண்ண முடியும்",
+        "'users/{user_id}/reviews/{review_id}/{filename}' மாதிரி ஒரு hierarchy, ரெண்டு தேவைகளையும் (user-level, review-level listing) satisfy பண்ணும்",
+        "Bucket-ல எல்லா objects-ஐயும் scan பண்ணி filter பண்றது, bucket பெரிசாகும்போது ரொம்ப slow ஆயிடும் - prefix design இதை தவிர்க்கும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A key structure like 'users/{user_id}/reviews/{review_id}/{filename}' is proposed, which supports both user-level and review-level prefix listing without a full bucket scan",
+        "ava_correct": "Correct! இந்த key structure, future queries-ஐ efficient-ஆ prefix matching-ல தான் support பண்ணும் - full bucket scan தேவையே இல்ல.",
+        "ava_wrong": "Key structure-ஐ ஒரு தடவை மறுபடி பாரு - user ID மற்றும் review ID ரெண்டும் prefix-ல தேடக்கூடிய இடத்துல இருக்கானு, ஒரு தேவையில்லாத flat naming-ல implicit-ஆ scan தேவைப்படுமான்னு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Application That Tried to 'Open' an S3 Object Like a Local File",
+      "ava_speaks": "priya-dev, ஒரு data-processing script எழுதும்போது, S3-ல இருக்கற ஒரு large CSV file-ஐ, local file-ஐ open பண்றது மாதிரி, நேரடியா 'partial write' மற்றும் 'in-place update' operations பண்ண try பண்றாங்க - S3-ஓட API model-ஐ முழுசா கவனிக்காம.",
+      "setup": "priya-dev writes a script intending to append new rows to an existing large CSV object in S3, treating it conceptually like opening a local file in append mode and writing directly to specific byte offsets.",
+      "what_happened": "The script fails — S3 objects are immutable once written; there's no native 'append' or 'partial update' operation. Any change requires uploading a completely new version of the object (a full PUT), not an in-place modification.",
+      "broken_config": "Attempted approach:\nopen('s3://foodquick-analytics/reports/daily.csv', mode='a') # conceptually treating S3 like a local file with append mode\n\nS3's actual capability: PUT (full object replace), GET (full or ranged read), DELETE — no native append/partial-write operation",
+      "error_shown": "AttributeError: 's3fs' object approach failed silently corrupting the object structure — investigation reveals the underlying issue: S3 has no append operation; the script's assumption of local-file-like semantics doesn't match S3's actual object model.",
+      "the_real_problem": "S3 objects immutable-ஆ இருக்கும் - ஒரு object-ஐ 'modify' பண்ணணும்னா, ஒரு completely new version upload பண்ணனும் (full PUT), local file-ல append பண்றது மாதிரி partial-write இல்ல. இந்த mismatch, S3-ஐ ஒரு filesystem-ஆ மனசுல வெச்சு code எழுதும்போது ஏற்படும்.",
+      "fix": {
+        "corrected_config": "Redesign the workflow: download the existing object (or read it via GET), append the new rows in memory or in a local temp file, then upload the complete updated file back to S3 as a new PUT — replacing the old object entirely. For frequently-appended data, consider a different pattern altogether, like writing daily partition files instead of one growing file.",
+        "result": "The script now works reliably within S3's actual object model, without any incorrect assumptions about in-place file editing."
+      },
+      "lesson": "S3 objects immutable - append அல்லது partial in-place write ஒரு native operation இல்ல. Code எழுதும்போது, S3-ஐ ஒரு local filesystem-ஆ நினைச்சு design பண்றது, silent failures அல்லது completely wrong behavior-க்கு வழிவகுக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Object Store Thinking",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "An engineer deletes the key 'photos/' in the S3 console, expecting it to delete an empty folder before uploading new content there. What actually happens?",
+          "answer": "If 'photos/' doesn't exist as an actual zero-byte object with that exact key (some tools create these to simulate empty folders), there's nothing to delete — folders aren't real objects unless something explicitly created a placeholder object for that prefix. The 'folder' the console shows is usually just the shared prefix of other objects, not a deletable thing in itself."
+        },
+        {
+          "question": "A team wants to list all objects for restaurant ID 5678 efficiently, out of millions of objects in the bucket. Is a key like 'restaurants/5678/menu.jpg' or a key like 'menu-5678-photo1.jpg' (flat, no restaurant grouping) better for this?",
+          "answer": "'restaurants/5678/menu.jpg' is far better — a prefix query for 'restaurants/5678/' can efficiently return just that restaurant's objects. The flat naming scheme would require scanning and filtering the entire bucket's key list to find matches, which doesn't scale well."
+        },
+        {
+          "question": "An application uploads a new version of a file to the same S3 key that already exists. What happens to the old content?",
+          "answer": "By default (without versioning enabled), the new PUT completely replaces the old object at that key — the previous content is gone unless S3 Versioning was turned on for the bucket, which would preserve it as a prior version instead of overwriting it permanently."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Design S3 Key Structures for Real Applications",
+      "ava_speaks": "Real companies-ல, S3 key design ஒரு afterthought இல்ல - அது application access patterns-ஐ முன்னாடியே யோசிச்சு, deliberately design பண்ண வேண்டிய ஒரு architectural decision.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Design key structures around the actual query patterns the application needs — what will be listed together, most often?",
+          "detail": "இது FoodQuick-ஓட review-photos exercise மாதிரி, future queries-ஐ efficient-ஆ ஆக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Avoid extremely predictable, sequential key prefixes for very high-throughput workloads, since S3 partitions internally based on key prefixes",
+          "detail": "Modern S3 handles this well automatically at most scales, but extremely high-request-rate applications still benefit from being aware of this"
+        },
+        {
+          "step": 3,
+          "action": "Treat every S3 write as a full object replace, and design application logic (like read-modify-write patterns) around that reality instead of expecting file-like partial updates",
+          "detail": "இது priya-dev-ஓட append mistake மாதிரி design errors-ஐ முன்னாடியே தடுக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS SDK S3 client (boto3, aws-sdk, etc.)",
+          "use": "Application code-ல, S3-ஐ correct-ஆ GET/PUT/DELETE operations-ஆ, filesystem operations இல்லாம, directly interact பண்ண உதவும்"
+        },
+        {
+          "tool": "S3 Inventory reports",
+          "use": "Bucket-ல இருக்கற objects-ஐ, key patterns-ஐ, periodic-ஆ audit பண்ண உதவும் - key design consistency verify பண்ண"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம S3-ஓட bucket/object model, key-based addressing, S3 ஏன் filesystem இல்லனு கத்துக்கிட்டோம். மிக முக்கியமா, S3-ஐ local drive மாதிரி treat பண்றது, application problems உருவாக்கும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம S3 Storage Classes பார்ப்போம் - Standard, IA, Glacier, cost trade-offs.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C5.1a — Summary",
+      "points": [
+        "✓ S3 is built on buckets (containers) and objects (files), addressed by a key, not a real folder path",
+        "✓ The console's folder view is a simulated navigation experience — underneath, S3 is a flat key-value namespace",
+        "✓ S3 objects are immutable — there's no native append or partial in-place write, only full replace",
+        "✓ Good key design (e.g. including IDs as prefixes) enables efficient prefix-based listing for common query patterns",
+        "✓ Treating S3 like a mounted local drive with filesystem semantics causes silent failures and poor performance"
+      ],
+      "coming_next": "Lesson C5.1b: S3 Storage Classes"
+    }
+  }
+}

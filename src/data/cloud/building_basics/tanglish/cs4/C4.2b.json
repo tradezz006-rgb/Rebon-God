@@ -1,0 +1,321 @@
+{
+  "lesson_id": "C4.2b",
+  "lesson_title": "Managing EC2",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C4.2a — Launching EC2",
+  "student_will_learn": [
+    "Explain what the Instance Metadata Service (IMDS) is and what information it provides",
+    "Write a user data script that runs automatically on instance launch",
+    "Explain why Session Manager remains available even when SSH access is lost",
+    "Distinguish between what user data scripts can and can't safely contain",
+    "Recover access to an instance after a lost SSH key pair, without rebuilding it"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம EC2 launch பண்றது, Stop vs Terminate பார்த்தோம். இப்போ Ravi-ஓட FQ-171 ticket-ல அடுத்த step - launch ஆன பிறகு instance-ஐ எப்படி manage பண்றது, automate பண்றது, அப்புறம் ஏதாவது access problem வந்தா எப்படி recover பண்றதுனு பார்ப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.2b",
+        "Managing EC2",
+        "Ticket FQ-171 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Instance Metadata Service and User Data Scripts",
+      "ava_speaks": "ஒவ்வொரு EC2 instance-க்குள்ளயும், ஒரு special internal endpoint இருக்கும் - Instance Metadata Service (IMDS), அது 169.254.169.254 IP-ல reachable. இதுவழியா, instance தன்னைப் பத்திய தகவல் தெரிஞ்சுக்கும் - instance ID, IAM role credentials, availability zone, மற்றும் 'user data' - இது launch பண்ணும்போது நாம கொடுக்கற ஒரு script, instance boot ஆகும்போது ஒரே தடவை automatic-ஆ run ஆகும். User data, software install பண்றது, config files write பண்றது, application setup பண்றது எல்லாம் automate பண்ண உதவும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "What IMDS and User Data Provide"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Concept",
+            "Purpose"
+          ],
+          "rows": [
+            [
+              "Instance Metadata Service (IMDS)",
+              "Lets the instance query its own details — ID, AZ, IAM role credentials — at runtime"
+            ],
+            [
+              "User Data",
+              "A script provided at launch time that runs automatically once, on first boot"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "User data runs with root privileges on first boot — never put permanent secrets or passwords in it, since it's visible to anyone with describe-instance-attribute permission on that instance."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "User data script எப்போ run ஆகும்?",
+          "options": [
+            "A) ஒவ்வொரு reboot-லயும்",
+            "B) Instance முதல் தடவை boot ஆகும்போது மட்டும் (default behavior)",
+            "C) ஒரு நாளைக்கு ஒரு தடவை automatic-ஆ",
+            "D) Manual-ஆ trigger பண்ணும்போது மட்டும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Default-ஆ, user data முதல் boot-ல மட்டும் run ஆகும் - software install பண்றது, initial setup பண்றதுக்கு இது perfect.",
+          "ava_wrong": "இல்ல, default-ஆ user data ஒவ்வொரு reboot-லயும் run ஆகாது - அது முதல் boot-ல மட்டும் run ஆகும். (Advanced configs-ல every-boot behavior-மும் possible, ஆனா அது default இல்ல.)"
+        },
+        {
+          "type": "inline_quiz",
+          "question": "User data script-ல ஒரு permanent database password hardcode பண்றது எதுக்கு risky?",
+          "options": [
+            "A) User data script-ஐ describe-instance-attribute permission இருக்கற யாராலும் பார்க்க முடியும்",
+            "B) User data ரொம்ப slow-ஆ run ஆகும்",
+            "C) User data password-ஐ automatic-ஆ encrypt பண்ணிடும், அதனால use பண்ண முடியாது",
+            "D) User data script-ல password எழுதவே முடியாது"
+          ],
+          "correct_index": 0,
+          "ava_correct": "Sari! User data plain text-ஆ store ஆகும், describe-instance-attribute permission இருக்கற யாராலும் அதை பார்க்க முடியும் - permanent secrets அதுல வெக்கக்கூடாது.",
+          "ava_wrong": "இல்ல, technical-ஆ password எழுத முடியும், ஆனா அது risky - user data plain text-ஆ visible-ஆ இருக்கும், அதனால secrets-ஐ Secrets Manager அல்லது Parameter Store-ல வெச்சு, runtime-ல fetch பண்றது தான் correct approach."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Automating Setup With User Data at Scale",
+      "ava_speaks": "FoodQuick scale ஆக ஆக, ஒவ்வொரு server-ஐயும் manual-ஆ setup பண்றது practical இல்லாம போச்சு. User data scripts use பண்ணி, ஒரு new instance launch ஆனதும், automatic-ஆ latest application code pull பண்ணி, dependencies install பண்ணி, monitoring agent start பண்ணி, application-ஐ running state-க்கு கொண்டு வரும். Zoho, Freshworks மாதிரி companies-ல, இந்த pattern 'immutable infrastructure' philosophy-ஓட ஒரு அடிப்படை - ஒவ்வொரு instance-மும் அதே script-ல இருந்து consistently வரும், manual drift தவிர்க்கப்படும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Manual Setup vs Automated User Data"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Manual Setup",
+            "User Data Automation"
+          ],
+          "rows": [
+            [
+              "Engineer SSHs in, runs commands one by one",
+              "Script runs identically on every new instance, unattended"
+            ],
+            [
+              "Easy to forget a step, servers drift apart",
+              "Every instance starts from the exact same known state"
+            ],
+            [
+              "Slow to scale — 1 engineer, 1 server at a time",
+              "Scales to 50 new instances as easily as 1"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Writing a User Data Script and Recovering Access via Session Manager",
+      "ava_speaks": "karthik-dev இப்போ ஒரு user data script எழுதி, application setup-ஐ automate பண்றான், அப்புறம் Session Manager use பண்ணி, ஒரு lost key pair situation-ஐ recover பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "Launch instance wizard-ல, Advanced Details-க்கு scroll பண்ணி, 'User data' text box-ல ஒரு bash script paste பண்றோம் - இது system update பண்ணி, nginx install பண்ணி, start பண்ணும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Launch instance wizard → Advanced details → User data",
+              "field": "User data",
+              "value": "#!/bin/bash\nyum update -y\nyum install -y nginx\nsystemctl enable nginx\nsystemctl start nginx",
+              "highlight": "User data text box",
+              "result": "The instance is now configured to auto-install and start nginx on first boot"
+            }
+          },
+          {
+            "ava_narration": "Instance launch ஆனப்புறம், Systems Manager-க்கு போய், 'Run Command' use பண்ணி, IMDS-ல இருந்து instance ID-ஐ query பண்றோம் - இது instance தன்னைப் பத்தி metadata எப்படி access பண்ணும்னு காட்டும்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Systems Manager → Run Command → AWS-RunShellScript",
+              "highlight": "Run Command service",
+              "result": "A command execution interface opens, targeting the specific instance"
+            }
+          },
+          {
+            "ava_narration": "Command-ஆ 'curl http://169.254.169.254/latest/meta-data/instance-id' run பண்றோம் - இது IMDS endpoint-ல இருந்து instance-ஓட own ID-ஐ return பண்ணும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Run Command → Command parameters",
+              "field": "Commands",
+              "value": "curl http://169.254.169.254/latest/meta-data/instance-id",
+              "highlight": "Command input box",
+              "result": "The command returns the instance's own ID, confirming IMDS is reachable and working from inside the instance"
+            }
+          },
+          {
+            "ava_narration": "இப்போ ஒரு real scenario - ananya-analyst ஒரு instance-ஓட SSH key pair file-ஐ இழந்துட்டா. Key இல்லாம SSH பண்ண முடியாது, ஆனா Session Manager key-ஐயே சாராது.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Systems Manager → Session Manager → Start session",
+              "highlight": "Start session button on the instance with the lost key pair",
+              "result": "A shell session opens directly, despite the SSH key pair being lost"
+            }
+          },
+          {
+            "ava_narration": "இந்த session-க்குள்ள, ஒரு புது SSH public key-ஐ authorized_keys file-ல add பண்ணலாம் - இது future-ல SSH access-ஐயும் restore பண்ணும், Session Manager-ஐ ஒரு fallback path-ஆவும் வெச்சுக்கலாம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Session Manager shell → ~/.ssh/authorized_keys",
+              "field": "New SSH public key entry",
+              "value": "ssh-rsa AAAA...new-key karthik-dev@foodquick",
+              "highlight": "authorized_keys file",
+              "result": "A new SSH key is now authorized, restoring traditional SSH access without ever rebuilding the instance"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The lost SSH key pair situation is fully resolved without terminating or rebuilding the instance — Session Manager provided access the whole time, and a new SSH key was added through that session.",
+          "what_to_notice": "Instance launch பண்றப்போ Session Manager IAM role attach பண்ணி இருந்தா, SSH key pair எப்போ lost ஆனாலும், instance-ஐ இழக்க வேண்டாம் - இதுதான் Session Manager-ஓட real value."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How IMDS Serves Instance Metadata",
+      "ava_speaks": "இந்த diagram பாரு - instance தனக்குள்ளயே எப்படி தன்னைப் பத்திய தகவல் தெரிஞ்சுக்கும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Inside the EC2 instance:",
+            "  Application/script sends a request to 169.254.169.254 (link-local, never leaves the instance)",
+            "        |",
+            "  IMDS responds with requested metadata:",
+            "  - /latest/meta-data/instance-id",
+            "  - /latest/meta-data/placement/availability-zone",
+            "  - /latest/meta-data/iam/security-credentials/<role-name> (temporary role credentials)",
+            "",
+            "This is how an attached IAM Role's temporary credentials are actually retrieved by the AWS SDK running on the instance."
+          ]
+        },
+        "ava_narration": "இது தான் C2.4-ல நாம பேசின IAM Role credentials, technically எப்படி instance-க்குள்ள கிடைக்குதுனு காட்டுது - IMDS தான் அந்த delivery mechanism."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Write a Safe User Data Script",
+      "instruction": "FoodQuick-ஓட ஒரு புது app server-க்கு user data script எழுது - CloudWatch agent install பண்ணி, application code deploy பண்ணணும், ஆனா secrets safely handle பண்ணணும்.",
+      "scenario": "Ravi-க்கு ஒரு new app server template வேணும் - அது boot ஆனதும் automatic-ஆ CloudWatch agent install பண்ணி, S3-ல இருந்து application code download பண்ணி, start பண்ணணும். Database password application-க்கு தேவை, ஆனா அதை user data-ல hardcode பண்ணக்கூடாது.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "Launch instance wizard → Advanced details → User data",
+        "current_configuration": "User data field is empty"
+      },
+      "requirements": [
+        "Include a command to install the CloudWatch agent",
+        "Include a command to download the application code from S3",
+        "Do NOT hardcode the database password anywhere in the script",
+        "Instead, include a command that fetches the password from AWS Secrets Manager at runtime"
+      ],
+      "hints": [
+        "aws secretsmanager get-secret-value CLI command-ஐ script-க்குள்ள call பண்ணி, runtime-ல password fetch பண்ணலாம் - இது plain text-ஆ store ஆகாது",
+        "இந்த approach வேலை செய்யணும்னா, instance-ஓட IAM role-ல secretsmanager:GetSecretValue permission இருக்கணும் - இது C2.4-ல கத்துக்கிட்ட IAM Roles concept-ஐ நினைவு படுத்து",
+        "S3-ல இருந்து code download பண்ண, 'aws s3 cp' command use பண்ணலாம் - அதுக்கும் instance role-ல S3 read permission வேணும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "The user data script installs the CloudWatch agent, downloads code from S3, and fetches the database password via a Secrets Manager API call at runtime — with no password string anywhere in the script text",
+        "ava_correct": "Correct! இந்த script secrets-ஐ safely handle பண்ணுது - plain text-ல எதுவும் sensitive-ஆ இல்ல.",
+        "ava_wrong": "Script-ஐ ஒரு தடவை scan பண்ணு - எங்காவது password நேரடியா எழுதப்பட்டிருக்கானு பாரு, அது இருந்தா Secrets Manager fetch call-ஆ மாத்து."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Lost Key Pair That Nearly Caused a Rebuild",
+      "ava_speaks": "priya-dev, ஒரு critical production instance-க்கு laptop crash ஆகி, SSH key pair file-ஐ இழந்துட்டா. Session Manager set பண்ணி இருக்கானு அவளுக்கு நினைவே இல்ல - அவள் first reaction, 'இந்த instance-ஐ terminate பண்ணி, மறுபடி build பண்ணனும்'nு.",
+      "setup": "priya-dev's laptop crashes and she loses her local copy of the SSH private key for foodquick-orders-processor, a critical production instance. She has no other copy of the key saved anywhere.",
+      "what_happened": "Without the key, she can't SSH in through the normal path, and her first instinct is to consider terminating the instance and rebuilding it from scratch — a risky, time-consuming option for a production instance with accumulated state and configuration.",
+      "broken_config": "Instance: foodquick-orders-processor\nAccess method assumed available: SSH only, using the now-lost private key\nIAM instance profile: foodquick-ssm-instance-role (was attached at launch, but priya-dev forgot this was configured)",
+      "error_shown": "ssh: connect to host 10.0.2.15 port 22: Permission denied (publickey). priya-dev has no other copy of the private key file.",
+      "the_real_problem": "priya panic ஆனது, SSH மட்டும் தான் access பண்ண ஒரே வழினு நினைச்சதால. உண்மையில், அந்த instance launch பண்ணும்போதே, ஒரு Session Manager-compatible IAM role attach பண்ணி இருந்தாங்க - இது SSH key-ஐ சாராம முழுசா independent-ஆ access தரும். இந்த fact அவளுக்கு தெரியாததால, ஒரு unnecessary rebuild பண்ணப் போனாள்.",
+      "fix": {
+        "corrected_config": "Use Session Manager to connect directly (no key needed):\nSystems Manager Console → Session Manager → Start session → foodquick-orders-processor\n\nOnce connected, generate a new SSH key pair and add the public key to ~/.ssh/authorized_keys to restore normal SSH access for the future.",
+        "result": "Full access is restored within minutes, with zero downtime and zero data loss — no rebuild was ever necessary."
+      },
+      "lesson": "SSH key pair இழந்தா, அது 'instance-ஐ இழந்தோம்'nு அர்த்தம் இல்ல - launch பண்ணும்போதே Session Manager role attach பண்ணி இருந்தா, அது எப்போவும் ஒரு reliable fallback access path-ஆ இருக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Metadata, Automation, and Recovery",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "An instance's user data script installs an application and configures it using a database password written directly into the script as plain text. What's the primary risk here, beyond just 'it's not best practice'?",
+          "answer": "Anyone with the ec2:DescribeInstanceAttribute permission — which may be broader than the set of people who should know the database password — can read the user data and see the plaintext password. It's a durable, discoverable secret leak, not a one-time exposure."
+        },
+        {
+          "question": "A team wants an instance to re-run part of its setup script every time it reboots, not just on first boot. Is the standard user data behavior sufficient for this?",
+          "answer": "No — standard user data runs only once, on first boot. Achieving every-boot behavior requires a different mechanism (like a cloud-init directive configured for persistent execution, or a systemd service that runs the logic on every startup)."
+        },
+        {
+          "question": "A new engineer asks why every new EC2 instance at FoodQuick gets an IAM instance profile attached at launch, even ones that don't need to call any AWS APIs from inside. What's a good justification?",
+          "answer": "Even if the application itself doesn't need AWS API access, attaching a role with Session Manager permissions ensures there's always a reliable access path if SSH keys are ever lost, misconfigured, or if port 22 needs to stay closed entirely — it's an operational safety net, not just an app permission."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Build Recoverable, Auditable Instance Access by Default",
+      "ava_speaks": "Real companies-ல, priya-dev-ஓட lost-key situation ஒரு one-off emergency-ஆ இருக்கக்கூடாது - அது ஒரு standard, boring recovery procedure-ஆ இருக்கணும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Attach a Session Manager-compatible IAM role to every EC2 instance by default, as part of the standard launch template",
+          "detail": "இது FoodQuick-ஓட lost-key scenario-ஐ ஒரு emergency-ல இருந்து, ஒரு routine non-event-ஆ மாத்தும்"
+        },
+        {
+          "step": 2,
+          "action": "Store user data scripts in version control (like a Git repo), not typed freshly into the console each time",
+          "detail": "இது consistency உறுதி பண்ணும், மற்றும் script-ல எப்போவாவது தப்பா ஒரு secret சேர்க்கப்பட்டா, code review-ல அது கண்டுபிடிக்கப்படும்"
+        },
+        {
+          "step": 3,
+          "action": "Log all Session Manager sessions to CloudWatch Logs or S3 for audit purposes",
+          "detail": "SSH key access-ஐ விட, Session Manager access ஒரு built-in advantage வெச்சிருக்கு - ஒவ்வொரு command-மும் automatic-ஆ log ஆகும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Systems Manager Parameter Store / Secrets Manager",
+          "use": "User data scripts-ல secrets hardcode பண்றதுக்கு பதிலா, runtime-ல secrets fetch பண்ண இதை use பண்ணலாம்"
+        },
+        {
+          "tool": "EC2 Launch Templates",
+          "use": "User data, IAM role, security groups எல்லாத்தையும் ஒரு reusable template-ஆ define பண்ணி, consistency உறுதி பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம IMDS என்னனு, user data scripts எப்படி setup automate பண்ணும்னு, Session Manager எப்படி SSH key இல்லாமலேயே access தரும்னு கத்துக்கிட்டோம். மிக முக்கியமா, lost SSH key ஒரு instance-ஐ இழக்க வேண்டிய காரணமே இல்லனு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம AMIs, snapshots, launch templates பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.2b — Summary",
+      "points": [
+        "✓ The Instance Metadata Service (IMDS) lets an instance query its own details, including temporary IAM role credentials",
+        "✓ User data scripts run automatically on first boot to automate setup",
+        "✓ Never hardcode permanent secrets in user data — fetch them from Secrets Manager or Parameter Store at runtime instead",
+        "✓ Session Manager provides shell access independent of SSH keys, as long as the right IAM role is attached",
+        "✓ A lost SSH key pair does not mean a lost instance if Session Manager was configured at launch"
+      ],
+      "coming_next": "Lesson C4.3: AMIs and Snapshots"
+    }
+  }
+}

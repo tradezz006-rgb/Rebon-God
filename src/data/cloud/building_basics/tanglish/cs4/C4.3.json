@@ -1,0 +1,323 @@
+{
+  "lesson_id": "C4.3",
+  "lesson_title": "AMIs and Snapshots",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C4.2b — Managing EC2",
+  "student_will_learn": [
+    "Explain what an AMI (Amazon Machine Image) is and what it captures",
+    "Explain the golden AMI pattern and why teams use it",
+    "Explain what an EBS snapshot is and how it differs from an AMI",
+    "Use a Launch Template to standardize how new instances are created",
+    "Take a rollback-safe backup before making a risky configuration change"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம user data scripts பத்தி பேசினோம் - instance boot ஆகும்போது automatic-ஆ setup பண்ண. இப்போ Ravi-ஓட FQ-171 ticket-ல அடுத்த கேள்வி - 'ஒரு perfectly configured server-ஐ, திரும்ப திரும்ப manual-ஆ build பண்ணாம, ஒரு template மாதிரி save பண்ண முடியுமா?' இதுதான் AMIs. அப்புறம் 'ஏதாவது தப்பா போனா, திரும்ப பழைய state-க்கு போக முடியுமா?'nு பார்ப்போம் - இது snapshots.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.3",
+        "AMIs and Snapshots",
+        "Ticket FQ-171 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "AMI vs Snapshot — A Full Blueprint vs a Point-in-Time Copy",
+      "ava_speaks": "AMI (Amazon Machine Image) ஒரு complete blueprint - OS, installed software, configurations, எல்லாம் சேர்ந்தது. AMI-ல இருந்து launch பண்ணா, exact அதே state வெச்சு ஒரு புது instance கிடைக்கும். EBS Snapshot வேற - அது ஒரு single EBS volume-ஓட point-in-time backup மட்டும், முழு instance blueprint இல்ல. உண்மையில், AMI உள்ளுக்குள்ள ஒன்னு அல்லது அதுக்கு மேல் EBS snapshots-ஐ reference பண்ணும் - AMI ஒரு 'wrapper', snapshot அதோட building block.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "AMI vs Snapshot"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "AMI",
+            "EBS Snapshot"
+          ],
+          "rows": [
+            [
+              "Captures the whole instance: OS, software, config",
+              "Captures one volume's data at a point in time"
+            ],
+            [
+              "Used to launch new instances identical to the source",
+              "Used to restore or clone a specific volume"
+            ],
+            [
+              "Built from one or more underlying EBS snapshots",
+              "Is a building block that an AMI references"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Golden AMI pattern: build one AMI with everything correctly configured, then launch every new instance from that same AMI instead of manually configuring each one."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு AMI-க்கும் ஒரு EBS Snapshot-க்கும் உள்ள relationship என்ன?",
+          "options": [
+            "A) ரெண்டும் ஒண்ணுதான், பேரு மட்டும் வேற",
+            "B) AMI, ஒன்னு அல்லது அதுக்கு மேல் EBS snapshots-ஐ reference பண்ணும் ஒரு complete instance blueprint",
+            "C) Snapshot, AMI-க்குள்ள இருக்கற ஒரு subset feature",
+            "D) AMI-க்கும் Snapshot-க்கும் எந்த relation-மும் இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! AMI ஒரு complete blueprint, அது உள்ளுக்குள்ள snapshots-ஐ use பண்ணும் - snapshot ஒரு building block, AMI அதை wrap பண்ணும் ஒரு பெரிய concept.",
+          "ava_wrong": "இல்ல, ரெண்டும் ஒண்ணு இல்ல - AMI முழு instance blueprint (OS + software + config), அது ஒன்னு அல்லது அதுக்கு மேல் EBS snapshots-ஐ reference பண்ணும், snapshot ஒரு single volume-ஓட backup மட்டும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "10 identical app servers launch பண்ணணும். Golden AMI pattern use பண்ணாம, ஒவ்வொரு instance-ஐயும் manual-ஆ configure பண்றதோட main downside என்ன?",
+          "options": [
+            "A) அது ரொம்ப fast-ஆ இருக்கும்",
+            "B) Consistency இழக்கலாம் - ஒவ்வொரு instance-மும் கொஞ்சம் கொஞ்சம் வித்தியாசமா configure ஆகலாம்",
+            "C) Cost அதிகமாகும்",
+            "D) Downside எதுவும் இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Manual configuration, ஒவ்வொரு instance-மும் slightly different-ஆ end ஆகலாம் - இது 'configuration drift' எனப்படும், debugging-ஐ கஷ்டமாக்கும்.",
+          "ava_wrong": "இல்ல, main problem cost அல்ல - அது consistency. ஒவ்வொரு instance-ஐயும் தனித்தனியா manual-ஆ configure பண்றது, சின்ன சின்ன வித்தியாசங்கள் ஏற்பட வாய்ப்பு அதிகம் - இதுதான் golden AMI தீர்க்கும் problem."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Golden AMIs at Scale",
+      "ava_speaks": "FoodQuick app servers scale ஆக ஆக, ஒவ்வொரு புது server-ஐயும் manual-ஆ configure பண்றது, hours எடுத்துக்கும், சின்ன mistakes-க்கு வாய்ப்பும் அதிகம். Golden AMI pattern use பண்ணி, ஒரு perfectly-tested AMI-ல இருந்து புது instances launch பண்ணா, minutes-ல ready ஆகும், consistency-மும் guaranteed. Freshworks, Zoho மாதிரி companies-ஓட infrastructure teams, ஒவ்வொரு application-க்கும் ஒரு versioned golden AMI pipeline வெச்சிருப்பாங்க - security patches, dependencies எல்லாம் ஒரு central place-ல update பண்ணி, புது AMI version build பண்ணுவாங்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Manual Configuration vs Golden AMI at Scale"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Manual Config (per instance)",
+            "Golden AMI Pattern"
+          ],
+          "rows": [
+            [
+              "Each instance takes 30-60 minutes to configure correctly",
+              "New instance ready in minutes, launched directly from the AMI"
+            ],
+            [
+              "Risk of configuration drift between instances",
+              "Every instance starts identical, from the same tested image"
+            ],
+            [
+              "Security patch needs to be applied to every instance individually",
+              "Patch the golden AMI once, roll out a new version everywhere"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Building a Golden AMI and a Launch Template",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட app server-ஐ ஒரு golden AMI-ஆ save பண்றான், அப்புறம் அதை ஒரு Launch Template-ல wrap பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல ஒரு fully configured app server instance-ஐ select பண்றோம் - இது nginx, application code, monitoring agent எல்லாம் correctly setup பண்ணப்பட்டிருக்கு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Instances → foodquick-app-server-golden-source",
+              "highlight": "The fully configured source instance",
+              "result": "The instance details panel opens, confirming this is the correctly configured template instance"
+            }
+          },
+          {
+            "ava_narration": "'Actions' -> 'Image and templates' -> 'Create image' click பண்றோம். Image name-ஆ 'foodquick-app-ami-v1.0'nு கொடுக்கிறோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Actions → Image and templates → Create image",
+              "field": "Image name",
+              "value": "foodquick-app-ami-v1.0",
+              "highlight": "Image name field",
+              "result": "AWS begins creating the AMI, which internally creates snapshots of all attached EBS volumes"
+            }
+          },
+          {
+            "ava_narration": "AMI ready ஆனப்புறம், Launch Templates-க்கு போய், 'Create launch template' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Launch Templates → Create launch template",
+              "highlight": "Create launch template button",
+              "result": "The launch template creation form opens"
+            }
+          },
+          {
+            "ava_narration": "Template name 'foodquick-app-template', AMI-ஆ foodquick-app-ami-v1.0, instance type m5.large, security group foodquick-app-sg எல்லாம் select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create launch template form",
+              "field": "Template name, AMI, Instance type, Security group",
+              "value": "foodquick-app-template, foodquick-app-ami-v1.0, m5.large, foodquick-app-sg",
+              "highlight": "AMI ID field showing foodquick-app-ami-v1.0",
+              "result": "A reusable launch template is created, bundling AMI, instance type, and security group into one definition"
+            }
+          },
+          {
+            "ava_narration": "இப்போ இந்த template-ஐ வெச்சு, 'Launch instance from template' select பண்ணி, ஒரு புது instance launch பண்றோம் - ஒரே click-ல, exact அதே configuration வெச்சு.",
+            "console_action": {
+              "type": "click",
+              "path": "Launch Templates → foodquick-app-template → Actions → Launch instance from template",
+              "highlight": "Launch instance from template button",
+              "result": "A new instance launches in seconds, identical to the golden source, without any manual configuration"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "FoodQuick now has a versioned golden AMI (foodquick-app-ami-v1.0) and a launch template that bundles it with the correct instance type and security group, so new app servers launch identically every time.",
+          "what_to_notice": "Future-ல app-ல ஏதாவது update பண்ணா, v2.0 AMI create பண்ணி, launch template-ஐ update பண்ணலாம் - இது version history-ஐயும் தருகிறது, ஏதாவது தப்பு நடந்தா v1.0-க்கு திரும்பவும் easy-ஆ."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How an AMI Relates to Its Underlying Snapshots",
+      "ava_speaks": "இந்த diagram பாரு - AMI உள்ளுக்குள்ள எப்படி snapshots-ஐ wrap பண்ணுதுனு காட்டுது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "AMI: foodquick-app-ami-v1.0",
+            "  |",
+            "  contains block device mappings pointing to:",
+            "  |-- Root volume snapshot (snap-0abc...) — OS + application code",
+            "  |-- Data volume snapshot (snap-0def...) — if a second volume was attached",
+            "",
+            "Launching an instance from this AMI:",
+            "  New EBS volumes are created FROM these snapshots",
+            "  The new instance boots with an exact copy of the golden source's disk state"
+          ]
+        },
+        "ava_narration": "AMI delete பண்ணா (deregister), underlying snapshots automatic-ஆ delete ஆகாது default-ஆ - அவை தனியா manage பண்ணனும், இல்லனா storage cost தொடர்ந்து வரும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Take a Rollback-Safe Backup Before a Risky Change",
+      "instruction": "FoodQuick-ஓட ஒரு app server-ல ஒரு major dependency upgrade பண்றதுக்கு முன்னாடி, AMI backup எடு.",
+      "scenario": "Ravi, foodquick-app-server-3-ல node.js runtime-ஐ ஒரு major version upgrade பண்ணணும்nு request பண்ணி இருக்காங்க. இது risky change - upgrade fail ஆனா, application முழுசா break ஆகலாம்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Instances → foodquick-app-server-3",
+        "current_configuration": "The instance is running the current, working node.js version, no pre-upgrade AMI has been taken yet"
+      },
+      "requirements": [
+        "Create an AMI of foodquick-app-server-3 BEFORE starting the upgrade",
+        "Name the AMI clearly with a version/date reference, e.g. foodquick-app-server-3-pre-nodejs-upgrade",
+        "Confirm the AMI creation completes successfully before proceeding with the actual upgrade",
+        "Only after the backup AMI is confirmed, proceed with the node.js upgrade"
+      ],
+      "hints": [
+        "AMI creation ஆரம்பிச்சு, 'pending' status-ல இருந்து 'available' status-க்கு மாறற வரைக்கும் காத்திரு - அது முடியலைனா, ஒரு reliable rollback point கிடையாது",
+        "Image name-ல ஒரு தெளிவான, searchable பேரு வெச்சுக்கோ - 'backup1' மாதிரி generic பேரு வெச்சா, 6 மாசம் கழிச்சு அது எதுக்கானதுனு தெரியாது",
+        "Upgrade fail ஆனா, இந்த AMI-ல இருந்து ஒரு புது instance launch பண்ணி, DNS/load balancer-ஐ redirect பண்ணலாம் - இதுதான் rollback path"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "An AMI named foodquick-app-server-3-pre-nodejs-upgrade exists and shows status 'available' before any upgrade command is run on the instance",
+        "ava_correct": "Correct! இப்போ upgrade எதுவும் தப்பா போனாலும், இந்த AMI-ல இருந்து fast-ஆ rollback பண்ண முடியும்.",
+        "ava_wrong": "AMI status 'available' ஆகறதுக்கு முன்னாடியே upgrade ஆரம்பிச்சிட்டா, backup incomplete-ஆ இருக்கலாம் - AMI முழுசா ready ஆனதை confirm பண்ணின பிறகுதான் proceed பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Config Change With No Way Back",
+      "ava_speaks": "ananya-analyst, ஒரு production instance-ல ஒரு major OS-level configuration change பண்ணிட்டாங்க - deadline pressure-ல, backup எடுக்க மறந்துட்டு. Change apply பண்ணின பிறகு, application boot ஆகவே இல்ல.",
+      "setup": "ananya-analyst applies a significant system-level configuration change (updating kernel parameters and a critical system library) directly on a running production instance, intending to improve performance, without taking an AMI or snapshot first.",
+      "what_happened": "The configuration change has an unexpected side effect — the application fails to start after the change, and several dependent services also begin failing. With no backup point to return to, the only options are debugging forward under pressure or manually trying to reverse each individual change.",
+      "broken_config": "Instance: foodquick-orders-processor\nAction taken: kernel parameters and system library updated directly, no AMI or snapshot taken beforehand\nCurrent state: application fails to start, error logs show a library version conflict",
+      "error_shown": "systemctl status foodquick-app.service: Failed to start FoodQuick Application Service. journalctl shows: error while loading shared libraries: libssl.so.1.1: cannot open shared object file — the updated library is incompatible with the application binary",
+      "the_real_problem": "Deadline pressure-ல 'இது ஒரு சின்ன change தான், backup தேவை இல்ல'nு நினைச்சது தான் real mistake. Major system-level changes-ல, side effects predict பண்றது கஷ்டம் - backup இல்லாம பண்றது, ஒரு safety net இல்லாம tightrope walk பண்றது மாதிரி.",
+      "fix": {
+        "corrected_config": "Since no AMI was taken, the team must now manually debug and reverse each change individually — a much slower and riskier process than a clean rollback would have been. Going forward: 'Create image' step becomes a mandatory checklist item before any system-level production change, with the AMI ID recorded in the change ticket.",
+        "result": "The incident is eventually resolved after several hours of manual debugging — significantly longer than the minutes a rollback to a pre-change AMI would have taken."
+      },
+      "lesson": "'இது ஒரு சின்ன change தான்'nு backup skip பண்றது, risky changes-ல எப்போவும் தப்பான assumption - AMI/snapshot எடுக்கறதுக்கு ஆகுற சில நிமிடங்கள், hours-கணக்கான emergency debugging-ஐ காப்பாற்றும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — AMI and Snapshot Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team updates their golden AMI monthly with the latest security patches, creating foodquick-app-ami-v1.1, v1.2, and so on. Should they delete older AMI versions immediately once a new one is created?",
+          "answer": "Not immediately — keeping at least a few recent previous versions provides a rollback path if a new AMI version turns out to have a problem discovered after rollout. Deleting only after the new version has been running successfully in production for a reasonable period is safer."
+        },
+        {
+          "question": "An engineer takes an EBS snapshot of a database volume while the database is actively writing data, without pausing writes first. Is this snapshot guaranteed to be usable for a clean restore?",
+          "answer": "Not necessarily guaranteed — a snapshot taken during active writes captures whatever state the disk was in at that instant, which could be mid-transaction for some databases. Many databases handle this gracefully via crash-consistent recovery, but the safest practice is to briefly pause writes or use a database-native backup mechanism for guaranteed consistency."
+        },
+        {
+          "question": "A launch template references AMI ID ami-0abc123 directly. The team creates a new golden AMI version, ami-0xyz789, but forgets to update the launch template. What happens the next time an Auto Scaling Group launches a new instance?",
+          "answer": "The new instance launches from the OLD AMI (ami-0abc123), not the updated one — the launch template doesn't automatically pick up newer AMIs. The team needs to create a new launch template version pointing to ami-0xyz789 for future launches to use the updated image."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Manage AMI Versions as a Pipeline, Not a One-Off",
+      "ava_speaks": "Real companies-ல, golden AMI creation ஒரு manual, one-time task இல்ல - அது ஒரு automated, repeatable pipeline.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Use a tool like HashiCorp Packer to define the AMI build process as code, rather than manually configuring a source instance each time",
+          "detail": "இது build process-ஐ version control-ல track பண்ண உதவும், 'எப்படி இந்த AMI build ஆச்சு'னு exactly reproduce பண்ண முடியும்"
+        },
+        {
+          "step": 2,
+          "action": "Trigger a new AMI build automatically whenever a base OS security patch or a core dependency update is released",
+          "detail": "இது manual reminders-ஐ சார்ந்திருக்காம, patches consistently apply ஆகுதுனு உறுதி பண்ணும்"
+        },
+        {
+          "step": 3,
+          "action": "Roll out a new AMI version gradually — a small percentage of instances first, then the rest — instead of replacing everything at once",
+          "detail": "இது ஒரு problematic AMI version-ஐ, முழு fleet-ஐயும் பாதிக்கறதுக்கு முன்னாடியே கண்டுபிடிக்க உதவும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "HashiCorp Packer",
+          "use": "AMI builds-ஐ code-ஆ define பண்ணி, repeatable, version-controlled image creation process உருவாக்கும்"
+        },
+        {
+          "tool": "EC2 Image Builder",
+          "use": "AWS-ஓட own managed service, AMI build, test, மற்றும் distribution pipeline-ஐ automate பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம AMIs, EBS snapshots, golden AMI pattern, launch templates எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, risky changes பண்றதுக்கு முன்னாடி backup எடுக்கறது எவ்ளோ முக்கியம்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம Elastic Load Balancing பார்ப்போம் - ALB vs NLB.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.3 — Summary",
+      "points": [
+        "✓ An AMI is a complete instance blueprint that references underlying EBS snapshots",
+        "✓ An EBS snapshot is a point-in-time backup of a single volume, a building block within an AMI",
+        "✓ The golden AMI pattern ensures every new instance launches identically, avoiding configuration drift",
+        "✓ Launch Templates bundle an AMI with instance type, security groups, and other launch settings for reuse",
+        "✓ Taking an AMI backup before a risky change provides a fast rollback path — skipping it turns a small mistake into a long incident"
+      ],
+      "coming_next": "Lesson C4.4: Elastic Load Balancing"
+    }
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "lesson_id": "C3.1",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nRavi's told you I'm here to help rebuild FoodQuick's network properly this time. Before we design anything new, I want to see exactly what's running today — no assumptions.\n\nPull up the VPC console. Walk me through what's actually there: what VPC, what's in it, and what's protecting the production database. I already have a feeling this was set up once, in a hurry, and never looked at again. Let's find out if I'm right.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nConfirmed what I suspected. This VPC was never really designed — it's the default one AWS hands every new account, and foodquick-orders-db has been sitting in it with a security group wide open to 0.0.0.0/0 on port 5432 since day one. Good that it's narrowed now, at least the front door isn't hanging open anymore.\n\nOne thing from your audit I want to sit with before we move on: that static route to 10.50.0.0/16 in the route table, going to a peering connection ID, with no subnet in this VPC anywhere near that range. I don't have an explanation yet. Don't touch it. Just remember it's there.\n\nNext: we start actually deciding what goes where. This VPC treats every subnet the same — nothing is actually private. Let's fix that.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.1-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.1",
+      "scenario": "You open the AWS console for FoodQuick's account for the first time under FQ-156. Before doing anything else, you check the VPC dashboard and the production RDS instance's security group. You immediately notice: foodquick-orders-db (RDS PostgreSQL) has an inbound rule on port 5432 with source 0.0.0.0/0.",
+      "question": "What does a 0.0.0.0/0 source on a database's inbound rule actually mean, and why is it the first thing worth flagging?",
+      "options": [
+        "A) It means the database only accepts connections from inside the VPC — 0.0.0.0/0 is shorthand for \"local network only\"",
+        "B) It means ANY IP address on the entire internet can attempt to connect to the database on that port — it's not scoped to FoodQuick's servers, or even to India",
+        "C) It's a placeholder AWS inserts by default and has no real effect until a real IP range is added",
+        "D) It only matters if the database also has a public IP assigned — otherwise the rule does nothing"
+      ],
+      "correct_index": 1,
+      "explanation": "0.0.0.0/0 means 'every possible IPv4 address' — literally the entire internet. This is not a default placeholder — it is an active rule. Even if RDS has no public IP, and even if the subnet is public (which we still have not checked) this is still a real exposure. The reason to check this first: this a single-line rule can fix it, but a single-line rule creates the biggest exposure.",
+      "ren_correct": "Correct — this 'read the rule literally' moment. 0.0.0.0/0 — exactly what it says — must be understood precisely.",
+      "ren_wrong": "A bit off track. 0.0.0.0/0 — 'entire internet' — no exceptions, and no safe-by-default assumption."
+    },
+    {
+      "id": "C3.1-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.1",
+      "question": "Priya explains: 'A VPC is your own isolated slice of AWS's network — nothing enters or leaves it unless you explicitly allow it.' A junior engineer asks: 'So if I don't add any rules at all, what can reach an EC2 instance sitting inside a brand new custom VPC?'",
+      "options": [
+        "A) Nothing from outside AWS, but every other AWS customer's resources in the same region can reach it by default",
+        "B) Nothing at all reaches it from outside the VPC — isolation is the default state, access has to be deliberately opened up",
+        "C) Anything within the same country's AWS infrastructure can reach it, since VPCs are isolated only from other countries",
+        "D) It depends on the instance type — larger instances default to more open access"
+      ],
+      "correct_index": 1,
+      "explanation": "VPC's whole point 'isolated by default'. If you do not explicitly open anything, nothing from outside can reach into it — the VPC boundary itself is a default-deny wall. This FoodQuick's problem — keep that foundation in mind: default VPC must also follow this same rule, but we will look at that next how much loosely configure must have done.",
+      "ren_correct": "Nice-correct — isolation is the DEFAULT, access has to be earned, not the other way around.",
+      "ren_wrong": "A bit think again — VPC boundary's whole purpose 'nothing gets in unless allowed'. That is the default state."
+    },
+    {
+      "id": "C3.1-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.1",
+      "question": "Priya mentions FoodQuick is running in the account's DEFAULT VPC — the one AWS creates automatically in every region when an account is opened. What's the real risk of building production infrastructure in a default VPC, compared to a custom one?",
+      "options": [
+        "A) Default VPCs are technically identical to custom VPCs in every way — the only difference is the name shown in the console",
+        "B) Default VPCs come pre-configured with permissive defaults (all subnets public, one shared route table) meant for quick experimentation — nobody actually DESIGNED it for a production workload, it just happened to be there",
+        "C) Default VPCs are slower because they're shared infrastructure between multiple AWS customers",
+        "D) Default VPCs can only run EC2 instances, not RDS databases"
+      ],
+      "correct_index": 1,
+      "explanation": "Default VPC — AWS gives a 'get started fast' convenience — auto-created, all subnets public, single route table, everything wired for quick testing. That that design was never meant for production — nobody deliberately chose that, it happened by accident. This is exactly what happened at FoodQuick: the default VPC convenience settings, became a permanent home for a real production database.",
+      "ren_correct": "Correct — default VPC oda danger — 'nobody chose this', it just happened by not choosing anything else.",
+      "ren_wrong": "A default VPC is not just another flavor of a custom VPC — you thought. The real difference is — one is designed for production; the other is convenience only."
+    },
+    {
+      "id": "C3.1-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.1",
+      "scenario": "You pull the complete current state of FoodQuick's VPC to map the problem before proposing any fix.",
+      "broken_config": "FoodQuick AWS Account — ap-south-1\n\nVPC: vpc-0a1b2c3d4e5f (DEFAULT VPC) — CIDR 172.31.0.0/16\n\nSubnets:\n├── subnet-aa11 (ap-south-1a) — 172.31.0.0/20 — Route Table: rtb-main\n├── subnet-bb22 (ap-south-1b) — 172.31.16.0/20 — Route Table: rtb-main\n└── subnet-cc33 (ap-south-1c) — 172.31.32.0/20 — Route Table: rtb-main\n\nrtb-main (Main Route Table, associated with ALL 3 subnets — the only route table in this VPC):\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n└── 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2\n\nEC2 / RDS placement:\n├── order-service (EC2 ×3, ASG) — subnet-aa11, subnet-bb22\n├── notification-worker (EC2 ×1) — subnet-cc33\n└── foodquick-orders-db (RDS PostgreSQL, Multi-AZ OFF) — subnet-aa11\n\nSecurity Group sg-db-0091 (attached to foodquick-orders-db) — Inbound rules:\n└── Port 5432, Source: 0.0.0.0/0",
+      "what_to_find": [
+        "foodquick-orders-db's security group allows inbound Postgres from 0.0.0.0/0 — the entire internet, not just FoodQuick's own servers",
+        "This is the account's DEFAULT VPC, not a purpose-built one — every subnet was created automatically, not designed",
+        "There is only ONE route table in the entire VPC (rtb-main), associated with all 3 subnets — meaning there's no distinction anywhere between how any two subnets are treated",
+        "There's a static route: 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2. This CIDR range doesn't match ANY subnet in this VPC (172.31.0.0/16 is the only range in use here) — nobody on the current team can explain what this is or why it's there",
+        "10.50.0.0/16 is not even part of this VPC's own CIDR block (172.31.0.0/16) — it's a completely foreign network being routed to, through something with a peering-connection-shaped ID"
+      ],
+      "correct_fix": "Immediate: narrow sg-db-0091's inbound rule from 0.0.0.0/0 to FoodQuick's known application CIDR range (172.31.0.0/16) as a same-day mitigation — full subnet-level isolation is a separate, bigger piece of work for a later lesson. Do NOT touch the 10.50.0.0/16 route yet — flag it in the investigation notes exactly as found (destination CIDR, target ID, and the fact that no subnet in this VPC matches it) for Priya, and leave it in place.",
+      "explanation": "There are two kinds of problems — (1) immediate, obvious, easy-to-fix exposure: DB SG 0.0.0.0/0, this must be narrowed today. (2) a genuinely unexplained artifact — that 10.50.0.0/16 route. Fixing this is not the job right now — first, the job is to correctly NOTICE it. Investigation oda first rule: do not touch anything without understanding it."
+    },
+    {
+      "id": "C3.1-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.1",
+      "question": "Arrange the correct order of steps for narrowing foodquick-orders-db's security group rule TODAY, without accidentally locking out the application or causing an outage.",
+      "items": [
+        "Add the new, narrower inbound rule (source: FoodQuick's known application CIDR) alongside the existing broad rule",
+        "Confirm which CIDR range FoodQuick's actual application servers use, by checking where order-service and notification-worker are deployed",
+        "Verify the application can still connect to the database successfully with only the narrow rule active",
+        "Remove the old 0.0.0.0/0 rule only after the narrow rule is confirmed working",
+        "Document the change and the reasoning in the change log, including the still-unexplained 10.50.0.0/16 route left untouched"
+      ],
+      "correct_order": [
+        1,
+        0,
+        2,
+        3,
+        4
+      ],
+      "explanation": "This real production change — change the order, application break can happen. First that actual correct CIDR range confirm must do (must not guess), then the old rule remove without doing new rule add must do (this 'never lock yourself out first' rule), then verify must do that velai does, then old broad rule remove must do, last document must do.",
+      "ren_correct": "Nice sequencing — 'add before remove' oda rule follow did you do, that real outage avoid does pattern.",
+      "ren_wrong": "Order a bit wrong. Old rule remove first, new rule verify must be done after — or the app will break."
+    },
+    {
+      "id": "C3.1-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.1",
+      "scenario": "You're implementing the SG narrowing. karthik-dev suggests: 'Why not just add each application server's specific /32 IP as its own rule? That's the tightest possible scope.'",
+      "question": "Is a list of individual /32 rules the right call here, given order-service runs in an Auto Scaling Group?",
+      "options": [
+        "A) Yes — /32 rules are always the most secure choice regardless of context",
+        "B) No — order-service instances are managed by an ASG and their IPs change as instances scale up, down, or get replaced; individual /32 rules would break the moment AWS launches a new instance with a different IP",
+        "C) No — /32 rules aren't supported for RDS security groups at all",
+        "D) Yes, but only if combined with a Lambda function that updates the rules automatically every hour"
+      ],
+      "correct_index": 1,
+      "explanation": "Auto Scaling Group instances's IP fixed not — scale-out, scale-in, replace, all of them get new private IPs. If you use an individual /32 rule, next scaling in event that rule becomes useless, the app can break silently. That is why we subnet-level CIDR range (172.31.0.0/16, later narrower private-subnet range) use we will do — so it stays stable even when instances change.",
+      "ren_correct": "Correct — ASG dynamic will be-nnu ninaikkanum, static /32 rules that reality's match aagaathu.",
+      "ren_wrong": "You missed that ASG IPs are not stable. /32 rule a for instance exact correctly even if, on the next scale event that rule becomes wrong."
+    },
+    {
+      "id": "C3.1-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.1",
+      "scenario": "Priya is already thinking ahead to the real network rebuild across the next several lessons. She asks: 'FoodQuick will eventually need separate ranges for app servers, databases, a cache layer, and maybe a second environment for staging. Before we build anything, what size CIDR block should the new custom VPC even use?'",
+      "question": "Which CIDR block size is the right call for a VPC meant to comfortably support several years of a growing company, versus one meant only for a single small proof-of-concept?",
+      "options": [
+        "A) A /28 — small and precise, exactly matching what's needed for today's 3 subnets",
+        "B) A /16 (e.g. 10.0.0.0/16) — large enough to carve out dozens of /20 or /24 subnets over years of growth across multiple tiers and environments, without ever needing to recreate the VPC",
+        "C) A /8 — the largest possible block, since bigger is always strictly better with no downside",
+        "D) It doesn't matter — VPC CIDR blocks can always be resized later without any disruption",
+        "E) Match whatever size the current default VPC uses, since that's clearly what AWS recommends"
+      ],
+      "correct_index": 1,
+      "explanation": "An ultra-small size like /28 — , 2-3 subnet create did address space will run out — you end up with no room for future growth. /8 unnecessary over-provisioning, only adds address-planning complexity, with no real benefit. VPC CIDR block you cannot freely resize it anytime the way you might wish (you would have to add non-overlapping secondary ranges, and that is messy too). /16 — sweet spot — 现在 gives comfortable room from day one through future teams and environments, without over-engineering.",
+      "ren_correct": "Correct — CIDR sizing — is not 'guess the exact number today', 'leave comfortable room for years of growth' — thinking.",
+      "ren_wrong": "CIDR sizing decision a bit think again — too small — blocks future growth, too big — unnecessary complexity. Find the sweet spot."
+    },
+    {
+      "id": "C3.1-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.1",
+      "scenario": "FoodQuick is expanding to serve customers in Mumbai and Delhi with lower latency, so Ravi asks karthik-dev to also stand up a small EC2 footprint in ap-south-2 (Hyderabad). karthik-dev writes a quick script reusing vpc-0a1b2c3d4e5f — the same VPC ID used in ap-south-1 — assuming it'll just work in the new region too.",
+      "error_shown": "An error occurred (InvalidVpcID.NotFound) when calling the RunInstances operation: The vpc ID 'vpc-0a1b2c3d4e5f' does not exist",
+      "diagnosis": "A VPC is a per-region resource — it exists ONLY in the region it was created in. vpc-0a1b2c3d4e5f was created in ap-south-1 and has no presence, meaning, or matching ID in ap-south-2 whatsoever. Reusing a VPC ID across regions isn't like reusing a security group name — the ID itself is scoped to one region and simply doesn't resolve anywhere else.",
+      "fix": "Create a separate, new VPC in ap-south-2 with its own CIDR block (non-overlapping with the ap-south-1 VPC if the two will ever need to communicate, e.g. via peering or Transit Gateway later), then build subnets, route tables, and security groups fresh in that region — none of it can be inherited or referenced from ap-south-1.",
+      "explanation": "This is a real, common confusion — people think a VPC is a 'global' resource, and try to use it after changing region. But a VPC is per-region — unlike Route 53 or IAM, it is not global. You must design a separate VPC for every region, and that is the real teaching moment here."
+    },
+    {
+      "id": "C3.1-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.1",
+      "scenario": "Before reporting back to Priya, you run a final audit to confirm today's fix actually holds and to document everything found — including what's still unresolved.",
+      "broken_config": "Post-fix audit — sg-db-0091 (attached to foodquick-orders-db):\n\nInbound rules:\n└── Port 5432, Source: 172.31.0.0/16\n\nrtb-main (still the only route table, still associated with all 3 subnets):\n├── 172.31.0.0/16 → local\n├── 0.0.0.0/0 → igw-0f9e8d7c6b5a4\n└── 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 (unchanged, unexplained, no matching subnet in this VPC)\n\nVPC still: vpc-0a1b2c3d4e5f (DEFAULT), single shared route table across all 3 subnets, no distinction anywhere between subnets",
+      "what_to_find": [
+        "The 0.0.0.0/0 inbound rule on the DB is gone — replaced with 172.31.0.0/16. Today's immediate exposure is closed.",
+        "172.31.0.0/16 is still the ENTIRE VPC's CIDR — meaning any resource anywhere in this VPC can still reach the DB. This is a real improvement over open-internet exposure, but it is not the final state — it will need tightening again once real subnet/tier separation exists (a later lesson's work)",
+        "The single shared route table across all 3 subnets is still unchanged — no subnet in this VPC is actually private yet, that structural work hasn't started",
+        "The 10.50.0.0/16 → pcx-0e4a9f2b1c8d3a1f2 route is still present, exactly as found, correctly left untouched"
+      ],
+      "correct_fix": "Today's fix (0.0.0.0/0 → 172.31.0.0/16) is complete and correct for what this lesson covers. Leave the single-route-table/no-private-subnet issue and the 10.50.0.0/16 route both open and clearly documented as separate, ongoing work — do not attempt to solve either one now.",
+      "explanation": "This verify step's whole point: do not confuse a partial fix with a full fix. Today we made one real, meaningful improvement — but two big things we still have not solved remain, clearly admitting that is honest engineering."
+    },
+    {
+      "id": "C3.1-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.1",
+      "scenario": "Priya asks you to recommend a CIDR sizing strategy for the custom VPC the team will start building next lesson — she wants a decision now, with reasoning, not just a number.",
+      "options": [
+        "A) 10.0.0.0/16 for the VPC, planning to carve out /20 blocks per tier (app, data, cache) per environment as they get built — leaves room for multiple environments and tiers for years without re-architecting",
+        "B) 10.0.0.0/24 for the VPC — small and tidy, matches exactly what FoodQuick uses today",
+        "C) Reuse 172.31.0.0/16, the same range the default VPC already uses, since it's already familiar to the team",
+        "D) Ask AWS support to auto-assign whatever CIDR block they recommend, since AWS knows FoodQuick's account best"
+      ],
+      "correct_index": 0,
+      "explanation": "/24 your current small footprint may match, you end up with no growth room — exactly the mistake we saw in T7. 172.31.0.0/16 the default VPC already uses — if the new custom VPC reuses the same range, and later you need to connect the two VPCs — CIDR overlap will block peering/Transit Gateway, and that becomes a blocker. AWS 'auto-assign whatever they recommend' — is not an option at all — CIDR planning is our responsibility. /16 with planned /20 carve-outs sustainable choice.",
+      "ren_correct": "Correct — you already thought about future connectivity in the CIDR decision, that is real architecture thinking.",
+      "ren_wrong": "Think a bit more about the CIDR choice — we are already using the default VPC range, reusing it will cause problems later. A small size also blocks growth."
+    },
+    {
+      "id": "C3.1-T11",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.1",
+      "scenario": "ananya-analyst asks if her new experimental fraud-detection model — still early prototype, running on a single EC2 instance — can just be launched inside FoodQuick's existing default VPC alongside everything else, since 'it's just a quick test.'",
+      "question": "What's the right guidance, applying what you now know about isolation and the current state of this VPC?",
+      "options": [
+        "A) Sure — it's just a prototype, and the current VPC is already running everything else, so one more instance changes nothing",
+        "B) It can go in the default VPC for now, but flag it clearly as temporary and make sure it doesn't get placed on the same subnet as production resources or given any broader access than it needs — the goal is that even a 'quick test' doesn't quietly inherit the same loose exposure the DB just had",
+        "C) No — nothing should ever be launched in a default VPC under any circumstances, even for a two-day experiment",
+        "D) It doesn't matter where it's launched, since VPC isolation only matters for databases, not compute instances"
+      ],
+      "correct_index": 1,
+      "explanation": "This is not an absolute 'never', but it is also not a blind 'sure, no problem'. Real answer: 'quick test' — just saying that does not mean you can turn security thinking off — exactly that assumption for foodquick-orders-db kept a loose SG for so many days. The isolation concept — is not only for the DB we saw, it must apply to any resource.",
+      "ren_correct": "Correct — 'temporary' — you must not give the same careless default to any resource, that is exactly the real mistake we saw today.",
+      "ren_wrong": "Both extremes are wrong — 'never touch default VPC' overly rigid, 'for a quick test it doesn't matter' overly careless. Balanced judgment is needed."
+    },
+    {
+      "id": "C3.1-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.1",
+      "scenario": "Time to report back to Priya Nair on FQ-156's first pass. You've drafted a few possible summaries.",
+      "question": "Which report should you actually send?",
+      "options": [
+        "A) \"Fixed the security issue. FoodQuick's network is secure now.\"",
+        "B) \"Narrowed foodquick-orders-db's security group from 0.0.0.0/0 down to the VPC's own CIDR (172.31.0.0/16) — today's most urgent exposure is closed. This is still a default VPC with a single shared route table and no real subnet isolation, which is unaddressed. Also found a static route to 10.50.0.0/16 pointing to a peering connection ID, with no matching subnet anywhere in this VPC — no explanation yet. Left it untouched as instructed, flagging it for further investigation.\"",
+        "C) \"Everything looks fine, no real issues found beyond one small SG tweak.\"",
+        "D) \"Deleted the confusing 10.50.0.0/16 route since nothing in this VPC uses that range anyway, and tightened the DB security group.\""
+      ],
+      "correct_index": 1,
+      "explanation": "A correct report must be specific — what we fixed, and what we still have not fixed — must be stated clearly. Not only that — Priya explicitly said not to touch anything, respecting that is part of professional judgment — without overriding the investigation lead's instruction, only report the findings.",
+      "ren_correct": "This correct report — accurate, honest about what's still open, and respects Priya's instruction.",
+      "ren_wrong": "This report overclaims (\"secure now\", \"everything fine\") or it makes a decision without authority (deleting the mystery route) it has taken. Both are wrong."
+    }
+  ],
+  "act_number": 1,
+  "act_title": "The Default VPC That Never Got Reviewed",
+  "builds_layer": "Network Foundation Layer"
+}

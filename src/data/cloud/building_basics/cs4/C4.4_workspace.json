@@ -1,0 +1,228 @@
+{
+  "lesson_id": "C4.4",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nOne more thing before we move past compute: I keep hearing that order-service's instances are reachable directly, bypassing whatever load balancing we have. Go check whether that's actually true, and if it is, let's understand exactly why and fix it properly — target groups, health checks, all of it.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nTurns out I had the details slightly wrong, but the underlying worry was right — there IS an ALB already, but the instances' security group never actually restricted access to just it, so they were reachable directly the whole time regardless. Good catch fixing that, and good catch on the health check path mismatch too, which was quietly making the ALB think healthy instances were unhealthy.\n\nNext: let's talk about scaling itself. Right now this fleet grows and shrinks based on someone noticing, not on any automatic policy. Let's fix that.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.4-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.4",
+      "scenario": "You investigate Ravi's claim. There IS already an Application Load Balancer in front of order-service, with a target group (order-service-tg) and health checks configured. But when you check the instances' security group directly, you find inbound rules allowing ports 80/443 from 0.0.0.0/0 — not just from the ALB.",
+      "question": "Given the ALB already exists, what does this SG configuration actually mean in practice?",
+      "options": [
+        "A) It doesn't matter — since the ALB exists, all traffic is automatically forced through it regardless of what the instance security group allows",
+        "B) It means anyone on the internet can bypass the ALB entirely and connect directly to an instance's IP on port 80/443 — the ALB's existence doesn't restrict direct access unless the instance's own security group is scoped to only allow traffic from the ALB",
+        "C) It means the ALB will refuse to start until this rule is removed",
+        "D) This only matters for HTTPS traffic, not HTTP"
+      ],
+      "correct_index": 1,
+      "explanation": "ALB exist doing automatic-a direct access block what was done — instance's own SG anga 0.0.0.0/0 allow if we had done, that instance direct-a reachable-a will be, ALB irundhaalum. ALB's benefits (health checks, routing) meaningful-a must bena, instance SG-a ALB's SG only-a restrict must do.",
+      "ren_correct": "Correct — ALB existing — automatic protection not, instance SG explicitly restrict must do.",
+      "ren_wrong": "A bit think again — ALB irundhaalum, instance SG broad-a irundha, direct access still possible. ALB automatic-a idha block what was done."
+    },
+    {
+      "id": "C4.4-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.4",
+      "question": "What's the core difference between an Application Load Balancer (ALB) and a Network Load Balancer (NLB)?",
+      "options": [
+        "A) They're functionally identical, just with different names and pricing",
+        "B) ALB operates at Layer 7 (HTTP/HTTPS), enabling path-based and host-based routing decisions based on the actual request content. NLB operates at Layer 4 (TCP/UDP), offering extremely low latency and a static IP, but without any awareness of HTTP-level content like paths or headers",
+        "C) NLB is simply a cheaper, older version of ALB with fewer features but otherwise identical behavior",
+        "D) ALB can only be used with EC2, while NLB can only be used with Lambda"
+      ],
+      "correct_index": 1,
+      "explanation": "ALB Layer in 7 velai does — HTTP path, host header all paathu routing decide does. NLB Layer in 4 velai does — TCP/UDP only, HTTP content-a paakathu, but very low latency and static IP gives. Both different use for case design has been done, one replace doing not.",
+      "ren_correct": "Correct — L7 vs L4, path-awareness vs raw performance, both different purpose.",
+      "ren_wrong": "A bit think again — ALB and NLB same not. ALB HTTP-aware routing does, NLB raw in TCP/UDP ultra-low-latency does."
+    },
+    {
+      "id": "C4.4-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.4",
+      "question": "What role does a target group's health check actually play in how the ALB routes traffic?",
+      "options": [
+        "A) Health checks are purely informational — they show status in the console but don't affect actual traffic routing",
+        "B) The ALB periodically checks each target's configured health check path; targets that fail the check are marked unhealthy and REMOVED from active rotation, so no traffic is sent to them until they pass health checks again",
+        "C) Health checks only run once, when a target is first registered, and never again afterward",
+        "D) Health checks determine instance pricing, not traffic routing"
+      ],
+      "correct_index": 1,
+      "explanation": "Health check purely informational not — real, active effect is there. ALB periodically check does, fail but target unhealthy-a mark does, ANDA for target traffic route doing STOP will happen udane. This real consequence-a because it is there, health check path correct-a configure doing very is important.",
+      "ren_correct": "Correct — health check active-a traffic routing affect does, informational only not.",
+      "ren_wrong": "A bit think again — health check just cosmetic not. Fail but for target traffic route aagardhu real-a stop will happen."
+    },
+    {
+      "id": "C4.4-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.4",
+      "scenario": "Continuing the audit, you pull the full current state of order-service's load balancing setup.",
+      "broken_config": "Application Load Balancer: foodquick-order-alb\n├── Listener: HTTPS:443 → forwards to order-service-tg\n\nTarget group: order-service-tg\n├── Health check path: /healthcheck\n├── Health check interval: 30s\n├── Healthy threshold: 3 consecutive successes\n├── Unhealthy threshold: 3 consecutive failures\n└── Registered targets: 4 instances, ALL currently marked UNHEALTHY\n\nActual order-service application:\n└── Serves its health endpoint at /health (not /healthcheck) — confirmed by checking the application's own routing code\n\nInstance security group (sg-order-svc-0072):\n└── Inbound: Port 80, 443 from 0.0.0.0/0 (not restricted to the ALB's security group)",
+      "what_to_find": [
+        "The health check path (/healthcheck) doesn't match what the application actually serves (/health) — every health check request gets a 404, so ALL targets are marked unhealthy even though the application itself is running fine",
+        "Because all targets are marked unhealthy, the ALB has effectively nowhere healthy to route traffic — this could cause real customer-facing failures despite the application working correctly",
+        "Separately, the instance security group allows direct inbound access from 0.0.0.0/0 on the same ports the ALB uses, meaning anyone can bypass the ALB (and its health-check-based protection) entirely and hit an instance directly",
+        "These are two independent problems that happen to compound each other — even if the health check were fixed, direct access would still be an open security gap, and vice versa"
+      ],
+      "correct_fix": "Fix the health check path in the target group to /health, matching what the application actually serves. Separately, update sg-order-svc-0072 to restrict inbound on 80/443 to ONLY the ALB's security group, removing the 0.0.0.0/0 rule entirely.",
+      "explanation": "This exact spec mistake (health check path mismatch) AND the continuity issue (direct access bypass) both same in audit found. Both independent problems — one fix because of doing different automatic-a fix aagathu, rendaiyum explicitly fix must do."
+    },
+    {
+      "id": "C4.4-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.4",
+      "question": "Arrange the correct order to fix both issues without causing a customer-facing outage in the process.",
+      "items": [
+        "Fix the health check path to /health first, and confirm targets start showing healthy again",
+        "Verify actual customer traffic through the ALB still works correctly with healthy targets",
+        "Update the instance security group to allow inbound only from the ALB's security group",
+        "Verify direct access to an instance's IP (bypassing the ALB) is now blocked",
+        "Confirm ALB-routed traffic still works correctly after the security group change"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Health check fix first (this already-broken traffic routing-a fix does, urgent), then verify. Then SG restrict must do, then direct access block aachu — verify, LAST-a ALB traffic still velai doing — verify must do — change the order, health check fix without doing SG restrict did, still unhealthy for targets traffic must go — problem continue will happen.",
+      "ren_correct": "Nice sequencing — urgent traffic-routing fix first, security restriction next, verify at every step.",
+      "ren_wrong": "Order again paaru — health check fix without doing SG restrict didlum, unhealthy targets problem still continue-a will be. Traffic-routing fix first."
+    },
+    {
+      "id": "C4.4-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.4",
+      "scenario": "You're about to restrict sg-order-svc-0072 to only allow traffic from the ALB. karthik-dev suggests using the ALB's specific IP addresses as the source, since he knows them from a recent CloudWatch dashboard.",
+      "question": "Is using the ALB's current IP addresses as the security group source a good approach?",
+      "options": [
+        "A) Yes — IP addresses are the most precise and permanent way to restrict access",
+        "B) No — ALBs can have their underlying IP addresses change over time (AWS manages this transparently), so hardcoding them is fragile. The correct approach is referencing the ALB's SECURITY GROUP ID as the source, which stays valid regardless of any underlying IP changes",
+        "C) Yes, but only if the IPs are updated manually every 24 hours",
+        "D) It doesn't matter, since ALBs never change their IP addresses once created"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, important point — ALB's underlying IPs AWS-a manage because of doing change can happen, we control doing not. IP hardcode did, fragile-a will be. SG-to-SG reference (we in C3.2a we saw same pattern) correct, durable approach — ALB's SG ID source-a use must do.",
+      "ren_correct": "Correct — SG-to-SG reference durable pattern, IP hardcode doing fragile.",
+      "ren_wrong": "A bit think again — ALB IPs AWS-a manage because of doing change can happen. SG ID reference doing correct, IP hardcode doing not."
+    },
+    {
+      "id": "C4.4-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.4",
+      "scenario": "Before deploying the health check fix, ananya-analyst asks: 'If all 4 targets have been marked unhealthy this whole time, how were customers even placing orders successfully?'",
+      "question": "What's the most likely explanation, given the application itself was confirmed working fine?",
+      "options": [
+        "A) Customers weren't actually able to place orders at all during this period — the reported success must be a data error",
+        "B) It's likely that the ALB, when ALL targets in a target group are unhealthy, falls back to routing traffic to all registered targets anyway (a real ALB behavior for this exact edge case) rather than serving zero traffic — meaning things happened to keep working, but with none of the actual protection health checks are meant to provide",
+        "C) The health check status shown in the console must have been incorrect/a display bug, and targets were actually healthy the whole time",
+        "D) order-service must have a completely separate, undocumented path that bypasses the ALB, unrelated to the SG issue found earlier"
+      ],
+      "correct_index": 1,
+      "explanation": "This real ALB behavior, worth knowing — ALLA targets unhealthy irundha, ALB traffic completely drop what was done, ella targets-kum route does anyway (fail-open behavior for this specific edge case). This 'things happened to work' explain does, but health check's REAL protection (unhealthy targets-a isolate doing) this whole time missing-a was there.",
+      "ren_correct": "Correct — ALB's fail-open behavior idha explain does, but real protection missing-a irundhthat still true.",
+      "ren_wrong": "A bit think again — display bug not, undocumented path also not. ALB's real 'all unhealthy' fallback behavior idha explain does."
+    },
+    {
+      "id": "C4.4-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.4",
+      "scenario": "Right after restricting the security group (before the health check fix is deployed), you briefly see the ALB's CloudWatch metrics show a spike in 5xx errors, and initially suspect the SG change broke something.",
+      "error_shown": "ALB Target Group logs: \"Health checks failed with 404: GET /healthcheck\" (this exact error was ALREADY present before the SG change, just not as visible since direct-access traffic was masking the impact)",
+      "diagnosis": "The 5xx spike coincided with the SG change but was NOT caused by it — investigating the actual target group logs shows the /healthcheck 404 errors were already happening continuously beforehand. What likely changed is that with direct access now blocked, ALL traffic is forced through the ALB, which was ALREADY relying on its fail-open behavior for all-unhealthy targets — removing the direct-access \"safety valve\" (however unintentional and insecure it was) made the ALB's fragile fail-open routing the only path, and any brief hiccup in that fallback behavior became immediately visible as 5xx errors to customers.",
+      "fix": "Deploy the health check path fix (/healthcheck → /health) immediately — this addresses the actual root cause. Once targets report healthy correctly, the ALB routes normally and stops relying on fail-open behavor entirely, resolving the 5xx spike properly rather than coincidentally.",
+      "explanation": "This real lesson — correlation-a paathu 'SG change broke it' — jump do not, actual target group logs paakkanum. Real root cause different edho irundhthat (health check mismatch), that already-a if it was problem, SG fix only that more visible-a is already done."
+    },
+    {
+      "id": "C4.4-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.4",
+      "scenario": "Both fixes are deployed. Final audit before reporting back.",
+      "broken_config": "Target group: order-service-tg\n├── Health check path: /health (corrected) ✓\n├── All 4 targets: HEALTHY ✓\n\nInstance security group (sg-order-svc-0072):\n├── Inbound: Port 80, 443 from sg-alb-foodquick-order (ALB's security group, SG-to-SG reference) ✓\n└── 0.0.0.0/0 rule: removed ✓\n\nVerification:\n├── Direct connection attempt to an instance's IP: BLOCKED ✓\n├── ALB-routed customer traffic: working correctly ✓\n└── 5xx error rate: back to baseline, zero incidents in the last hour ✓",
+      "what_to_find": [
+        "Health check path correctly matches the application's actual endpoint now",
+        "All targets report healthy, meaning the ALB is routing based on real health status, not fail-open fallback behavior",
+        "Direct access is genuinely blocked, confirmed by an actual test, not just assumed from the SG rule alone",
+        "5xx errors are back to baseline — this is the real proof the fix worked, not just that the configuration looks correct on paper"
+      ],
+      "correct_fix": "No further changes needed — both issues are resolved and verified with real tests, not just configuration review.",
+      "explanation": "This 'recognize this is already correct' verify task — we two real problems fix we have done, AND real tests-a confirm we have done (direct access blocked, traffic working, error rate normal) — config 'looks right' — assume doing not."
+    },
+    {
+      "id": "C4.4-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.4",
+      "cases": {
+        "case_1": "A new customer-facing API that needs path-based routing (e.g. /api/orders vs /api/users going to different target groups) and SSL termination",
+        "case_2": "A new internal gRPC-based service between two backend systems that needs the lowest possible latency and doesn't need any HTTP-level routing logic",
+        "case_3": "A service that needs a static IP address for allowlisting purposes with an external partner's firewall"
+      },
+      "correct_answers": {
+        "case_1": "ALB — path-based routing and SSL termination are exactly ALB's Layer 7 strengths",
+        "case_2": "NLB — Layer 4 raw performance with minimal overhead fits low-latency gRPC/TCP traffic better than ALB's HTTP-aware processing",
+        "case_3": "NLB — NLB supports static IP addresses (or Elastic IPs) per AZ, which ALB does not offer in the same way, making it the right fit when a partner needs to allowlist a fixed IP"
+      },
+      "scenario": "Ravi asks you to match the right load balancer type to three different scenarios FoodQuick expects to face soon.",
+      "explanation": "Moonu different different requirement — path-based routing/SSL (ALB's strength), raw low-latency TCP (NLB's strength), static IP for partner allowlisting (NLB-specific capability). This real judgment — 'always use ALB' or 'always use NLB' a default answer not, requirement-a base after doing decide must do.",
+      "ren_correct": "Correct — each case-kum characteristics-a base after doing right LB type match did you do.",
+      "ren_wrong": "A bit think again — each case also different different requirement (path routing, raw latency, static IP), for each one different different LB type fit will happen."
+    },
+    {
+      "id": "C4.4-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.4",
+      "scenario": "Ravi asks about the real risk exposure the direct-access gap represented, for the incident writeup. FoodQuick's order-service handles customer payment initiation; a comparable direct-access bypass at a similar-sized Indian company led to a documented ₹6.2 lakh fraud loss last year when attackers found and hit an origin server directly, bypassing the load balancer's request logging and any WAF rules attached to it.",
+      "question": "How should the risk (not just the fix) be communicated in the report, given nothing bad actually happened this time?",
+      "solution": "Frame it accurately: nothing was exploited THIS time, but the gap existed for an unknown period and bypassed every protection normally sitting in front of the ALB (request logging, any future WAF rules, DDoS protections). The ₹6.2 lakh comparable incident illustrates the realistic scale of what this class of gap can cost when it IS found and exploited — not a claim that FoodQuick specifically lost money, but a concrete reason this deserved priority even though this specific instance turned out fine.",
+      "explanation": "This real risk communication — 'nothing happened, so no big deal' — underplay do not, 'we got breached' — overclaim to do vendaam. Comparable incident's real number giving, scale-a honestly convey for doing help does."
+    },
+    {
+      "id": "C4.4-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.4",
+      "scenario": "Time to report back to Ravi on this piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the load balancer issue. Everything's secure now.\"",
+        "B) \"Confirmed the ALB exists but the instance SG allowed direct access via 0.0.0.0/0, bypassing it entirely — restricted to the ALB's SG via SG-to-SG reference. Separately found the health check path was mismatched (/healthcheck configured, app serves /health) — ALL targets were unhealthy and the ALB was relying on undocumented fail-open behavior to keep working at all. Both fixed and verified with real tests (direct access blocked, traffic healthy, 5xx back to baseline). Framing the direct-access gap's real risk using a comparable ₹6.2L industry incident, though nothing here was confirmed exploited.\"",
+        "C) \"There was a small config issue, resolved now.\"",
+        "D) \"The load balancer was never actually a problem, the original concern was based on a misunderstanding.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — two real, independent problems clearly explain must do, AND real risk framing (evidence-based, not overclaimed) include must do. 'Never actually a problem' — wrong — real gap was there, Ravi's specific detail a bit off-a even if, underlying concern valid-a was there.",
+      "ren_correct": "This correct report — both real problems explained, tested, and risk honestly framed.",
+      "ren_wrong": "This report either vague-a is there or real gap-a dismiss does ('never actually a problem') — real issue was there, that acknowledge must do."
+    }
+  ],
+  "act_number": 5,
+  "act_title": "Load Balancing That Spreads Risk",
+  "builds_layer": "Traffic Entry Layer"
+}

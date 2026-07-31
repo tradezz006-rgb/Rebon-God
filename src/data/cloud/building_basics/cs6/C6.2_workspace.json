@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C6.2",
+  "ticket": "FQ-203",
+  "sender": "Deepak Menon (DevOps Lead)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-203 — Deepak Menon (DevOps Lead)\n\nTwo things this lesson. First: I want to set up real alarms for order-service, properly this time. I've been told the team has been getting woken up at 3am for things that clear themselves in 30 seconds — that's not monitoring, that's noise. I want alarms that fire when something is actually wrong, not every time a metric hiccups.\n\nSecond — and this connects back to what we found last time. That HighErrorRate-order-service alarm has been firing into silence for 6 months. Before we fix the subscription, I want to know: what was it actually catching? Were there real incidents in there, or was it just the same false-positive noise problem we're about to fix everywhere else?\n\n— Deepak",
+  "arc_outro": "Deepak Menon (DevOps Lead)\n\nThat's the uncomfortable answer — two real incidents in there, back-to-back in Week 14, buried in noise, with no notification reaching anyone. And I now know exactly when the SNS subscription was removed, because CloudTrail has a record of it. An engineer removed their personal email subscription without replacing it, which is understandable enough, but it's what turned a working alarm into a silent one.\n\nI'll handle the conversation with Ravi about what those Week 14 incidents actually cost us. You focus on getting CloudTrail properly configured — I want a full audit trail before we close this thing out.\n\n— Deepak",
+  "tasks": [
+    {
+      "id": "C6.2-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C6.2",
+      "scenario": "karthik-dev reports he's been woken up at 3am three times in the past month by the order-service CPU alarm. Each time, by the time he logged in to investigate, the CPU had already returned to normal. He's started silencing his phone after midnight.",
+      "question": "Before looking at the alarm configuration, what does this pattern strongly suggest about how the alarm is currently configured?",
+      "options": [
+        "A) The alarm is working correctly — being woken up for issues that self-resolve is normal and expected monitoring behavior",
+        "B) The alarm is likely triggering on a SINGLE datapoint crossing the threshold, rather than requiring multiple consecutive elevated readings — this makes it fire on brief, transient spikes that don't represent a real sustained problem, causing false alerts that train the team to ignore alarms",
+        "C) The alarm's threshold is set correctly, but the SNS topic is delivering notifications at the wrong time of day",
+        "D) CPU alarms are inherently unreliable and should never be used for order-service"
+      ],
+      "correct_index": 1,
+      "explanation": "3am wake-up + self-resolves before anyone can act = classic single-datapoint alarm symptom. One spike, threshold crossed once, alarm fires — but that real sustained problem not. Alert fatigue's starting point this: team starts ignoring alarms because they're mostly noise.",
+      "ren_correct": "Correct — self-resolving-before-investigation pattern single-datapoint alarm-a strongly suggest does.",
+      "ren_wrong": "A bit think again — alarm correctly configured-a irundha, self-resolving for things wake up to do must not. Configuration problem suspect."
+    },
+    {
+      "id": "C6.2-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.2",
+      "question": "What do the three CloudWatch alarm states (OK, ALARM, INSUFFICIENT_DATA) actually represent?",
+      "options": [
+        "A) OK means no data at all, ALARM means the metric is being collected, INSUFFICIENT_DATA means the alarm is broken",
+        "B) OK means the metric is within the defined threshold (no action needed); ALARM means the threshold has been crossed (action/notification triggered); INSUFFICIENT_DATA means not enough data has been collected yet to evaluate the threshold, typically seen on new alarms or after gaps in metric reporting",
+        "C) INSUFFICIENT_DATA and OK are identical states — the naming is purely cosmetic",
+        "D) ALARM state is only possible for metrics that cost money to collect"
+      ],
+      "correct_index": 1,
+      "explanation": "Moonu different different states — OK (for threshold ulla, no action), ALARM (threshold crossed, notification triggered), INSUFFICIENT_DATA (data without, evaluate to do cannot — new in alarm or metric in gap commonly seen). This fundamental, alarm debug for doing theriyanum.",
+      "ren_correct": "Correct — moonu states clear-a is clear.",
+      "ren_wrong": "A bit think again — moonu states different different meaning. INSUFFICIENT_DATA data-without state, OK's different topic."
+    },
+    {
+      "id": "C6.2-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.2",
+      "question": "What does setting an alarm to require '3 out of 5 consecutive datapoints' above a threshold actually mean, compared to '1 out of 1'?",
+      "options": [
+        "A) It means the alarm waits 5 times longer before firing in all situations, with no benefit",
+        "B) '3 out of 5' means the alarm only transitions to ALARM state when at least 3 of the last 5 evaluated datapoints are above the threshold — brief transient spikes that immediately return to normal won't trigger it, since they wouldn't produce 3 sustained elevated readings. '1 out of 1' fires the instant ANY single datapoint crosses the threshold, which is why transient spikes cause false alerts",
+        "C) '3 out of 5' and '1 out of 1' produce identical behavior — the numbers are purely for display purposes",
+        "D) '3 out of 5' reduces the alarm's sensitivity so much that it will never fire for real sustained problems either"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact distinction — '1 out of 1' single transient in spike fire even if done, '3 out of 5' sustained for elevation only fire does, brief transient spikes filter will happen. Alert fatigue avoid for doing this key mechanism.",
+      "ren_correct": "Correct — consecutive datapoints sustained for elevation filter does, transient for spikes not.",
+      "ren_wrong": "A bit think again — '3 out of 5' just slower version not. Transient spikes filter doing real value."
+    },
+    {
+      "id": "C6.2-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.2",
+      "scenario": "You pull the current alarm configuration for order-service.",
+      "broken_config": "CloudWatch Alarm: OrderService-HighCPU\n├── Metric: CPUUtilization, namespace: AWS/EC2, ASG: order-service\n├── Threshold: CPUUtilization > 80%\n├── Evaluation periods: 1\n├── Datapoints to alarm: 1 (fires on a single datapoint breach)\n├── Period: 60 seconds\n├── Alarm action: SNS → order-alerts-team (correctly subscribed email list)\n└── History: 9 ALARM transitions in the past month, 8 of which lasted under 90 seconds before returning to OK\n\nCloudWatch Alarm: HighErrorRate-order-service (the silent one from C6.1)\n├── Metric: HTTP 5xx error count, namespace: FoodQuick/OrderService\n├── Threshold: Error rate > 2% over 5 minutes\n├── Evaluation periods: 3, Datapoints to alarm: 2 (better configured than the CPU alarm)\n├── SNS topic: order-service-alerts (ZERO confirmed subscribers)",
+      "what_to_find": [
+        "OrderService-HighCPU is set to fire on 1 out of 1 datapoints — this is exactly why it fires on brief transient spikes and wakes karthik-dev up for self-resolving non-issues, 8 out of 9 times being noise",
+        "HighErrorRate-order-service is actually BETTER configured (2 out of 3 datapoints) but has the silent SNS topic problem from C6.1 — so a more thoughtfully-configured alarm has zero reach",
+        "The two alarms together illustrate both halves of the monitoring problem: one fires too easily on noise, the other fires correctly but reaches nobody",
+        "Fixing only the CPU alarm's datapoints setting while ignoring the silent error-rate alarm would leave the more important signal (actual 5xx errors) still unreachable"
+      ],
+      "correct_fix": "Update OrderService-HighCPU to require 3 out of 5 consecutive datapoints above 80% before alarming, which filters transient spikes while still catching genuine sustained high CPU. Separately, add real subscribers to order-service-alerts SNS topic for the error-rate alarm — both problems need fixing, not just the noisy one.",
+      "explanation": "Two alarm, two different different problem — one noisy (1-of-1 single datapoint), one silent (zero subscribers). Two also fix must do, single-fix after doing 'monitoring done' — saysle real problem will be."
+    },
+    {
+      "id": "C6.2-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C6.2",
+      "question": "Arrange the correct order to fix OrderService-HighCPU without creating a gap in real alert coverage.",
+      "items": [
+        "Document the current '1 out of 1' setting and the alert history (8/9 false positives) before making any change",
+        "Update the alarm to require 3 out of 5 consecutive datapoints above 80%",
+        "Verify the alarm is in OK state after the change (not stuck in a stale ALARM state)",
+        "Monitor over the next week to confirm false alert rate drops and the alarm still fires on a real, simulated sustained load test",
+        "Update the team that the change is live and explain the new behavior — so they know 'the alarm is quieter now' means 'it's better, not broken'"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Document current state first (before-after for comparison is needed), then change must do, then verify must do stale state or, then real behavior monitor must do, LAST-a team communicate must do — for team sollaama did, 'alarm broken-a' — ninaikkalaam.",
+      "ren_correct": "Nice sequencing — document, change, verify, monitor, communicate. Team communication last but necessary.",
+      "ren_wrong": "Order again paaru — team communicate doing also is important, alarm quieter but 'broken' — ninaikkaama is."
+    },
+    {
+      "id": "C6.2-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.2",
+      "scenario": "Deepak asks whether a COMPOSITE alarm — an alarm that only fires when multiple child alarms are simultaneously in ALARM state — would be a better solution for order-service instead of tuning the datapoints threshold.",
+      "question": "When would a composite alarm actually be better than tuning a single alarm's consecutive-datapoints setting?",
+      "options": [
+        "A) Composite alarms are always strictly better than tuned single alarms, regardless of the situation",
+        "B) Composite alarms are specifically valuable when you want to fire only if MULTIPLE independent signals are elevated simultaneously — e.g. 'alert only if CPU AND error rate AND latency are all high at the same time,' which filters noise better than any one metric alone can. For simple single-metric false-positive filtering (karthik-dev's 3am CPU spike), tuning the consecutive datapoints on that single alarm is simpler and sufficient",
+        "C) Composite alarms are only available for RDS metrics, never for EC2 or application metrics",
+        "D) Tuning consecutive datapoints and composite alarms are technically the same feature — the names are interchangeable"
+      ],
+      "correct_index": 1,
+      "explanation": "Composite alarm real value — multiple independent signals converge doesbothu only fire does, single metric noise-a vida very smart. But single metric's transient spike filter for doing, consecutive datapoints tuning simpler and sufficient. Correct tool, correct use case.",
+      "ren_correct": "Correct — composite alarm multi-signal for convergence, consecutive datapoints single-metric transient spike for filtering. Different different use cases.",
+      "ren_wrong": "A bit think again — composite alarms always better not, different different use case. Single for metric datapoints tuning sufficient, composite overengineering will happen."
+    },
+    {
+      "id": "C6.2-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.2",
+      "scenario": "ananya-analyst asks Deepak: 'You mentioned karthik-dev started silencing his phone after midnight because of the false alerts. Is that actually a problem beyond just annoyance?'",
+      "question": "What's the real business risk of alert fatigue — the pattern where a team starts ignoring or silencing alarms because of too much noise?",
+      "options": [
+        "A) It's only an inconvenience — teams can always check dashboards manually for anything important that alarms might miss",
+        "B) Alert fatigue is a genuine operational risk: when the team is conditioned to ignore or silence alarms because of noise, they'll also miss real incidents that fire using the same mechanism. A real production outage firing into a silenced or ignored notification channel can go undetected just as completely as FoodQuick's silent SNS topic — the human response channel being broken is functionally identical to the technical one being broken",
+        "C) Alert fatigue only affects on-call engineers, not the overall reliability of the system",
+        "D) The solution to alert fatigue is always to add more alarms covering more metrics, not to tune existing ones"
+      ],
+      "correct_index": 1,
+      "explanation": "This real operational risk — human-level silence (silenced phone) and technical-level silence (zero SNS subscribers) functionally same result: real incident fire but, nobody notices. FoodQuick's HighErrorRate alarm's exact same problem, different cause.",
+      "ren_correct": "Correct — human-level silence and technical-level silence, functionally same outcome. This real risk.",
+      "ren_wrong": "A bit think again — alert fatigue just inconvenience not. Real incidents silenced in phone fire but, nobody notices — that real operational risk."
+    },
+    {
+      "id": "C6.2-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C6.2",
+      "scenario": "Deepak's specific question: pull the full 47-alarm history of HighErrorRate-order-service and determine whether any of those firings corresponded to real incidents, or whether all 47 were noise.",
+      "error_shown": "HighErrorRate-order-service alarm history analysis (47 ALARM transitions, last 6 months):\n\nWeeks 1-13, 15-26: 45 ALARM transitions, all lasting 5-12 minutes then returning to OK, no corresponding entries in order-service application logs showing actual customer-facing errors above the 2% threshold\n\nWeek 14 (approximately 4 months ago): 2 consecutive ALARM transitions, each lasting 38-47 minutes — matching application logs show actual 5xx error rates peaking at 8-12% and 6-9% respectively during these windows, with order completion drops confirmed in the order database; no incident ticket was created, no engineering response occurred",
+      "diagnosis": "45 of 47 alarm firings were likely false positives (brief measurement artifacts or metric noise that happened to cross the threshold) — the 2-out-of-3 consecutive datapoints configuration was correctly filtering most noise but not all. The 2 Week 14 firings were REAL: actual elevated error rates, real impact on customers placing orders, and zero engineering response because the SNS topic had no subscribers. These are exactly the incidents that should have woken someone up — and didn't, because the notification path was silently broken.",
+      "fix": "Report these findings specifically to Deepak for the conversation with Ravi. The Week 14 incidents need a timeline: when did they happen, how long did they last, what was the customer impact (order drops), and when was the SNS subscription removed (CloudTrail will have this — appropriate for C6.3). This is no longer a monitoring-hygiene finding; it's a real, documentable operational gap.",
+      "explanation": "This Act 2 mystery deepening — 45 firings noise-a irundhaachu (expected, alarm config reasonable-a was there), but 2 real incidents. This 'flying blind' theme's exact cost: real customer impact, no response, no record. Next question: when did the subscription go silent, and why — CloudTrail in C6.3 answer does."
+    },
+    {
+      "id": "C6.2-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.2",
+      "scenario": "Both alarm fixes are applied. Final verification before reporting back.",
+      "broken_config": "Post-fix alarm audit:\n\nOrderService-HighCPU:\n├── Datapoints to alarm: 3 out of 5 (updated from 1 out of 1)\n├── First week under new config: 0 ALARM transitions (vs 9 in prior month) ✓\n├── Simulated load test (genuine sustained CPU >80% for 6 minutes): ALARM correctly triggered after 3rd consecutive datapoint ✓\n└── karthik-dev confirmed: no false 3am wake-ups since the change\n\nHighErrorRate-order-service:\n├── New SNS subscribers added: deepak.menon@foodquick.in, oncall-engineering@foodquick.in (team distribution list, not a personal email) ✓\n├── Test notification sent manually: received by both subscribers, confirmed working ✓\n├── Alarm config unchanged (2 out of 3 already reasonable) ✓\n└── Week 14 real incidents documented separately for Ravi's conversation",
+      "what_to_find": [
+        "The CPU alarm's 0 false positives in the first week confirms the consecutive-datapoints change is working — the simulated load test proves it still catches real sustained problems",
+        "The error-rate alarm now reaches real humans, confirmed via a test notification (not just assumed from the config change alone)",
+        "Critically, the new SNS subscriber is a team distribution list, not a personal email — this is exactly the structural fix: a personal email subscription being removed silently is what caused the original gap",
+        "The Week 14 findings are correctly left open as a separate ongoing item rather than buried in the technical alarm-fix summary"
+      ],
+      "correct_fix": "No further changes needed on alarm configuration — both alarms are now correctly configured and reaching the right people. The Week 14 incident documentation remains open pending CloudTrail investigation.",
+      "explanation": "This 'recognize this is already correct' verify task — we two alarms fix we have done, real tests after doing verify we have done, AND structural fix (distribution list vs personal email) but C6.3's open item correctly open-a is there."
+    },
+    {
+      "id": "C6.2-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C6.2",
+      "cases": {
+        "case_1": "A metric that frequently has brief, 1-2 minute spikes that are normal and harmless, but sustained elevation for 10+ minutes is a real problem",
+        "case_2": "A situation where you only want to alert when BOTH the error rate AND the latency are elevated simultaneously (single elevated metric alone is within normal variance)",
+        "case_3": "A metric where any single reading above the threshold is immediately customer-impacting and requires instant response",
+        "case_4": "An alarm for a new service where you're not sure yet what 'normal' looks like, and want to tune thresholds as you learn more"
+      },
+      "correct_answers": {
+        "case_1": "Consecutive datapoints (e.g. 5 out of 5 over 2-minute periods) — filters the normal brief spikes while still catching the sustained elevation that matters",
+        "case_2": "Composite alarm combining both the error-rate and latency child alarms — neither alone is sufficient to trigger, both together are",
+        "case_3": "1 out of 1 IS actually appropriate here — the false-positive cost is lower than the cost of delayed response to a real single-reading problem. Context matters",
+        "case_4": "Start with a loose threshold and 1 out of 1 to observe behavior, then tighten based on real data — not a permanent configuration, but appropriate while calibrating"
+      },
+      "scenario": "Deepak asks you to document the standing framework for when each alarm configuration pattern makes sense.",
+      "explanation": "Naanku different different scenario — sustained-elevation-filter (consecutive datapoints), multi-signal-convergence (composite), immediate-impact (1-of-1 appropriate), calibration-phase (loose threshold temporarily). This real judgment — '1 out of 1 always wrong' — saying also, 'consecutive datapoints always right' — saying also, both oversimplification.",
+      "ren_correct": "Correct — each case-kum actual pattern and stakes base after doing right configuration match did you do.",
+      "ren_wrong": "A bit think again — '1 out of 1 always wrong' — oversimplify do not. Context matter does, case in 3 that appropriate."
+    },
+    {
+      "id": "C6.2-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C6.2",
+      "scenario": "Deepak wants to quantify the real operational cost of the 3am false alerts — not just the SNS notification charges, which are negligible. karthik-dev estimates each false alert costs him roughly 45 minutes of disrupted sleep and an hour of actual investigation time before he's confident it was a false positive. At a senior engineer's rough internal cost of ₹2,500/hour, and 8 confirmed false alerts in the past month:",
+      "question": "What's the real monthly cost of the noisy alarm, and how does it compare to the negligible SNS cost?",
+      "solution": "SNS notification cost: effectively ₹0 per alert at this volume — email notifications through SNS cost fractions of a rupee each. Real cost: 8 false alerts × (1 hour investigation + disrupted-sleep productivity impact, conservatively valued at another 1 hour equivalent) = roughly 16 hours × ₹2,500/hour ≈ ₹40,000/month in engineering time and quality-of-life cost. The infrastructure cost of the alarm is irrelevant; the human cost of poorly-configured alerting is what actually matters here.",
+      "explanation": "This real cost framing — SNS/CloudWatch alarm cost negligible, but engineer-time and alert fatigue cost real-a is there. This why alarm quality matters more than alarm quantity."
+    },
+    {
+      "id": "C6.2-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.2",
+      "scenario": "Time to report back to Deepak on this piece of FQ-203.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed both alarms. Monitoring is working properly now.\"",
+        "B) \"OrderService-HighCPU updated from 1-of-1 to 3-of-5 consecutive datapoints — 0 false alerts in the first week vs 9/month before, and a simulated load test confirmed real sustained problems still trigger correctly. HighErrorRate-order-service now has confirmed subscribers (distribution list, not a personal email — structural fix to prevent a silent removal). Historical analysis of the 47 silent firings: 45 appear to be noise, 2 in Week 14 were real sustained error spikes with confirmed order-completion drops — no engineering response occurred during either because the notification path was already silent. Flagging Week 14 details to Deepak separately for the Ravi conversation. CloudTrail investigation (when/who removed the SNS subscription) appropriate next step.\"",
+        "C) \"All 47 previous alarm firings were false positives, everything is fine now.\"",
+        "D) \"Found some alarm configuration issues, addressed them.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific numbers (0 false alerts, 9 before), real test evidence (load test), the structural fix explanation (distribution list vs personal email), AND the Week 14 real-incident finding honestly stated without burying it in the technical fix summary. Option C dangerous — claiming all 47 were false positives incorrectly covers up two real incidents.",
+      "ren_correct": "This correct report — specific evidence, structural fix explained, real incidents honestly reported separate from the technical alarm fixes.",
+      "ren_wrong": "This report either vague-a is there or real incidents incorrectly dismiss does ('all 47 false positives') — this real finding, cover-up must not."
+    }
+  ],
+  "act_number": 2,
+  "act_title": "Alarms That Page the Right People",
+  "builds_layer": "Alerting Layer"
+}

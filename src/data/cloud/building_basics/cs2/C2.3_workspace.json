@@ -1,0 +1,248 @@
+{
+  "lesson_id": "C2.3",
+  "act_number": 4,
+  "act_title": "The Weight of Forgotten Access",
+  "builds_layer": "Access Hygiene Layer",
+  "total_tasks": 12,
+  "arc_intro": "Ravi's ask is clear: find everything the deleted account left behind, before the auditor does. Two threads have been sitting open since your first day on this ticket — a mysterious access key and a forgotten admin role. Today, you find out if they're finally the same story.",
+  "tasks": [
+    {
+      "id": "C2.3-T1",
+      "sequence": 1,
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "You ask Ravi who the deleted account actually belonged to. He checks HR records: 'That was Vikram — a DevOps contractor who left the company about 6 months ago. His last official working day was logged, but I don't actually know when his AWS access was fully cut off.'",
+      "question": "What is the first thing you need to establish before investigating further?",
+      "options": [
+        "A) Whether Vikram is a common name at the company",
+        "B) The exact gap, if any, between Vikram's official last working day and the date his AWS access was actually, fully revoked",
+        "C) What Vikram's personal opinion of the company was when he left",
+        "D) Whether Vikram ever met the auditor before"
+      ],
+      "correct_index": 1,
+      "explanation": "Official last day, actual access revoked day — No, gap. gap- — investigate must be done.",
+      "ren_correct": "Correct focus — the gap between 'left' and 'actually locked out' is where problems live.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.3-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "question": "Before diving into Vikram's specific case, a quick grounding check: what is privilege creep, in one sentence?",
+      "options": [
+        "A) A deliberate attempt by a developer to gain more access than they should have",
+        "B) Permissions that accumulate naturally over time as roles and projects change, rarely getting removed when no longer needed",
+        "C) A bug in AWS IAM that randomly expands permissions",
+        "D) Something that only happens at companies larger than 500 employees"
+      ],
+      "correct_index": 1,
+      "explanation": "Privilege creep deliberate Not quite — natural process. Roles, projects, old access remove.",
+      "ren_correct": "Right — and Vikram's case is about to be the clearest example of this you've seen yet.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.3-T3",
+      "sequence": 3,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "iam_console",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "You pull the full historical permission record for Vikram's account before it was deleted, from IAM Access Advisor's archived data.",
+      "broken_config": "Vikram — Historical Access Record (before deletion):\n├── EC2 (full access) — granted on hire, used regularly\n├── S3 (full access) — granted on hire, used regularly\n├── iam:CreateUser, iam:AttachUserPolicy — granted 8 months ago for 'initial account setup help', NEVER revoked\n├── RDS admin — granted for a 2-week migration project, 7 months ago, never used since\n└── Billing view access — granted on hire, rarely used but harmless",
+      "what_to_find": [
+        "iam:CreateUser and iam:AttachUserPolicy — granted for a ONE-TIME setup task 8 months ago, still active the entire time until his account was deleted",
+        "This is exactly the permission needed to create a new admin user or grant broad access to an existing one — the most dangerous kind of leftover permission",
+        "RDS admin from an old migration project was also never revoked, though less immediately dangerous than the IAM permissions"
+      ],
+      "correct_fix": "Both should have been revoked immediately after their one-time purposes were served: iam:CreateUser/AttachUserPolicy right after initial setup was done, RDS admin right after the migration project completed 7 months ago. Neither should have still been active 6+ months later when his account was ultimately deleted.",
+      "explanation": "iam:CreateUser 8 active-, one-time task-. This is AdminAccess role, ml-team-policy — permission use do create."
+    },
+    {
+      "id": "C2.3-T4",
+      "sequence": 4,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "question": "Which AWS tool would have caught this specific problem — an 8-month-old unused iam:CreateUser permission — if it had been run regularly?",
+      "options": [
+        "A) IAM Access Advisor, checking last-used dates on each permission",
+        "B) AWS Cost Explorer",
+        "C) CloudWatch Billing Alarms",
+        "D) VPC Flow Logs"
+      ],
+      "correct_index": 0,
+      "explanation": "Access Advisor — exact tool. Last-used date. tool, quarterly- run do, Vikram- iam:CreateUser permission months- flag.",
+      "ren_correct": "Exactly — and 'quarterly, regularly' is the operative word. A tool that exists but never gets used doesn't help.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.3-T5",
+      "sequence": 5,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "You check the exact offboarding timeline. Vikram's official last working day is logged. His IAM user was fully deleted 14 days later — HR processed the paperwork slowly, and the deletion request sat in a queue.",
+      "question": "Now cross-reference this with the mysterious access key from your very first investigation — created 12 days after a DIFFERENT event (a contractor's project ending) on the dev-shared account. Does the timing line up, and what does that suggest?",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "12 days after the contractor's project fits within the 14-day window before Vikram's account was actually deleted — meaning Vikram's account was still fully active and capable of creating access keys during that exact window",
+        "This strongly suggests Vikram's still-active account — with its still-active iam:CreateUser-adjacent permissions — is connected to that mysterious key on dev-shared",
+        "Whether Vikram did this himself or someone else used his still-valid credentials during his final days cannot be confirmed with certainty from this data alone, but the account and the timing both point the same direction"
+      ],
+      "explanation": "12 vs 14- window — almost exact match. Vikram account active- window- mysterious key create. This is connection — proof Not quite — strong correlation."
+    },
+    {
+      "id": "C2.3-T6",
+      "sequence": 6,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "You pull the complete CloudTrail record for Vikram's account during his final 14 days, to see the full picture at once — not just the one event you found weeks ago.",
+      "error_shown": "CloudTrail Event History — userName: vikram.devops, final 14 days before deletion:\n\nDay 3 after official last day: CreateRole (foodquick-order-notification-role) — AdministratorAccess attached\nDay 5 after official last day: PutUserPolicy on ml-team-policy — Action ec2:*, no Condition block, comment: 'quick access for the sprint, will scope later'\nDay 12 after official last day: CreateAccessKey on user 'dev-shared' — from IP 185.220.101.47 (a known exit node commonly used to mask true origin)\nDay 14 after official last day: IAM user vikram.devops finally deleted by HR-triggered offboarding process",
+      "diagnosis": "The full timeline is now visible in one place: three separate 'unexplained' findings from across this entire investigation were all Vikram's account, active during a 14-day gap between his last working day and actual deletion. The Day 12 event — the new access key on dev-shared — came from an IP address associated with anonymization services, which is different in character from the earlier two events (which look like rushed, sloppy work, not deliberate concealment).",
+      "fix": "Document the full timeline precisely for Ravi and, given the anonymized IP on Day 12, recommend this specific event be escalated for a deeper security review rather than closed as 'just sloppy offboarding' like the other two. The root cause fix regardless: offboarding must revoke access on the LAST WORKING DAY, not whenever HR paperwork happens to clear.",
+      "explanation": "events, 14-day window, person. — rushed, sloppy, 'will fix later' habit. — anonymized IP, character. This is real answer: root cause (slow offboarding), Day 12 event escalate must be done."
+    },
+    {
+      "id": "C2.3-T7",
+      "sequence": 7,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "Ravi asks the question everyone's been wondering: 'Did any real damage happen? Was anything actually accessed or taken using that access key?'",
+      "question": "What is the correct next investigative step to actually answer this question, rather than guessing?",
+      "options": [
+        "A) Assume no damage occurred since nothing has been reported broken",
+        "B) Use CloudTrail to trace every API call made using the credentials from that specific access key, from the moment it was created until it was deactivated, to build a factual record of exactly what was accessed",
+        "C) Ask Vikram directly, since he would know best",
+        "D) Delete all logs from that period since the account is already gone and the issue is resolved"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: Use CloudTrail to trace every API call made using the credentials from that specific access key, from the moment it was created until it was deactivated, to build a factual record of exactly what was accessed",
+      "ren_correct": "Correct instinct — assumptions aren't evidence, CloudTrail is.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.3-T8",
+      "sequence": 8,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "iam_console",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "With Vikram's case understood, Ravi wants to know if this exact pattern — a departed person's permissions lingering — exists anywhere else in the account, right now, for anyone.",
+      "broken_config": "Full Team Access Advisor Sweep — Departed/Inactive Status Check:\n├── vikram.devops — deleted (this investigation)\n├── priya.dev — active, all permissions used within 30 days ✓\n├── karthik.dev — active, all permissions used within 30 days ✓\n├── ananya.analyst — active, all permissions used within 30 days ✓\n├── former-intern-2025 — account still EXISTS, last login 5 months ago, has S3 read + EC2 read still active\n└── contractor-temp-account — account still EXISTS, project ended 3 months ago, has RDS read still active",
+      "what_to_find": [
+        "former-intern-2025 — an internship that clearly ended, account never deactivated, 5 months of unused but active access",
+        "contractor-temp-account — same pattern as Vikram, a temporary engagement that ended without the access being removed",
+        "Both of these are currently-existing versions of the exact same root cause you just spent this whole investigation tracing"
+      ],
+      "correct_fix": "Deactivate both accounts immediately. Going forward, this confirms the need for the systematic offboarding and quarterly review process — this isn't hypothetical prevention, these two accounts prove the pattern is still live in the account right now.",
+      "explanation": "This is real payoff — Vikram investigation do, pattern. coincidence Not quite — This is company- actual habit, visible."
+    },
+    {
+      "id": "C2.3-T9",
+      "sequence": 9,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "Later that day, karthik-dev asks: 'Can I get DynamoDB admin access? There's a project next quarter that might need it, and I don't want to wait for approval later.'",
+      "question": "Given everything you just found, how do you respond?",
+      "options": [
+        "A) Grant it now — it's easier than waiting",
+        "B) Decline for now — ask him to request the specific scoped access when the project actually starts and the real requirements are known",
+        "C) Grant it, but set a personal reminder to check on it in 6 months",
+        "D) Grant read-only DynamoDB as a compromise"
+      ],
+      "correct_index": 1,
+      "explanation": "'just in case' request pattern Vikram- case-. Project start exact requirement. Speculative access, especially after - then,.",
+      "ren_correct": "You've internalized exactly the right lesson from today.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.3-T10",
+      "sequence": 10,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "Ravi asks you to design the actual prevention process — not just today's cleanup, but something that makes this structurally hard to repeat.",
+      "options": [
+        "A) Ask managers to remember to notify IT when someone leaves or a project ends",
+        "B) Two linked processes: (1) offboarding triggers IMMEDIATE access revocation on the last working day, not after HR paperwork, and (2) a recurring quarterly Access Advisor sweep across all users flags anything unused for 90+ days for review",
+        "C) Give every new hire minimal access forever and never grant elevated permissions even temporarily",
+        "D) Require director-level approval for every single permission grant, no matter how small"
+      ],
+      "correct_index": 1,
+      "explanation": "'Managers remember' — original problem, process Not quite. Immediate offboarding revocation + recurring quarterly review — This is structural fix, - without.",
+      "ren_correct": "This is exactly the kind of process that survives people forgetting things — which they always will.",
+      "ren_wrong": "Not quite. 'Remember to notify' relies on human memory — that's precisely what failed with Vikram. Need structural, automatic process."
+    },
+    {
+      "id": "C2.3-T11",
+      "sequence": 11,
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "question": "Arrange the new FoodQuick offboarding process in the correct order, based on everything learned from Vikram's case.",
+      "items": [
+        "Access revocation happens ON the last working day, not after HR paperwork clears",
+        "Disable console login immediately",
+        "Deactivate ALL access keys, not just the password",
+        "Remove from all IAM groups",
+        "Audit CloudTrail for the departing person's last 30 days of activity",
+        "Fully delete the IAM user only after the audit confirms nothing is pending"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "explanation": "Last working day- revoke must be done — Vikram case- 14- gap problem. Password, keys, groups. Audit do final delete."
+    },
+    {
+      "id": "C2.3-T12",
+      "sequence": 12,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.3",
+      "max_attempts": 3,
+      "scenario": "Five days until the audit. Time for the final report on this piece — the biggest finding of the entire investigation so far.",
+      "question": "Write the complete summary for Ravi: what happened, what you found, what's fixed, and what's still being escalated.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "All three unexplained findings from this investigation (mystery key, admin role, sloppy policy) trace to one former contractor, Vikram, whose access remained active for 14 days after his last working day due to slow offboarding",
+        "Two additional currently-active accounts with the same lingering-access pattern were found and deactivated during this sweep",
+        "The access key event specifically (from an anonymized IP) is being escalated for deeper security review, separate from the general offboarding process failure",
+        "New offboarding and quarterly review processes are now designed and ready to implement"
+      ],
+      "explanation": "Access Hygiene Layer resolved — entire investigation- main mystery close. Full picture: root cause, immediate fixes, escalation, prevention — report-."
+    }
+  ],
+  "arc_outro": "Access Hygiene Layer: secured. The mystery that started on Day 1 of FQ-142 is finally understood — not a dramatic hack, but the quiet, ordinary failure of an offboarding process that took 14 days too long. Ravi reads the full report and is quiet for a moment. 'This is exactly what the auditor would have found if we hadn't. Good work.' Five days to the audit. Two layers left — and now it's about making sure trust, once given, is given correctly, and never again forgotten."
+}

@@ -1,0 +1,311 @@
+{
+  "lesson_id": "C3.2b",
+  "lesson_title": "Multi-AZ Design",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C3.2a — Subnets Public vs Private",
+  "student_will_learn": [
+    "Explain why a single Availability Zone is a single point of failure",
+    "Distinguish an AWS Region from an Availability Zone (AZ)",
+    "Explain how RDS Multi-AZ failover keeps a database available during an AZ outage",
+    "Design an Auto Scaling Group that spans multiple AZs correctly",
+    "Identify why a low minimum capacity setting can silently defeat multi-AZ redundancy"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம foodquick-public-1a, foodquick-private-1a subnets create பண்ணோம் - ரெண்டுமே ap-south-1a-ல தான். Priya Nair FQ-156-ல அடுத்த கேள்வி கேட்டிருக்காங்க - 'ap-south-1a data center-ல ஏதாவது problem வந்தா, FoodQuick முழுசா down ஆயிடுமா?' இதுதான் இன்னைக்கு நாம பேசப் போற Multi-AZ design.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.2b",
+        "Multi-AZ Design",
+        "Ticket FQ-156 — continuing with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Region, Availability Zone, and Why One AZ Is Not Enough",
+      "ava_speaks": "AWS Region ஒரு geographic area - example ap-south-1 (Mumbai). ஒவ்வொரு Region-க்குள்ளயும் multiple Availability Zones (AZs) இருக்கும் - இது தனி தனி data centers, தனி power, தனி cooling, தனி networking வெச்சிருக்கும், ஆனா low-latency-ஆ ஒண்ணுக்கொண்ணு connect ஆயிருக்கும். ஒரு resource - EC2, RDS - ஒரு specific AZ-க்குள்ள தான் இருக்கும். அந்த AZ-க்கு ஏதாவது problem வந்தா (power outage, network issue), அந்த AZ-ல மட்டும் இருக்கற எல்லாமே unavailable ஆயிடும். இதுதான் single point of failure.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Region vs Availability Zone"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Region",
+            "Availability Zone (AZ)"
+          ],
+          "rows": [
+            [
+              "A geographic area (e.g. ap-south-1, Mumbai)",
+              "One isolated data center (or cluster) within that region"
+            ],
+            [
+              "Contains multiple AZs (usually 3+)",
+              "Has its own power, cooling, and networking"
+            ],
+            [
+              "Resources don't span regions automatically",
+              "AZs within a region are connected with low-latency links"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "A single AZ going down should never take down the whole application — that's what multi-AZ design protects against."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ap-south-1a-ல ஒரு power outage வந்துச்சு. ap-south-1a-ல மட்டும் resources வெச்சிருக்கற ஒரு app-க்கு என்ன ஆகும்?",
+          "options": [
+            "A) ஒண்ணுமே ஆகாது, Region-ல மற்ற AZs இருக்கே",
+            "B) App முழுசா unavailable ஆயிடும், ஏன்னா அதோட resources எல்லாம் ஒரே AZ-ல தான்",
+            "C) Traffic automatic-ஆ வேற region-க்கு redirect ஆயிடும்",
+            "D) Database மட்டும் affect ஆகும், app servers affect ஆகாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Resources ஒரே AZ-ல மட்டும் இருந்தா, அந்த AZ down ஆனா முழு app-மும் unavailable ஆயிடும் - இதுதான் single point of failure-ஓட real impact.",
+          "ava_wrong": "இல்ல, AWS automatic-ஆ ஒண்ணுமே பண்ணாது - நாம explicit-ஆ multiple AZs-ல resources spread பண்ணனும், இல்லனா ஒரு AZ down ஆனா முழு app-மும் down ஆயிடும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Region-க்கும் Availability Zone-க்கும் உள்ள relationship என்ன?",
+          "options": [
+            "A) ரெண்டும் ஒண்ணுதான், பேரு மட்டும் வேற",
+            "B) ஒரு Region-க்குள்ள multiple AZs இருக்கும்",
+            "C) ஒரு AZ-க்குள்ள multiple Regions இருக்கும்",
+            "D) Region-மும் AZ-மும் தனித்தனியா, ஒண்ணுக்கொண்ணு relation இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Region ஒரு பெரிய geographic area, அதுக்குள்ள multiple, physically separate AZs இருக்கும்.",
+          "ava_wrong": "இல்ல, Region பெரிசு, அதுக்குள்ள multiple AZs இருக்கும் - தலைகீழா நினைச்சுக்காத."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Cost of Single-AZ Architecture",
+      "ava_speaks": "AWS-ல periodic-ஆ AZ-level issues நடக்கும் - 2023-ல ap-south-1-ல ஒரு network event, single-AZ architecture வெச்சிருந்த பல startups-ஐ hours-கணக்கா affect பண்ணுச்சு, ஆனா multi-AZ architecture வெச்சிருந்த companies-க்கு customer-facing impact ஏதுமே இல்லாம போச்சு. FoodQuick-ஓட scale-ல, ஒரு single-AZ outage-ல ஒரு மணி நேரம் downtime ஆனா, roughly ₹6-8 லட்சம் revenue loss வரும்nu Priya Nair-ஓட estimate.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Single-AZ Risk vs Multi-AZ Protection"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Single-AZ Architecture",
+            "Multi-AZ Architecture"
+          ],
+          "rows": [
+            [
+              "One AZ outage = full application outage",
+              "One AZ outage = automatic failover, users barely notice"
+            ],
+            [
+              "Estimated FoodQuick impact: ₹6-8 lakh/hour during an outage",
+              "Slightly higher baseline cost (duplicate resources), but no single point of failure"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Adding a Second AZ and Enabling RDS Multi-AZ",
+      "ava_speaks": "karthik-dev இப்போ foodquick-prod-vpc-ல ஒரு second AZ-க்கு subnets add பண்றான், அப்புறம் database-க்கு Multi-AZ enable பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல VPC Console-ல, ap-south-1b-க்கு ஒரு புது public subnet create பண்றோம் - 10.0.3.0/24, பேரு 'foodquick-public-1b'.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create subnet form",
+              "field": "Subnet name, IPv4 CIDR block, Availability Zone",
+              "value": "foodquick-public-1b, 10.0.3.0/24, ap-south-1b",
+              "highlight": "Availability Zone dropdown showing ap-south-1b",
+              "result": "A second public subnet now exists in a different AZ from foodquick-public-1a"
+            }
+          },
+          {
+            "ava_narration": "அதே மாதிரி ap-south-1b-க்கு ஒரு private subnet-மும் create பண்றோம் - 10.0.4.0/24, 'foodquick-private-1b'.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create subnet form",
+              "field": "Subnet name, IPv4 CIDR block, Availability Zone",
+              "value": "foodquick-private-1b, 10.0.4.0/24, ap-south-1b",
+              "highlight": "Availability Zone dropdown showing ap-south-1b",
+              "result": "A second private subnet now exists, ready for a standby database or app servers"
+            }
+          },
+          {
+            "ava_narration": "இப்போ RDS Console-ல foodquick-orders-db-க்கு போய், Modify click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "RDS Console → Databases → foodquick-orders-db → Modify",
+              "highlight": "Modify button",
+              "result": "The database modification form opens"
+            }
+          },
+          {
+            "ava_narration": "'Multi-AZ deployment' option-ஐ 'Yes'nu மாத்துறோம். இது ap-south-1b-ல ஒரு standby replica automatic-ஆ create பண்ணும்.",
+            "console_action": {
+              "type": "select",
+              "path": "Modify DB instance → Availability & durability",
+              "field": "Multi-AZ deployment",
+              "value": "Yes",
+              "highlight": "Multi-AZ deployment radio button",
+              "result": "AWS begins provisioning a synchronous standby replica in a different AZ"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "FoodQuick's production database now has a synchronous standby copy in ap-south-1b. If ap-south-1a fails, RDS automatically fails over to the standby, typically within 60-120 seconds, without any manual intervention.",
+          "what_to_notice": "Application code-ல எதுவும் மாத்த வேண்டாம் - RDS endpoint அப்படியே இருக்கும், failover நடந்தும் application-க்கு transparent-ஆ இருக்கும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How RDS Multi-AZ Failover Works",
+      "ava_speaks": "இந்த diagram பாரு - primary DB ap-south-1a-ல, standby DB ap-south-1b-ல. Normal operation-ல, application primary-கிட்ட மட்டும்தான் பேசும். AZ failure ஆனா, என்ன நடக்கும்nு பாரு.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Normal operation:",
+            "  Application --> Primary DB (ap-south-1a) --sync replication--> Standby DB (ap-south-1b)",
+            "",
+            "ap-south-1a fails:",
+            "  RDS detects the failure",
+            "  Standby DB (ap-south-1b) is promoted to primary",
+            "  DNS endpoint automatically repoints to the new primary",
+            "  Application reconnects using the SAME endpoint — no code change needed"
+          ]
+        },
+        "ava_narration": "Failover-க்கு roughly 60-120 seconds ஆகும் - அந்த window-ல brief connection errors வரலாம், ஆனா application code retry logic வெச்சிருந்தா, user almost எதுவும் கவனிக்க மாட்டாங்க."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Configure an Auto Scaling Group Across Two AZs",
+      "instruction": "FoodQuick-ஓட application servers-க்கு ஒரு Auto Scaling Group configure பண்ணு, அது ரெண்டு AZs-லயும் correctly spread ஆகணும்.",
+      "scenario": "FoodQuick-ஓட app servers தற்போது ap-south-1a-ல மட்டும் இருக்காங்க. Priya Nair, இதை multi-AZ ஆக்கணும்னு request பண்ணி இருக்காங்க, ஆனா minimum capacity setting-ஐ கவனமா தேர்ந்தெடுக்கணும் - ஒரு common mistake தவிர்க்க.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Auto Scaling Groups → Create Auto Scaling group",
+        "current_configuration": "No ASG exists yet; app servers are currently launched manually, only in ap-south-1a"
+      },
+      "requirements": [
+        "Select both foodquick-public-1a and foodquick-public-1b subnets so the ASG can launch instances in either AZ",
+        "Set minimum capacity to at least 2, not 1",
+        "Set desired capacity to 2, distributing one instance per AZ",
+        "Set maximum capacity to a reasonable headroom above desired, e.g. 4"
+      ],
+      "hints": [
+        "ASG create பண்றப்போ, subnet selection-ல ரெண்டு AZs-ஓட subnets-ஐயும் தேர்ந்தெடுக்கணும் - ஒண்ணு மட்டும் select பண்ணினா, multi-AZ benefit கிடைக்காது",
+        "Minimum capacity 1-ஆ வெச்சா, AWS ஒரே ஒரு instance மட்டும் run பண்ணும் - அது எந்த AZ-ல வேணும்னாலும் இருக்கலாம், அதனால redundancy உறுதி இல்ல",
+        "Minimum 2 வெச்சா, ASG பொதுவா ஒவ்வொரு AZ-க்கும் ஒரு instance spread பண்ணும் - இதுதான் real redundancy"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "The ASG is configured with both AZ subnets attached, minimum capacity 2, desired capacity 2, maximum capacity 4",
+        "ava_correct": "Perfect! இப்போ ஒரு AZ fail ஆனாலும், மற்ற AZ-ல இருக்கற instance traffic handle பண்ணும்.",
+        "ava_wrong": "Minimum capacity-ஐ ஒரு தடவை check பண்ணு - 1-ஆ வெச்சிருந்தா, ரெண்டு AZs subnet-ல select பண்ணியிருந்தாலும், redundancy உறுதி இல்ல."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Two AZs Selected, Still a Single Point of Failure",
+      "ava_speaks": "FoodQuick-ல ஒரு engineer, ASG-ஐ ரெண்டு AZs-ல subnet select பண்ணி configure பண்ணிட்டான் - சரியா தான் பண்ணினான்nu நினைச்சான். ஆனா ஒரு நாள் ap-south-1a-ல ஒரு issue வந்தப்போ, FoodQuick முழுசா down ஆயிடுச்சு. என்ன தப்பு நடந்துச்சு?",
+      "setup": "An engineer configures the FoodQuick app-server Auto Scaling Group with both ap-south-1a and ap-south-1b subnets attached, believing this alone guarantees multi-AZ redundancy.",
+      "what_happened": "The ASG's minimum capacity was left at the default value of 1, and desired capacity was also set to 1 to save cost during a quiet period. AWS launched the single running instance in ap-south-1a. When ap-south-1a had an issue, there was no instance running in ap-south-1b to take over.",
+      "broken_config": "Auto Scaling Group: foodquick-app-asg\nSubnets: foodquick-public-1a, foodquick-public-1b (both attached)\nMinimum capacity: 1\nDesired capacity: 1\nMaximum capacity: 4",
+      "error_shown": "CloudWatch alarm: foodquick-app-asg has 0 healthy targets in target group foodquick-app-tg. All application requests returning 503 Service Unavailable.",
+      "the_real_problem": "ரெண்டு AZs-ஓட subnets attach பண்றது, redundancy-ஐ guarantee பண்ணாது - அது வெறும் possibility மட்டும்தான். Minimum capacity 1-ஆ இருந்தா, AWS ஒரே ஒரு instance மட்டும் run பண்ணும், அது எந்த ஒரு AZ-ல வேணும்னாலும் இருக்கலாம். அந்த ஒரு AZ fail ஆனா, மற்ற AZ-ல எந்த instance-மும் இல்லாததால, முழு app-மும் down ஆகும்.",
+      "fix": {
+        "corrected_config": "Auto Scaling Group: foodquick-app-asg\nSubnets: foodquick-public-1a, foodquick-public-1b (unchanged)\nMinimum capacity: 2\nDesired capacity: 2\nMaximum capacity: 4",
+        "result": "With minimum and desired capacity both at 2, the ASG maintains at least one healthy instance per AZ. If ap-south-1a fails, the instance in ap-south-1b continues serving traffic while the ASG launches a replacement."
+      },
+      "lesson": "Multiple AZs-ஓட subnets attach பண்றது மட்டும் போதாது - minimum capacity குறைந்தது AZ count-ஐ match பண்ணனும், இல்லனா multi-AZ design வெறும் theoretical-ஆ மட்டும் இருக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Multi-AZ Design Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "FoodQuick wants to save cost and considers running the RDS standby replica in the SAME AZ as the primary, just on a different instance. Does this achieve the same protection as true Multi-AZ?",
+          "answer": "No. If both primary and standby are in the same AZ, an AZ-level failure (power, networking, the data center itself) takes down both simultaneously. Multi-AZ protection specifically requires the standby to be in a physically separate AZ."
+        },
+        {
+          "question": "An ASG has minimum=2, desired=2, maximum=2, spread across 2 AZs. One instance in ap-south-1a becomes unhealthy and is terminated. What happens next?",
+          "answer": "The ASG launches a replacement instance to bring the count back to desired capacity (2). It could land in either AZ depending on capacity and AWS's placement logic — the key protection is that the OTHER AZ's instance kept serving traffic throughout, so there was no full outage."
+        },
+        {
+          "question": "A junior engineer proposes setting maximum capacity equal to minimum capacity (e.g. both at 2) to keep costs predictable. What's the risk of this specific choice?",
+          "answer": "It removes the ASG's ability to scale UP during a genuine traffic spike, separate from the AZ redundancy question — if demand exceeds what 2 instances can handle, requests will fail with no room to add capacity. Multi-AZ redundancy and scaling headroom are two different problems; minimum protects against AZ failure, but maximum needs enough headroom above desired to absorb real traffic growth."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Architects Validate Multi-AZ Design Before It's Tested for Real",
+      "ava_speaks": "Priya Nair மாதிரி Cloud Architects, multi-AZ design பண்ணின பிறகு, அது உண்மையிலேயே வேலை செய்யுமான்னு proactive-ஆ verify பண்ணுவாங்க - ஒரு real AZ outage வரும் வரைக்கும் காத்திருக்க மாட்டாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Run a controlled failover test on RDS Multi-AZ using the 'Reboot with failover' option during a low-traffic window",
+          "detail": "இது real outage மாதிரியே behavior simulate பண்ணும், ஆனா controlled-ஆ, தேர்ந்தெடுத்த நேரத்துல"
+        },
+        {
+          "step": 2,
+          "action": "Manually terminate one ASG instance and confirm traffic continues serving from the other AZ without customer impact",
+          "detail": "இது 'நாங்க think பண்றது' vs 'உண்மையிலேயே நடக்கறது' இடையே உள்ள gap-ஐ கண்டுபிடிக்க உதவும்"
+        },
+        {
+          "step": 3,
+          "action": "Document the tested recovery time (RTO) and communicate it to the team, not just assume a number",
+          "detail": "இது FoodQuick-ஓட revenue-loss estimate-க்கு ஒரு real, tested number கொடுக்கும் - guess இல்ல"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Fault Injection Simulator (FIS)",
+          "use": "AZ failures, network issues மாதிரி controlled chaos experiments run பண்ணி, multi-AZ design உண்மையிலேயே resilient-ஆ இருக்கானு proactive-ஆ verify பண்ணும்"
+        },
+        {
+          "tool": "RDS 'Reboot with failover' option",
+          "use": "Production-ல real failover-ஐ safely simulate பண்ணி, actual failover time measure பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம Region-க்கும் AZ-க்கும் உள்ள வித்தியாசம், RDS Multi-AZ failover எப்படி வேலை செய்யும், ASG-ஐ correctly multi-AZ-ஆ configure பண்றது எப்படி-nu கத்துக்கிட்டோம். மிக முக்கியமா, minimum capacity குறைவா வெச்சா, ரெண்டு AZs subnet select பண்ணியிருந்தாலும் redundancy கிடைக்காதுன்னு கத்துக்கிட்ட. அடுத்த lesson-ல நாம Internet Gateway, NAT Gateway, route tables பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.2b — Summary",
+      "points": [
+        "✓ A Region contains multiple physically separate Availability Zones (AZs)",
+        "✓ Resources in a single AZ are a single point of failure if that AZ has an outage",
+        "✓ RDS Multi-AZ keeps a synchronous standby in a different AZ and fails over automatically, usually within 60-120 seconds",
+        "✓ An Auto Scaling Group must span multiple AZ subnets to have any chance at redundancy",
+        "✓ Minimum capacity below the number of AZs can silently defeat multi-AZ redundancy, even with the right subnets attached"
+      ],
+      "coming_next": "Lesson C3.3: Internet Gateway, NAT Gateway, and Route Tables"
+    }
+  }
+}

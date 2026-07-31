@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C6.3",
+  "ticket": "FQ-203",
+  "sender": "Deepak Menon (DevOps Lead)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-203 — Deepak Menon (DevOps Lead)\n\nI want a full audit trail before we close this thing out. The HighErrorRate alarm was correctly firing for 6 months into a silent SNS topic, and I want to know exactly when that subscription was removed and by whom — not to blame anyone, but because if it was an accident, I want to understand how it happened so we can structurally prevent it.\n\nWhile you're setting up CloudTrail properly, also tell me whether what we're looking for is even IN there. I have a feeling FoodQuick hasn't been capturing everything everywhere.\n\n— Deepak",
+  "arc_outro": "Deepak Menon (DevOps Lead)\n\nA contractor cleaned up what they thought was their own personal notification — understandable. Nobody told them they were the only subscriber. And because CloudTrail was single-region, we almost missed it entirely.\n\nThat's the full story: alarm configured correctly, real incidents in Week 14, contractor removed the last subscription shortly afterward without realizing the consequence, nobody noticed for four months because there was nothing left to notice. Not malicious, not careless — just the kind of thing that happens when there's no process for it.\n\nRavi has the timeline. One last thing to set up: a real observability dashboard, so we're never guessing about state from individual metrics and logs again. That closes out FQ-203.\n\n— Deepak",
+  "tasks": [
+    {
+      "id": "C6.3-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C6.3",
+      "scenario": "Deepak wants to find who removed the SNS subscription. Before querying anything, you need to check what CloudTrail is actually set up to capture in this account.",
+      "question": "What's the first thing to verify before assuming CloudTrail can answer this question?",
+      "options": [
+        "A) Nothing — CloudTrail automatically captures all API calls in all regions for all AWS accounts from day one",
+        "B) Whether a trail exists, and whether it covers the right regions — CloudTrail trails must be explicitly created and configured, and by default, the management console may show recent events from a limited event history, but a true, persistent, queryable trail requires deliberate setup",
+        "C) Whether the AWS account has been active for at least 12 months, since CloudTrail only becomes available after that period",
+        "D) Whether Deepak has admin IAM permissions, since only admins can ever access CloudTrail events"
+      ],
+      "correct_index": 1,
+      "explanation": "CloudTrail automatic not — trail explicitly create must do, region coverage configure must do. in Console 90-day event history default-a visible-a is there, but persistent, queryable trail (long-term retention, all-regions) deliberate setup is needed.",
+      "ren_correct": "Correct — trail explicitly create must do, automatic full coverage not.",
+      "ren_wrong": "A bit think again — CloudTrail automatic all-regions coverage kudukkkathu. Trail create must do, coverage check must do first."
+    },
+    {
+      "id": "C6.3-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.3",
+      "question": "What's the difference between CloudTrail MANAGEMENT events and DATA events?",
+      "options": [
+        "A) They're the same thing, just two names used in different regions",
+        "B) Management events record API calls that manage AWS RESOURCES (creating/deleting S3 buckets, modifying security groups, removing SNS subscriptions — the 'control plane') and are included in the free tier. Data events record API calls on the DATA inside those resources (S3 object-level GetObject/PutObject, Lambda invocations) and cost extra — most security auditing needs management events, not data events",
+        "C) Data events are free and management events cost extra — the opposite of their actual billing",
+        "D) Data events only apply to RDS and cannot be enabled for S3 or Lambda"
+      ],
+      "correct_index": 1,
+      "explanation": "Management events — resource manage doing (create, delete, modify — control plane), free in tier included. Data events — resource's for data API calls (S3 object level, Lambda invocations), extra cost. Most security audit (SNS subscription removal like we're looking for) management events.",
+      "ren_correct": "Correct — management events control plane, free. Data events data-level access, extra cost.",
+      "ren_wrong": "A bit think again — billing reverse-a thoughthikitiya. Management events free tier, data events extra cost."
+    },
+    {
+      "id": "C6.3-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.3",
+      "question": "What does enabling a CloudTrail trail as 'multi-region' actually do, compared to a single-region trail?",
+      "options": [
+        "A) A multi-region trail costs significantly more and is only needed for accounts with resources in many different regions",
+        "B) A multi-region trail automatically captures events from ALL AWS regions — including regions the team doesn't actively use — so API calls from any region are logged in one place, even if a resource was inadvertently created or modified in an unexpected region. A single-region trail only captures events from that one specific region",
+        "C) Multi-region trails capture events faster than single-region trails, with no other functional difference",
+        "D) There's no practical difference — CloudTrail automatically replicates all events to the primary region regardless of trail configuration"
+      ],
+      "correct_index": 1,
+      "explanation": "Multi-region trail ALL regions's events a in place capture does — team-a actively use do regions also including. in C5.4 we in us-east-1 forgotten Lambda kandupidichom — this exact same principle: unexpected in region any nadandha, multi-region in trail visible will happen.",
+      "ren_correct": "Correct — multi-region trail all regions cover does, single-region only that one region.",
+      "ren_wrong": "A bit think again — multi-region trail just speed difference not. Coverage difference — ALL regions vs one region real difference."
+    },
+    {
+      "id": "C6.3-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.3",
+      "scenario": "You pull FoodQuick's current CloudTrail configuration.",
+      "broken_config": "CloudTrail trails in FoodQuick's AWS account:\n├── Trail name: foodquick-main-trail\n├── Region: ap-south-1 ONLY (single-region trail)\n├── Management events: ALL (read + write) ✓\n├── Data events: NOT enabled (none configured)\n├── S3 bucket for logs: s3://foodquick-cloudtrail-logs/ ✓\n├── Log file integrity validation: ENABLED ✓\n└── Log retention in the S3 bucket: NEVER EXPIRE (same default-no-retention problem as the log groups)\n\nGlobal services (IAM) events:\n└── Included in the ap-south-1 trail ✓ (IAM events route to one region regardless)\n\nRegions with NO trail coverage:\n└── us-east-1, eu-west-1, ap-southeast-1 — all three were identified in C5.4 as regions FoodQuick has previously used",
+      "what_to_find": [
+        "The trail is single-region (ap-south-1 only) — API calls from any other region are not captured in this trail, which directly limits what we can find about the SNS subscription removal if it happened from or via any other region",
+        "CloudTrail log retention is also set to 'never expire' in S3 — same pattern as the CloudWatch Logs retention finding from C6.1, costing money for indefinite storage",
+        "SNS is a regional service — the order-service-alerts topic is in ap-south-1, meaning the subscription removal API call should be in the ap-south-1 trail, but the single-region limitation is still a real gap for future events in other regions",
+        "Data events are not enabled, which is appropriate for now (management events are what we need for this investigation)"
+      ],
+      "correct_fix": "Convert foodquick-main-trail to a multi-region trail so all future API calls from any region are captured. Also set a retention policy on the CloudTrail S3 bucket (e.g. 1 year for compliance/security audit purposes, specific to that need). Query the existing trail for the SNS UnsubscribeFromTopic event before changing anything, since the SNS topic is in ap-south-1 and should be in the existing trail.",
+      "explanation": "This exact spec mistake — single-region trail, future events other in regions miss will happen. SNS topic in ap-south-1 is there, so that existing in trail can be, but this lucky-a — habit-a multi-region irundha, miss aaga chance without."
+    },
+    {
+      "id": "C6.3-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C6.3",
+      "question": "Arrange the correct order to investigate the SNS subscription removal and then properly fix the CloudTrail configuration.",
+      "items": [
+        "Query the existing ap-south-1 trail first for the SNS Unsubscribe event — before changing the trail, since changes could affect what's queryable",
+        "Document the investigation findings (who, when, what action)",
+        "Update foodquick-main-trail to cover all regions",
+        "Set a retention policy on the CloudTrail S3 log bucket",
+        "Verify multi-region coverage by confirming events from a test API call in another region appear in the trail"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First query existing trail (trail change for doing earlier investigate must do — change to do then something miss can happen), then findings document must do, then trail update must do for multi-region, then S3 retention fix must do, LAST-a verify must do real test's.",
+      "ren_correct": "Nice sequencing — investigate first using what exists, then fix the configuration, then verify.",
+      "ren_wrong": "Order again paaru — trail change for doing earlier existing trail-a query must do, or investigation window miss can happen."
+    },
+    {
+      "id": "C6.3-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.3",
+      "scenario": "You query the existing trail for SNS Unsubscribe events on the order-service-alerts topic. CloudTrail returns one match: approximately 4 months ago (shortly after the Week 14 incidents), user 'priya.k' performed an UnsubscribeFromTopic action on the order-service-alerts ARN.",
+      "question": "Given this finding, what's the right immediate interpretation and next step?",
+      "options": [
+        "A) Log a disciplinary action against priya.k immediately for sabotaging the monitoring system",
+        "B) Check whether priya.k is a contractor who may have completed their engagement around that time — the action itself (removing a personal SNS subscription) may have been a routine cleanup they performed when finishing up, without knowing they were the only subscriber. CloudTrail shows WHAT happened, not the intent behind it",
+        "C) Conclude this was definitely a deliberate, malicious act since it happened shortly after the real incidents",
+        "D) Ignore the finding since CloudTrail events older than 90 days are automatically deleted and this one must be fabricated"
+      ],
+      "correct_index": 1,
+      "explanation": "CloudTrail shows WHAT happened (who, when, what action) — that intent or context explain what was done. priya.k contractor-a irundha, personal cleanup-a do be, single subscriber — theriyaamal. This is exactly the 'not malicious, ordinary human action' pattern across CS2-CS6.",
+      "ren_correct": "Correct — CloudTrail WHO and WHEN kaatum, WHY kaataaathu. Context understand in order to do vera step is needed.",
+      "ren_wrong": "A bit think again — CloudTrail event is there — that automatically malicious not. Context understand for doing investigate must do first."
+    },
+    {
+      "id": "C6.3-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.3",
+      "scenario": "You confirm with HR: priya.k was a 3-month contractor whose engagement ended about 4 months ago. She removed her personal email subscription from several SNS topics as part of her offboarding cleanup, which was the right thing to do — she had no way of knowing she was the last subscriber on order-service-alerts.",
+      "question": "How should this finding be framed to Deepak?",
+      "options": [
+        "A) 'priya.k deliberately sabotaged the monitoring system on her way out'",
+        "B) priya.k removed her personal subscription as normal offboarding cleanup, without knowing she was the sole subscriber — a process gap, not a people problem. The structural fix (using a team distribution list instead of personal emails as subscribers) directly addresses this: no individual's offboarding can ever silently take down a notification channel again",
+        "C) 'We cannot determine who did this since CloudTrail data is unreliable'",
+        "D) 'This is priya.k's fault and she should be notified of the impact she caused'"
+      ],
+      "correct_index": 1,
+      "explanation": "This CS2's Vikram framing's exact echo, new in context — person did a reasonable thing, gap was in the process, not the person. Structural fix (team distribution list) already we have done in C6.2, that exact-a this scenario address does.",
+      "ren_correct": "Correct — process gap framing, not individual blame. Structural fix already in place.",
+      "ren_wrong": "A bit think again — blame framing wrong. Priya.k reasonable action if we had done, gap in process was there, in person not."
+    },
+    {
+      "id": "C6.3-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C6.3",
+      "scenario": "While reviewing CloudTrail logs, Deepak asks whether the trail can also show who originally created the HighErrorRate-order-service alarm — to understand its full history. You search the trail for the CreateAlarm API call.",
+      "error_shown": "$ aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreateAlarm --start-time 2023-01-01\n{\n \"Events\": []\n}\n\n(No results — CloudTrail has records going back only 18 months from when the trail was first enabled; the alarm was created approximately 22 months ago)",
+      "diagnosis": "CloudTrail cannot provide records from before the trail was first enabled — it has no retroactive visibility into API calls that happened before it started logging. This is expected and not a bug, but it creates a genuine audit gap: anything that happened before the trail was set up (in this case, 4+ months of account history before the trail existed) is permanently unrecoverable in CloudTrail, regardless of the trail's current configuration.",
+      "fix": "Accept this as an expected limitation and document it honestly: the alarm's original creation predates the trail, so its creator and original configuration decisions are not in CloudTrail. For events from before the trail, any other available records (PR history, Slack messages, internal wikis, commit logs) may provide partial context, but CloudTrail cannot help here. This underscores why continuous, multi-region CloudTrail coverage from day one matters — retroactive setup cannot recover historical records.",
+      "explanation": "This CloudTrail's real limitation, important-a theriyanum — trail enable do then only records will be, retroactive-a historical events recover to do cannot. This 'start early' importance's exact lesson — later enable did, before's records forever gone."
+    },
+    {
+      "id": "C6.3-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.3",
+      "scenario": "Trail updated and investigation complete. Final audit before reporting back.",
+      "broken_config": "CloudTrail — post-fix:\n├── foodquick-main-trail: NOW MULTI-REGION ✓\n├── Management events: ALL (read + write) ✓\n├── Data events: NOT enabled (unchanged, appropriate for current needs) ✓\n├── S3 bucket retention: 1 year (updated from Never Expire, matches security audit requirement) ✓\n├── Verification: test API call made in ap-southeast-1 — event appeared in trail within 15 minutes ✓\n\nInvestigation findings documented:\n├── SNS subscription removal: priya.k, ~4 months ago, routine contractor offboarding, no malicious intent ✓\n├── Structural fix already applied (team distribution list) in C6.2 ✓\n├── Alarm creation pre-dates trail: creator unrecoverable, documented as expected gap ✓\n└── Week 14 real incidents: two confirmed real error spikes, no engineering response, documented for Ravi",
+      "what_to_find": [
+        "Multi-region coverage is confirmed working via a real test in a region that previously had no coverage",
+        "S3 retention is now set to 1 year, specifically justified by security audit needs — not an arbitrary number, not 'Never Expire'",
+        "The investigation findings are completely documented, including the limitation (alarm creation pre-trail) — honest about what CloudTrail can and cannot tell us",
+        "The structural fix from C6.2 (team distribution list) directly addresses the specific process gap found in this investigation — the two fixes connect"
+      ],
+      "correct_fix": "No further changes needed — investigation is complete, trail is properly configured, and all findings are documented with appropriate honesty about gaps.",
+      "explanation": "This 'recognize this is already correct' verify task — we trail properly configure we have done, real test after doing verify we have done, AND investigation findings completely honest-a document we have done, gap also including."
+    },
+    {
+      "id": "C6.3-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C6.3",
+      "cases": {
+        "case_1": "An account where the team needs to know every time ANY IAM role or user is created, modified, or deleted",
+        "case_2": "An account where compliance requires logging every single S3 object download from a specific sensitive bucket",
+        "case_3": "An account where the team wants to know when security groups are changed, but doesn't need object-level S3 access logs",
+        "case_4": "A new AWS account being set up from scratch, where the team wants maximum future audit capability from day one"
+      },
+      "correct_answers": {
+        "case_1": "Management events only, multi-region trail — IAM events are management events (control plane), covered by default in a properly-configured trail at no extra cost beyond S3 storage",
+        "case_2": "Data events specifically on that S3 bucket — object-level GetObject events are data events, not management events; these cost extra per event but are the only way to log individual object downloads",
+        "case_3": "Management events only, multi-region trail — security group changes are management events (control plane API calls), no data events needed",
+        "case_4": "Multi-region trail with management events enabled immediately, data events only where specifically needed for compliance — establishing coverage from day one means no audit gaps for future events, even if data event scope is expanded later"
+      },
+      "scenario": "Deepak wants a standing framework for when CloudTrail data events are worth enabling, versus management events alone being sufficient.",
+      "explanation": "Naanku different different need — IAM change audit (management events free), object-level download audit (data events, extra cost but necessary), security group change audit (management events free), day-one coverage (multi-region management events immediately). Cost discipline: data events specific for bucket only, not blanket everywhere.",
+      "ren_correct": "Correct — each case-kum actual audit need base after doing management events vs data events correct-a match did you do.",
+      "ren_wrong": "A bit think again — data events everywhere enable doing unnecessary cost. Management events free in tier most control-plane needs cover does."
+    },
+    {
+      "id": "C6.3-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C6.3",
+      "scenario": "Deepak asks for the cost breakdown of a proper CloudTrail setup: management events trail + S3 storage for 1 year of logs. FoodQuick generates roughly 50,000 management events/month. CloudTrail charges: first copy of management events is FREE per region; S3 storage for the log files at roughly ₹1.92/GB-month; estimated 50,000 events generates approximately 0.5GB of compressed log data per month.",
+      "question": "What's the real monthly cost of running a properly-configured multi-region management events trail, and is it justified?",
+      "solution": "Management events: FREE (first copy in any trail). S3 storage: ~0.5GB/month × ₹1.92 ≈ ~₹0.96/month for current event volume. Even at 10x event volume (500,000 events/month), S3 storage would be ~₹9.60/month. Total multi-region management events trail: effectively free at any reasonable volume, with S3 storage costs negligible. Framed for Deepak: the cost of properly-configured CloudTrail from day one is nearly zero — the cost of NOT having it was four months of undetectable monitoring failure and two unresponded real incidents. This is one of the clearest 'insurance that costs basically nothing' cases in AWS.",
+      "explanation": "CloudTrail management events cost nearly zero — S3 storage only real cost, that a bit. This 'almost free insurance' — not having it's real cost (undetected incidents, no audit trail) very very adhigam."
+    },
+    {
+      "id": "C6.3-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.3",
+      "scenario": "Time for the final report to Deepak, closing the mystery thread that started in C6.1.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Found who removed the subscription. Fixed CloudTrail. Mystery solved.\"",
+        "B) \"CloudTrail investigation complete: priya.k removed her personal subscription ~4 months ago during contractor offboarding, without knowing she was the sole subscriber — ordinary process gap, not malicious. CloudTrail correctly had this event recorded since it happened in ap-south-1 (our existing trail's region). Trail converted to multi-region to prevent future blind spots; S3 retention set to 1 year. One honest gap: the alarm's original CreateAlarm event predates when the trail was enabled, so we can't recover the original creator or configuration — documented as an expected limitation. Combined with the C6.2 structural fix (team distribution list), no individual's offboarding can silently break a notification channel again.\"",
+        "C) \"priya.k should have known better. Fixed the trail.\"",
+        "D) \"Cannot determine what happened since CloudTrail has too many limitations to be useful.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — specific CloudTrail finding, process-not-people framing, honest about the limitation (pre-trail gap), AND connects the structural fix from C6.2 to this investigation's specific finding. Option C blame-framing wrong. Option D incorrect — CloudTrail answered the actual question, even with limitations.",
+      "ren_correct": "This correct report — specific, process-framed, honest about limitations, and connects the structural fix already applied.",
+      "ren_wrong": "This report either blame-a frame does (C) or CloudTrail-a dismiss does (D) — CloudTrail actual for question answer having done, even with limitations."
+    }
+  ],
+  "act_number": 3,
+  "act_title": "CloudTrail as the Audit Trail",
+  "builds_layer": "Accountability Layer"
+}

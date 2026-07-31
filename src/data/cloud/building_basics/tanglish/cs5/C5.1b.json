@@ -1,0 +1,335 @@
+{
+  "lesson_id": "C5.1b",
+  "lesson_title": "S3 Storage Classes",
+  "section_id": "CS5",
+  "section_name": "Storage",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C5.1a — S3 Basics",
+  "student_will_learn": [
+    "Explain the trade-offs between S3 Standard, Infrequent Access, Glacier, and Deep Archive",
+    "Explain how retrieval time and cost trade off against storage cost across storage classes",
+    "Configure a lifecycle policy to automatically transition objects between storage classes",
+    "Match a data access pattern to the correct storage class",
+    "Identify why actively-served content should never be moved to an archival storage class"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம S3-ஓட bucket/object model பார்த்தோம். இப்போ CFO-ஓட FQ-189 ticket-ல real கேள்வி - 'ஒரே storage class-ல எல்லாத்தையும் வெச்சிருக்கறோமா, அல்லது data-ஓட access pattern-ஐ பொறுத்து cost optimize பண்ணலாமா?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற S3 Storage Classes.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS5 · Lesson C5.1b",
+        "S3 Storage Classes",
+        "Ticket FQ-189 — continuing with CFO's Office"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Storage Cost vs Retrieval Cost vs Retrieval Time",
+      "ava_speaks": "S3-ல பல storage classes இருக்கும், ஒவ்வொண்ணும் ஒரு different trade-off offer பண்ணும். S3 Standard, அதிக storage cost, ஆனா immediate retrieval, frequent access-க்கு நல்லது. S3 Standard-IA (Infrequent Access), storage cost குறைவு, ஆனா ஒவ்வொரு retrieval-க்கும் ஒரு extra cost இருக்கும் - infrequently access பண்ற ஆனா immediate access தேவைப்படற data-க்கு. Glacier, storage cost ரொம்ப குறைவு, ஆனா retrieval minutes முதல் hours வரைக்கும் ஆகலாம். Deep Archive, cheapest storage, ஆனா retrieval 12+ hours ஆகலாம் - long-term compliance archives-க்கு மட்டும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "S3 Storage Classes — The Trade-off Spectrum"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Storage Class",
+            "Storage Cost",
+            "Retrieval Time"
+          ],
+          "rows": [
+            [
+              "S3 Standard",
+              "Highest",
+              "Immediate (milliseconds)"
+            ],
+            [
+              "S3 Standard-IA",
+              "Lower, plus per-GB retrieval fee",
+              "Immediate (milliseconds)"
+            ],
+            [
+              "S3 Glacier Flexible Retrieval",
+              "Very low",
+              "Minutes to hours"
+            ],
+            [
+              "S3 Glacier Deep Archive",
+              "Lowest",
+              "12+ hours"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Cheaper storage always comes with either a retrieval fee, a retrieval delay, or both — there's no free lunch. The right class depends entirely on how often and how urgently the data needs to be accessed."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு data set, ஆண்டுக்கு ஒரு தடவை மட்டும் access பண்ணப்படும், ஆனா access பண்ணும்போது சில மணி நேரம் காத்திருக்கறது problem இல்ல (compliance archive). எந்த storage class பொருந்தும்?",
+          "options": [
+            "A) S3 Standard, ஏன்னா அது fastest",
+            "B) S3 Glacier அல்லது Deep Archive, cheapest storage, retrieval delay acceptable-ஆ இருக்கறதால",
+            "C) S3 Standard-IA, ஏன்னா அது balanced",
+            "D) இது எந்த storage class-லும் store பண்ண முடியாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Rarely accessed, delay tolerable-ஆ இருந்தா, Glacier அல்லது Deep Archive தான் cheapest option - retrieval delay இங்க ஒரு problem இல்ல.",
+          "ava_wrong": "இல்ல, S3 Standard இங்க unnecessary-ஆ expensive - ஆண்டுக்கு ஒரு தடவை மட்டும் access பண்றது, delay tolerate பண்ண முடியற data-க்கு, Glacier அல்லது Deep Archive தான் cost-effective."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Cheaper storage class தேர்ந்தெடுக்கும்போது, என்ன trade-off பண்றோம்?",
+          "options": [
+            "A) எந்த trade-off-மும் இல்ல, எல்லாமே ஒரே service quality",
+            "B) Retrieval cost அதிகரிக்கும், retrieval time அதிகரிக்கும், அல்லது ரெண்டுமே",
+            "C) Data durability குறையும்",
+            "D) Data automatically delete ஆயிடும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Storage cost குறைஞ்சா, retrieval fee அதிகரிக்கலாம், retrieval time (minutes to hours) அதிகரிக்கலாம், அல்லது ரெண்டுமே - இதுதான் real trade-off, durability affect ஆகாது.",
+          "ava_wrong": "இல்ல, durability எல்லா storage classes-லும் (Deep Archive உட்பட) high-ஆவே இருக்கும் - real trade-off retrieval cost மற்றும் retrieval time, storage cost குறையும்போது."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Automating the Trade-off With Lifecycle Policies",
+      "ava_speaks": "ஒரு common pattern - data 'new'-ஆ இருக்கும்போது frequently access பண்ணப்படும், time போக போக access frequency குறையும். FoodQuick-ஓட old order invoices, generate ஆன முதல் 30 நாள் frequently access பண்ணப்படும் (customer support queries), அதுக்கு அப்புறம் almost ஒரு போதும் access பண்ணப்படாது, ஆனா compliance-க்காக 7 வருடம் retain பண்ணனும். Manual-ஆ ஒவ்வொரு file-ஐயும் move பண்றதுக்கு பதிலா, lifecycle policies use பண்ணி automatic transitions set பண்ணலாம். Freshworks மாதிரி companies, invoices, logs, backups எல்லாத்துக்கும் இதே pattern use பண்றாங்க - storage cost automatically optimize ஆகும், manual intervention தேவை இல்லாம.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Lifecycle Policy — Automatic Cost Optimization Over Time"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Data Age",
+            "Access Pattern",
+            "Storage Class (via Lifecycle Policy)"
+          ],
+          "rows": [
+            [
+              "0-30 days",
+              "Frequent (support queries)",
+              "S3 Standard"
+            ],
+            [
+              "30-365 days",
+              "Rare, occasional lookup",
+              "S3 Standard-IA"
+            ],
+            [
+              "1-7 years",
+              "Almost never, compliance only",
+              "S3 Glacier Deep Archive"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up a Lifecycle Policy for Order Invoices",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட order invoices bucket-க்கு ஒரு lifecycle policy configure பண்றான் - automatic-ஆ storage class transition ஆக.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "S3",
+        "steps": [
+          {
+            "ava_narration": "S3 Console-ல foodquick-order-invoices bucket-க்கு போய், 'Management' tab-ல 'Lifecycle rules' -> 'Create lifecycle rule' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "S3 Console → foodquick-order-invoices → Management → Lifecycle rules → Create lifecycle rule",
+              "highlight": "Create lifecycle rule button",
+              "result": "The lifecycle rule creation form opens"
+            }
+          },
+          {
+            "ava_narration": "Rule name 'invoice-cost-optimization' கொடுத்து, scope-ஆ 'Apply to all objects in the bucket' select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Create lifecycle rule form",
+              "field": "Rule name, Scope",
+              "value": "invoice-cost-optimization, Apply to all objects in the bucket",
+              "highlight": "Rule name field and scope selector",
+              "result": "The rule will apply to every invoice object in this bucket"
+            }
+          },
+          {
+            "ava_narration": "'Transition current versions of objects' enable பண்றோம் - 30 நாள் கழிச்சு S3 Standard-IA-க்கு, 365 நாள் கழிச்சு Glacier Deep Archive-க்கு transition பண்ண.",
+            "console_action": {
+              "type": "fill",
+              "path": "Lifecycle rule actions → Transitions",
+              "field": "Transition 1, Transition 2",
+              "value": "30 days -> S3 Standard-IA, 365 days -> Glacier Deep Archive",
+              "highlight": "Transition day count and target storage class fields",
+              "result": "Objects will automatically move to cheaper storage classes as they age, with no manual intervention needed"
+            }
+          },
+          {
+            "ava_narration": "Expiration-ஆ, 2555 நாள் (7 வருடம்) கழிச்சு object delete பண்ண set பண்றோம் - compliance retention period முடிஞ்ச பிறகு.",
+            "console_action": {
+              "type": "fill",
+              "path": "Lifecycle rule actions → Expiration",
+              "field": "Expire current versions of objects",
+              "value": "2555 days",
+              "highlight": "Expiration days field",
+              "result": "Invoices older than 7 years will be automatically and permanently deleted, matching the compliance retention requirement"
+            }
+          },
+          {
+            "ava_narration": "Rule review பண்ணி, 'Create rule' click பண்றோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Create lifecycle rule → Create rule",
+              "highlight": "Create rule button",
+              "result": "The lifecycle policy is now active and will run automatically going forward"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Order invoices now automatically transition from Standard to Standard-IA at 30 days, to Glacier Deep Archive at 365 days, and expire entirely after 7 years — all without any manual file management.",
+          "what_to_notice": "Lifecycle policy ஒரு one-time setup - இதுக்கு அப்புறம், ஒவ்வொரு புது invoice-மும் automatic-ஆ இதே rule-ஐ follow பண்ணும், manual intervention தேவை இல்ல."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "An Object's Journey Through Its Lifecycle",
+      "ava_speaks": "இந்த diagram பாரு - ஒரு single invoice object, time போக போக எப்படி storage classes-ஐ மாறி மாறி போகுதுனு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Day 0: Invoice created -> S3 Standard (frequent access expected)",
+            "Day 30: Lifecycle rule triggers -> S3 Standard-IA (occasional access, cheaper storage)",
+            "Day 365: Lifecycle rule triggers -> S3 Glacier Deep Archive (compliance-only, cheapest storage)",
+            "Day 2555 (7 years): Lifecycle rule triggers -> Object permanently deleted",
+            "",
+            "Cost per GB decreases at each transition; retrieval time increases at each transition."
+          ]
+        },
+        "ava_narration": "இந்த முழு journey-யும் automatic-ஆ நடக்கும் - யாரும் manual-ஆ track பண்ணி move பண்ண வேண்டாம்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Design a Lifecycle Policy for Application Logs",
+      "instruction": "FoodQuick-ஓட application logs bucket-க்கு, correct lifecycle policy design பண்ணு.",
+      "scenario": "CFO-ஓட office, application logs storage cost ரொம்ப அதிகமா இருக்குனு flag பண்ணி இருக்காங்க. Logs, முதல் 7 நாள் active debugging-க்கு frequently access பண்ணப்படும், 7-90 நாள் இடையே rare debugging lookups-க்கு access பண்ணப்படும், 90 நாளுக்கு அப்புறம் almost ஒரு போதும் access பண்ணப்படாது, ஆனா audit requirements-க்காக 1 வருடம் retain பண்ணணும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "S3 Console → foodquick-application-logs → Management → Create lifecycle rule",
+        "current_configuration": "All logs currently sit in S3 Standard indefinitely, with no lifecycle policy applied"
+      },
+      "requirements": [
+        "Keep logs in S3 Standard for the first 7 days (active debugging period)",
+        "Transition to S3 Standard-IA at day 7 (occasional lookups still need reasonably fast access)",
+        "Transition to Glacier Deep Archive at day 90 (audit-only retention)",
+        "Expire (delete) the logs at day 365, matching the 1-year audit requirement"
+      ],
+      "hints": [
+        "Active debugging window-க்கு, S3 Standard-ஐ முதல் few days-க்கு அப்படியே வெச்சுக்கோ - transition rule 7 நாள் delay-ஆ start ஆகணும்",
+        "Deep Archive-க்கு direct-ஆ 90 நாள்-ல move பண்ணலாம் - Glacier Flexible Retrieval இதுக்கு தேவை இல்ல, ஏன்னா audit-only access, retrieval speed critical இல்ல",
+        "Expiration date, retention requirement-கூட exactly match ஆகணும் - அதிகமா வெச்சிருந்தா unnecessary cost, குறைவா வெச்சிருந்தா compliance violation"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A lifecycle policy with transitions at day 7 (to Standard-IA) and day 90 (to Glacier Deep Archive), and expiration at day 365",
+        "ava_correct": "Correct! இந்த policy, access pattern-ஐ accurately reflect பண்ணுது - active period fast access, archive period cheap storage, retention period exact-ஆ compliance-ஐ match பண்ணுது.",
+        "ava_wrong": "Transition days-ஐ ஒரு தடவை check பண்ணு - active debugging window-க்கு பிறகு தான் Standard-IA-க்கு move ஆகணும், அப்புறம் archive access pattern ஆரம்பிச்சதும் Deep Archive-க்கு move ஆகணும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Product Images Accidentally Archived to Glacier",
+      "ava_speaks": "ananya-analyst, cost optimization பண்ணும்போது, ஒரு overly broad lifecycle rule apply பண்ணிட்டாங்க - 'foodquick-product-images-prod' bucket முழுசும், 90 நாள் கழிச்சு Glacier-க்கு transition ஆகணும்னு set பண்ணி. ஆனா இந்த bucket-ல, actively-served menu item photos-மும் இருந்துச்சு.",
+      "setup": "ananya-analyst, aiming to reduce S3 costs across the board, applies a bucket-wide lifecycle rule to foodquick-product-images-prod that transitions all objects to Glacier after 90 days, without checking whether every object in that bucket is genuinely archival.",
+      "what_happened": "Menu item photos older than 90 days — many of which are still actively displayed on the FoodQuick app for long-standing restaurant menu items — get transitioned to Glacier. When the app tries to load these images, it can't retrieve them instantly; users see broken image placeholders instead of menu photos.",
+      "broken_config": "Lifecycle rule: transition-to-glacier-90-days\nScope: entire foodquick-product-images-prod bucket (no exclusion for actively-served content)\nTransition: 90 days -> Glacier Flexible Retrieval (retrieval takes minutes to hours)\n\nApplication behavior: expects synchronous, millisecond image loads for the product catalog — completely incompatible with Glacier's retrieval model",
+      "error_shown": "Application error logs: Image load failed for menu-items/pizza-margherita.jpg — S3 GetObject returned InvalidObjectState: The operation is not valid for the object's storage class. Frontend displays broken image icon.",
+      "the_real_problem": "Lifecycle rule bucket-ஓட முழு content-ஐயும், ஒரே access pattern வெச்சிருக்குனு assume பண்ணுச்சு. ஆனா real-ஆ, அந்த bucket-ல ரெண்டு completely different access patterns கலந்திருந்துச்சு - சில genuinely old, unused images, சில actively-served, currently-displayed images. Glacier-ல இருந்து synchronous, immediate retrieval சாத்தியமே இல்ல - அதனால இது ஒரு silent, gradual application breakage-ஆ தெரிஞ்சுது.",
+      "fix": {
+        "corrected_config": "1. Immediately restore the actively-served images out of Glacier back to S3 Standard (this requires an explicit restore request and a wait time).\n2. Redesign the lifecycle rule with a filter/prefix that ONLY targets genuinely inactive content (e.g. only images for restaurants marked 'permanently closed'), not the entire bucket indiscriminately.\n3. Consider S3 Intelligent-Tiering instead for this bucket, which automatically moves objects between tiers based on actual observed access patterns, rather than a blind time-based rule.",
+        "result": "Actively-served images are restored to fast-access storage, and the lifecycle rule now correctly targets only genuinely archival content going forward."
+      },
+      "lesson": "Lifecycle rules bucket-wide-ஆ, content-ஓட actual access pattern-ஐ கவனிக்காம apply பண்றது, actively-used content-ஐயும் தப்பா archive பண்ணி, application breakage-க்கு வழிவகுக்கும் - archival policies-ஐ, genuinely archival content-க்கு மட்டும் scope பண்ணணும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Storage Class Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A dataset's access pattern is unpredictable and hard to characterize in advance — sometimes accessed daily for weeks, then not touched for months, with no clear schedule. What storage approach handles this without manual guesswork?",
+          "answer": "S3 Intelligent-Tiering — it automatically monitors actual access patterns and moves objects between tiers based on real usage, rather than requiring someone to predict and hardcode a time-based lifecycle schedule that might not match reality."
+        },
+        {
+          "question": "A team applies a lifecycle rule transitioning objects to Glacier at 30 days, but doesn't realize their application periodically re-reads ALL objects in the bucket (including old ones) for a monthly reconciliation job. What's the risk?",
+          "answer": "The reconciliation job will fail or hang when it hits objects in Glacier, since those require an explicit restore request and a wait time before they're readable again — the job's assumption of uniform, immediate access across all objects breaks the moment some of them archive."
+        },
+        {
+          "question": "A compliance team requires that certain financial records be retrievable within 24 hours if requested by an auditor, but otherwise are almost never accessed. Between Glacier Flexible Retrieval (minutes-hours) and Deep Archive (12+ hours), which better fits a strict same-day requirement?",
+          "answer": "Glacier Flexible Retrieval is the safer fit — Deep Archive's 12+ hour retrieval time leaves very little margin if an audit request comes in later in the day, while Flexible Retrieval's minutes-to-hours window comfortably meets a 24-hour requirement with room to spare."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Avoid Bucket-Wide Lifecycle Mistakes",
+      "ava_speaks": "Real companies-ல, lifecycle policies apply பண்றதுக்கு முன்னாடி, bucket-ஓட content-ஐ carefully categorize பண்றது ஒரு standard practice.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Separate genuinely archival content from actively-served content into different buckets or prefixes before applying any lifecycle rule",
+          "detail": "இது ananya-analyst-ஓட mistake மாதிரி, ஒரே bucket-ல mixed access patterns-ஐ blind-ஆ ஒரே rule-ல treat பண்றதை தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Test a new lifecycle rule on a small subset or a non-production bucket first, observing the actual transition behavior before applying broadly",
+          "detail": "இது unexpected application breakage-ஐ, production-ல impact ஆவதுக்கு முன்னாடியே கண்டுபிடிக்க உதவும்"
+        },
+        {
+          "step": 3,
+          "action": "Use S3 Storage Lens or S3 Analytics to understand actual access patterns across a bucket before designing lifecycle rules based on assumptions",
+          "detail": "Data-driven decisions, guesswork-ஐ விட ரொம்ப reliable-ஆ இருக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "S3 Storage Lens",
+          "use": "Bucket-level storage usage மற்றும் activity metrics-ஐ organization-wide-ஆ காட்டி, cost optimization opportunities மற்றும் risky patterns identify பண்ண உதவும்"
+        },
+        {
+          "tool": "S3 Intelligent-Tiering",
+          "use": "Access patterns unpredictable-ஆ இருக்கும்போது, manual lifecycle rules-க்கு பதிலா, automatic, usage-based tier movement தரும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம S3 Standard, Standard-IA, Glacier, Deep Archive trade-offs, lifecycle policies எப்படி automatic transitions பண்ணும்னு கத்துக்கிட்டோம். மிக முக்கியமா, actively-served content-ஐ archival storage class-க்கு தப்பா move பண்றது, application breakage-க்கு வழிவகுக்கும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம S3 Security பார்ப்போம் - Block Public Access, bucket policies, encryption.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C5.1b — Summary",
+      "points": [
+        "✓ S3 Standard, Standard-IA, Glacier, and Deep Archive trade storage cost against retrieval cost and retrieval time",
+        "✓ Cheaper storage always comes with either a retrieval fee, a retrieval delay, or both",
+        "✓ Lifecycle policies automate storage class transitions based on object age, avoiding manual file management",
+        "✓ S3 Intelligent-Tiering handles unpredictable access patterns better than a fixed time-based lifecycle rule",
+        "✓ A bucket-wide lifecycle rule that doesn't account for actively-served content can silently break an application"
+      ],
+      "coming_next": "Lesson C5.2: S3 Security"
+    }
+  }
+}

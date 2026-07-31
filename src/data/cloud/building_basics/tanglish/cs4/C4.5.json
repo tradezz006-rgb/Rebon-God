@@ -1,0 +1,335 @@
+{
+  "lesson_id": "C4.5",
+  "lesson_title": "Auto Scaling Groups",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C4.4 — Elastic Load Balancing",
+  "student_will_learn": [
+    "Explain min, max, and desired capacity in an Auto Scaling Group",
+    "Distinguish between target tracking, step, and scheduled scaling policies",
+    "Explain why a cooldown period exists and what problem it prevents",
+    "Configure a target tracking scaling policy for a realistic traffic pattern",
+    "Debug a scenario where an ASG can't scale far enough because of a capacity ceiling"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம load balancer traffic-ஐ multiple servers-க்கு distribute பண்ணறதை பார்த்தோம். ஆனா ஒரு கேள்வி - traffic sudden-ஆ spike ஆனா, extra servers யார் automatic-ஆ add பண்றது? Traffic குறையும்போது, extra servers யார் remove பண்றது, cost waste ஆகாம? இதுதான் இன்னைக்கு நாம கத்துக்கப் போற Auto Scaling Groups.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.5",
+        "Auto Scaling Groups",
+        "Ticket FQ-171 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Min, Max, and Desired Capacity",
+      "ava_speaks": "Auto Scaling Group (ASG)-ல 3 முக்கிய numbers இருக்கும் - Minimum, Maximum, Desired. Minimum, எப்போவும் run ஆக வேண்டிய குறைந்தபட்ச instance count - traffic zero-ஆ இருந்தாலும் இதுக்கு கீழ போகாது. Maximum, ASG scale பண்ண முடிற உச்சபட்ச instance count - traffic எவ்ளோ spike ஆனாலும் இதை தாண்டி போகாது. Desired, தற்போது ASG maintain பண்ண try பண்ற instance count - இது min-க்கும் max-க்கும் இடையே, real-time-ல scaling policies-ஐ பொறுத்து மாறிக்கொண்டே இருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Min / Max / Desired"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Setting",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "Minimum",
+              "The floor — ASG never runs fewer instances than this, even at zero traffic"
+            ],
+            [
+              "Maximum",
+              "The ceiling — ASG never scales beyond this, no matter how high traffic spikes"
+            ],
+            [
+              "Desired",
+              "The current target count, adjusted dynamically within min-max by scaling policies"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Maximum is a hard ceiling. If real traffic demand exceeds what Maximum allows, the ASG simply cannot add more capacity — requests will start failing."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ASG-ஓட Maximum capacity 4-ஆ set பண்ணி இருக்கு. Traffic spike-ல, 6 instances தேவைப்படுது. என்ன ஆகும்?",
+          "options": [
+            "A) ASG automatic-ஆ maximum-ஐ தாண்டி 6 instances-க்கு scale பண்ணும்",
+            "B) ASG 4-ல தான் நிக்கும், extra demand handle பண்ண முடியாது",
+            "C) ASG automatic-ஆ maximum-ஐ 6-ஆ மாத்திக்கும்",
+            "D) ASG முழுசா shut down ஆயிடும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Maximum ஒரு hard ceiling - ASG அதை தாண்டி scale பண்ணவே பண்ணாது. Traffic demand அதை தாண்டினா, requests fail ஆகும் வாய்ப்பு இருக்கு.",
+          "ava_wrong": "இல்ல, Maximum ஒரு hard limit - ASG அதை தாண்டவே முடியாது, automatic-ஆ மாற்றவும் முடியாது. இதை மனுஷனா manual-ஆ update பண்ணனும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Desired capacity, Minimum-க்கும் Maximum-க்கும் என்ன relationship வெச்சிருக்கும்?",
+          "options": [
+            "A) Desired எப்போவும் Minimum-கூட சமமா இருக்கும்",
+            "B) Desired எப்போவும் Maximum-கூட சமமா இருக்கும்",
+            "C) Desired, Minimum-க்கும் Maximum-க்கும் இடையே, scaling policies-ஐ பொறுத்து மாறும்",
+            "D) Desired-க்கும் Minimum/Maximum-க்கும் எந்த relation-மும் இல்ல"
+          ],
+          "correct_index": 2,
+          "ava_correct": "Sari! Desired, Min-க்கும் Max-க்கும் இடையே dynamic-ஆ மாறும் - இதுதான் current traffic demand-ஐ பொறுத்து ASG actually maintain பண்ண try பண்ற count.",
+          "ava_wrong": "இல்ல, Desired fixed-ஆ Min-கூடவோ Max-கூடவோ இருக்காது - அது Min-க்கும் Max-க்கும் இடையே, scaling policies trigger ஆகும்போது dynamic-ஆ மாறும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Scaling Policies — Reacting vs Predicting",
+      "ava_speaks": "Target tracking scaling, ஒரு metric-ஐ (example: average CPU 60%) target-ஆ வெச்சு, automatic-ஆ scale in/out பண்ணும் - இது FoodQuick-ஓட unpredictable lunch-hour spikes-க்கு நல்லது. Scheduled scaling, ஒரு known pattern-க்கு முன்னாடியே capacity increase பண்ணும் - example: FoodQuick தினமும் மதியம் 12 மணிக்கு traffic spike ஆகும்னு தெரிஞ்சா, 11:45-க்கே proactively scale-out பண்ணலாம், reactive scaling-ஐ காத்திருக்காம. Freshworks, Zoho மாதிரி SaaS companies, ரெண்டையும் combine பண்ணி use பண்றாங்க - predictable patterns-க்கு scheduled, unpredictable spikes-க்கு target tracking.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Target Tracking vs Scheduled Scaling"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Target Tracking",
+            "Scheduled Scaling"
+          ],
+          "rows": [
+            [
+              "Reacts to real-time metrics (CPU, request count)",
+              "Proactively scales at known, predictable times"
+            ],
+            [
+              "Good for unpredictable spikes",
+              "Good for known daily/weekly patterns"
+            ],
+            [
+              "Slight lag while metrics cross the threshold",
+              "Zero lag — capacity is already there before the spike hits"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Configuring an ASG With Target Tracking Scaling",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட app servers-க்கு ஒரு Auto Scaling Group create பண்றான், target tracking scaling policy attach பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "EC2 Console-ல Auto Scaling Groups-க்கு போய், 'Create Auto Scaling group' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Auto Scaling Groups → Create Auto Scaling group",
+              "highlight": "Create Auto Scaling group button",
+              "result": "The ASG creation wizard opens"
+            }
+          },
+          {
+            "ava_narration": "Name 'foodquick-app-asg' கொடுத்து, launch template-ஆ C4.3-ல create பண்ணின foodquick-app-template select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Create Auto Scaling group form",
+              "field": "Name, Launch template",
+              "value": "foodquick-app-asg, foodquick-app-template",
+              "highlight": "Launch template dropdown",
+              "result": "The ASG will launch new instances using the same golden AMI configuration every time"
+            }
+          },
+          {
+            "ava_narration": "Subnets-ல foodquick-public-1a மற்றும் foodquick-public-1b ரெண்டையும் select பண்றோம் - multi-AZ lesson-ல கத்துக்கிட்டது படி.",
+            "console_action": {
+              "type": "select",
+              "path": "Network settings",
+              "field": "Subnets",
+              "value": "foodquick-public-1a, foodquick-public-1b",
+              "highlight": "Subnet selection checkboxes",
+              "result": "The ASG can launch instances in either AZ, maintaining redundancy"
+            }
+          },
+          {
+            "ava_narration": "Existing load balancer target group-ஆ foodquick-app-tg attach பண்றோம் - இப்போ புது instances launch ஆனதும் automatic-ஆ ALB-கூட register ஆகும்.",
+            "console_action": {
+              "type": "select",
+              "path": "Load balancing",
+              "field": "Existing target group",
+              "value": "foodquick-app-tg",
+              "highlight": "Target group selection",
+              "result": "New instances will automatically be added to the target group and start receiving traffic once healthy"
+            }
+          },
+          {
+            "ava_narration": "Group size-ல Minimum 2, Desired 2, Maximum 8 கொடுக்கிறோம் - multi-AZ redundancy-க்கு minimum 2 (C3.2b-ல கத்துக்கிட்டது), traffic spikes-க்கு headroom-ஆ maximum 8.",
+            "console_action": {
+              "type": "fill",
+              "path": "Group size",
+              "field": "Minimum, Desired, Maximum",
+              "value": "2, 2, 8",
+              "highlight": "Group size input fields",
+              "result": "The ASG maintains at least 2 instances for redundancy, and can scale up to 8 during peak load"
+            }
+          },
+          {
+            "ava_narration": "Scaling policy-ஆ 'Target tracking' select பண்றோம், metric type 'Average CPU utilization', target value 60%. Instances warmup 300 seconds கொடுக்கிறோம் - இது cooldown period, scale-out நடந்த உடனேயே மறுபடி scale-out trigger ஆகாம தடுக்கும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Configure scaling policies",
+              "field": "Policy type, Metric type, Target value, Instance warmup",
+              "value": "Target tracking, Average CPU utilization, 60, 300 seconds",
+              "highlight": "Target value and warmup fields",
+              "result": "The ASG will scale out when average CPU exceeds 60%, waiting 300 seconds between scaling actions to let new instances stabilize"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "foodquick-app-asg maintains between 2 and 8 instances, automatically scaling based on average CPU utilization, with a 300-second cooldown preventing rapid, unstable scaling actions.",
+          "what_to_notice": "Cooldown period இல்லாம இருந்தா, ஒரு traffic spike-ல ASG rapid-ஆ பல தடவை scale-out trigger பண்ணி, 'flapping' நடக்கும் - cooldown இதை தடுக்கும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How Target Tracking Scaling Reacts Over Time",
+      "ava_speaks": "இந்த diagram பாரு - lunch-hour spike-ல ASG எப்படி respond பண்ணும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "11:30 AM — CPU average 35%, 2 instances running (at minimum)",
+            "12:00 PM — Lunch rush begins, CPU average climbs past 60% target",
+            "12:02 PM — ASG triggers scale-out, launches 2 more instances (now 4)",
+            "12:05 PM — New instances pass health checks, join the target group, CPU average drops back near 60%",
+            "1:30 PM — Lunch rush ends, CPU average drops below 60%",
+            "1:35 PM — ASG triggers scale-in, gradually removes instances back toward 2"
+          ]
+        },
+        "ava_narration": "Scale-out பொதுவா scale-in-ஐ விட fast-ஆ நடக்கும் - AWS traffic spikes-ஐ quickly cover பண்ண aggressive-ஆ scale-out பண்ணும், ஆனா scale-in-ஐ கொஞ்சம் conservative-ஆ, gradual-ஆ பண்ணும், premature capacity loss தவிர்க்க."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Add a Scheduled Scaling Action for a Known Traffic Pattern",
+      "instruction": "FoodQuick-ஓட ஒவ்வொரு வெள்ளிக்கிழமை மாலை, weekend orders spike ஆகும்னு Ravi கண்டுபிடிச்சிருக்காங்க. Proactive-ஆ scale-out பண்ண, ஒரு scheduled scaling action add பண்ணு.",
+      "scenario": "Historical data-ஐ பார்த்தா, ஒவ்வொரு வெள்ளிக்கிழமை மாலை 6 மணிக்கு, order volume sharply spike ஆகுது. Target tracking scaling-ஐ மட்டும் நம்பினா, spike ஆரம்பிச்ச பிறகுதான் react பண்ணும் - reaction lag-ல சில users-க்கு slow experience கிடைக்கலாம்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Auto Scaling Groups → foodquick-app-asg → Automatic scaling → Scheduled actions",
+        "current_configuration": "Only the target tracking policy exists; no scheduled action has been added yet"
+      },
+      "requirements": [
+        "Create a scheduled action that increases minimum and desired capacity every Friday at 5:45 PM",
+        "Set the scheduled minimum and desired capacity to 4 (ahead of the expected spike)",
+        "Keep maximum capacity at 8, unchanged, so target tracking can still scale further if needed",
+        "Add a second scheduled action to scale back down to normal levels (min 2, desired 2) once the Friday spike has historically ended"
+      ],
+      "hints": [
+        "Recurrence field-ல cron expression use பண்ணலாம் - Friday 5:45 PM-க்கு ஒரு weekly recurring schedule set பண்ண",
+        "Scheduled action, Maximum-ஐ தொடாத - அது target tracking-க்கு இன்னும் தேவைப்பட்டா scale பண்ண headroom கொடுக்கணும்",
+        "Scale-down action-ஐ மறந்துடாத - இல்லனா, Friday spike முடிஞ்ச பிறகும், weekend முழுக்க unnecessary-ஆ 4 instances run ஆகி, cost waste ஆகும்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Two scheduled actions exist: one raising min/desired to 4 every Friday 5:45 PM, and one returning them to 2 after the spike window, with maximum staying at 8 throughout",
+        "ava_correct": "Correct! இப்போ Friday spike ஆரம்பிக்கறதுக்கு முன்னாடியே capacity ready-ஆ இருக்கும் - reaction lag இல்ல.",
+        "ava_wrong": "ஏதோ ஒரு பீஸ் மிச்சம் இருக்கு போல - scale-up-மும் scale-down-மும் ரெண்டுமே இருக்கானு, maximum unchanged-ஆ இருக்கானு check பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Maximum That Was Too Low for the Real Traffic Spike",
+      "ava_speaks": "ananya-analyst, ஒரு marketing campaign launch date-க்கு முன்னாடி, ASG-ஓட maximum capacity-ஐ review பண்ணாம விட்டிட்டாங்க - அது ஆறு மாசத்துக்கு முன்னாடி set பண்ணி இருந்த ஒரு பழைய, சின்ன traffic level-க்கான value.",
+      "setup": "FoodQuick launches a major marketing campaign expecting significantly higher order volume than usual. Nobody reviews the ASG's Maximum capacity setting, which was set to 4 six months ago when the business was much smaller.",
+      "what_happened": "The campaign drives real traffic well beyond what 4 instances can handle. The ASG's target tracking policy correctly detects high CPU and tries to scale out, but hits the Maximum ceiling of 4 and can't add any more instances. Users start seeing 503 Service Unavailable errors during the campaign's peak hours.",
+      "broken_config": "Auto Scaling Group: foodquick-app-asg\nMinimum: 2\nDesired: 4 (already at max, trying to scale further)\nMaximum: 4 (set 6 months ago, never revisited)\n\nCloudWatch: Average CPU utilization sustained at 92%, well above the 60% target, but ASG cannot launch beyond 4 instances",
+      "error_shown": "ALB access logs: spike in 503 Service Unavailable responses during campaign peak hours. CloudWatch alarm: foodquick-app-asg GroupDesiredCapacity has been at GroupMaxSize (4) for 47 minutes — target tracking policy cannot scale further.",
+      "the_real_problem": "Maximum capacity ஒரு 'set once, review periodically' setting - ஆனா business grow ஆனப்போ, யாரும் அதை revisit பண்ணல. Scaling policy correctly வேலை செய்தாலும், அது Maximum-ஐ தாண்டி எதுவும் பண்ண முடியாது - இது ஒரு hard architectural limit, policy configuration தப்பு இல்ல.",
+      "fix": {
+        "corrected_config": "Immediately raise Maximum capacity to a value with real headroom (e.g. 15), based on the campaign's expected traffic multiplier. Going forward: review Maximum capacity as part of any major traffic-driving event's planning checklist (marketing campaigns, product launches, seasonal peaks).",
+        "result": "The ASG scales out to meet actual demand, 503 errors stop, and the campaign proceeds without further capacity-related incidents."
+      },
+      "lesson": "Maximum capacity, business growth-கூட periodically review ஆகாம விட்டா, ஒரு புது traffic-driving event, silently ஒரு hard ceiling-ஐ hit பண்ணி, scaling policy correctly வேலை செய்தாலும் users-க்கு errors கொடுக்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Scaling Configuration Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "An ASG has a very short cooldown period (say, 30 seconds) and a target tracking policy on CPU. During a spike, it scales out rapidly, then scales back in almost immediately when the new instances briefly reduce average CPU, then scales out again minutes later. What's this pattern called, and what fixes it?",
+          "answer": "This is called 'flapping' — rapid, unstable scale-in/scale-out cycling. Increasing the cooldown period (or the instance warmup time) gives new instances time to stabilize and truly absorb load before the ASG re-evaluates whether more scaling is needed, preventing this oscillation."
+        },
+        {
+          "question": "A team sets Minimum equal to Maximum (both at 4) to keep costs perfectly predictable. What real capability do they lose by doing this?",
+          "answer": "They lose all elastic scaling entirely — with min=max, the ASG can never add capacity beyond 4, no matter how high real demand goes, and it also can't scale down during quiet periods to save cost. This defeats the core purpose of using an ASG in the first place."
+        },
+        {
+          "question": "FoodQuick wants Black Friday-level scaling but genuinely doesn't know the exact traffic multiplier to expect. Should they set Maximum extremely high (e.g. 100) just to be safe with no real analysis?",
+          "answer": "Setting an extremely high Maximum with no analysis isn't free of risk either — a bug or a misconfigured scaling policy could scale to expensive levels unexpectedly. A better approach is to estimate a reasonable headroom based on available data (e.g. previous peak x a safety multiplier) and pair it with billing alarms, rather than picking an arbitrary very large number with no reasoning behind it."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Keep Capacity Limits Aligned With Real Growth",
+      "ava_speaks": "Real companies-ல, ASG Maximum capacity ஒரு 'set and forget' setting-ஆ இருக்கக் கூடாது - அது business growth-கூட தொடர்ந்து revisit பண்ண வேண்டிய ஒரு living number.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Review ASG Maximum capacity quarterly as part of a standard capacity planning cadence, not only reactively after an incident",
+          "detail": "இது FoodQuick-ஓட campaign mistake மாதிரி, business growth-ஐ ஒரு பழைய limit catch பண்றதை தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Set a CloudWatch alarm on GroupDesiredCapacity approaching GroupMaxSize, alerting before the ceiling is actually hit",
+          "detail": "இது proactive warning தரும் - ஒரு real outage நடக்கறதுக்கு முன்னாடியே"
+        },
+        {
+          "step": 3,
+          "action": "Before any known major event (marketing campaign, product launch), explicitly review and temporarily raise Maximum if needed",
+          "detail": "இது ananya-analyst-ஓட mistake-ஐ, ஒரு standard pre-launch checklist item ஆக்கி தடுக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Auto Scaling scaling activity history",
+          "use": "ASG எப்போ scale-out/scale-in trigger பண்ணுச்சு, ஏன்னு exact reasoning-கூட history காட்டும் - flapping அல்லது ceiling-hit patterns கண்டுபிடிக்க உதவும்"
+        },
+        {
+          "tool": "CloudWatch composite alarms",
+          "use": "Multiple conditions (high CPU + desired capacity near maximum) சேர்த்து ஒரே alarm-ஆ combine பண்ணி, precise-ஆ 'we're about to hit our ceiling' warning தரும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம Min/Max/Desired capacity, target tracking vs scheduled scaling, cooldown periods எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, Maximum capacity periodically review பண்ணாம விட்டா, business growth silently ஒரு ceiling-ஐ hit பண்ணி outages உருவாக்கும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம EC2 Pricing Models பார்ப்போம் - On-Demand, Reserved, Spot.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.5 — Summary",
+      "points": [
+        "✓ Minimum is the floor, Maximum is the hard ceiling, Desired is the dynamically adjusted current target",
+        "✓ Target tracking scaling reacts to real-time metrics; scheduled scaling proactively prepares for known patterns",
+        "✓ A cooldown period prevents rapid, unstable scaling cycles known as flapping",
+        "✓ Maximum capacity is a hard limit — a scaling policy cannot exceed it even under genuine demand",
+        "✓ Maximum capacity needs periodic review as business traffic grows, or a real spike can silently hit an outdated ceiling"
+      ],
+      "coming_next": "Lesson C4.6: EC2 Pricing Models"
+    }
+  }
+}

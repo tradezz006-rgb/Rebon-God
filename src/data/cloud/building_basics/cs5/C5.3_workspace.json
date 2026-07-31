@@ -1,0 +1,229 @@
+{
+  "lesson_id": "C5.3",
+  "ticket": "FQ-189",
+  "sender": "Meera Iyer (VP of Finance, CFO's Office)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-189 — Meera Iyer (VP of Finance, CFO's Office)\n\nDifferent kind of storage question this time — reporting-db-01 is running low on disk space, and karthik-dev resized the EBS volume in the console this morning. He says it's done. I want your team to actually confirm that, not just take his word for it.\n\n— Meera\n\nKeep EC2 instance-store vs EBS ephemeral trade-offs in mind while you work these tickets.",
+  "arc_outro": "Meera Iyer — VP of Finance, CFO's Office\n\nGood thing you checked instead of trusting the console alone — a database that still thinks it has no space, despite the bill going up for a bigger volume, would have been an expensive way to learn that lesson. Properly sized now, and I appreciate the type choice being explained in plain terms — sounds like we weren't about to overpay for performance we don't need.\n\nNothing new on the growing bucket this time — that's fine, not every piece of this needs to connect. Let's keep going.\n\n— Meera",
+  "tasks": [
+    {
+      "id": "C5.3-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C5.3",
+      "scenario": "karthik-dev resized reporting-db-01's EBS data volume from 100GB to 250GB in the AWS console this morning, and reports the task as done. Before confirming this to Meera, you decide to check the instance directly.",
+      "question": "What should you actually check to confirm the resize is fully effective, not just requested?",
+      "options": [
+        "A) Nothing further needed — the AWS console showing 250GB is sufficient confirmation that the fix is complete",
+        "B) Log into the instance and run 'df -h' (or equivalent) to see what the OPERATING SYSTEM actually reports as available space — the console resize changes the underlying block device, but the filesystem sitting on top may not automatically know about or use the new space",
+        "C) Check the billing dashboard to confirm FoodQuick is now being charged for 250GB, since correct billing proves the resize worked",
+        "D) Restart the entire instance, since only a full reboot can ever reveal the true disk size"
+      ],
+      "correct_index": 1,
+      "explanation": "AWS console volume size um OS-level filesystem size um different different topic. in Console 250GB kaatuchu — says, filesystem that extra space-a use does — guarantee what was done. in Instance login after doing 'df -h' run doing real confirmation, console screenshot only not.",
+      "ren_correct": "Correct — console size and OS-visible size different vera, real confirmation in instance irundhu will come.",
+      "ren_wrong": "A bit think again — in console size kaanrthat filesystem that space-a use does — guarantee what was done. in Instance actual-a check must do."
+    },
+    {
+      "id": "C5.3-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.3",
+      "question": "At a high level, what distinguishes gp3, io2, st1, and sc1 EBS volume types from each other?",
+      "options": [
+        "A) They're identical in performance, differing only in price for no functional reason",
+        "B) gp3 (general purpose SSD) suits most everyday workloads with balanced cost/performance; io2 (provisioned IOPS SSD) suits mission-critical workloads needing guaranteed, high, consistent IOPS; st1 (throughput-optimized HDD) suits large, sequential-access workloads like big log processing; sc1 (cold HDD) suits the least frequently accessed, most cost-sensitive data",
+        "C) io2 is always the cheapest option and should be used by default for all workloads regardless of need",
+        "D) st1 and sc1 are SSD-based, while gp3 and io2 are HDD-based — the opposite of their actual design"
+      ],
+      "correct_index": 1,
+      "explanation": "Naanku different different use case — gp3 balanced everyday for workload (most common default), io2 guaranteed high IOPS for mission-critical, st1 periya sequential throughput for workload (log processing like), sc1 very rarely-accessed cold for data cheapest option. Ovvoruthukum different different fit.",
+      "ren_correct": "Correct — naankum different different use for case design has been done, one-size-fits-all not.",
+      "ren_wrong": "A bit think again — naanku types different different performance/cost for profile design has been done. gp3/io2 SSD, st1/sc1 HDD-based."
+    },
+    {
+      "id": "C5.3-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.3",
+      "question": "When you resize an EBS volume from 100GB to 250GB in the AWS console, what actually happens immediately?",
+      "options": [
+        "A) The filesystem on top of the volume automatically expands to use the full 250GB with zero further action needed",
+        "B) Only the underlying BLOCK DEVICE's size changes to 250GB — the partition table and the filesystem sitting on top of it still need to be explicitly extended (e.g. via growpart and then resize2fs/xfs_growfs) before the OS will actually recognize and use the additional space",
+        "C) The volume is immediately unmounted and must be manually remounted before any further action is possible",
+        "D) AWS automatically restarts the instance to apply the new size"
+      ],
+      "correct_index": 1,
+      "explanation": "Console resize block device size only change does. Partition and filesystem explicit-a extend must do (growpart, then resize2fs or xfs_growfs, filesystem type depend has been done) — this automatic-a to happenthu, manual step is needed.",
+      "ren_correct": "Correct — block device size um filesystem size um different different steps, both explicitly must do.",
+      "ren_wrong": "A bit think again — console resize only podhathu. Partition and filesystem explicitly extend must do, automatic-a aagathu."
+    },
+    {
+      "id": "C5.3-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.3",
+      "scenario": "You log into reporting-db-01 to verify karthik-dev's resize.",
+      "broken_config": "AWS Console: EBS volume vol-0d4f8a2c1e9b3d7a6 shows 250GB (resized this morning) ✓\n\n$ df -h /data\nFilesystem Size Used Avail Use% Mounted on\n/dev/xvdf 98G 96G 2.0G 98% /data\n\n$ lsblk\nNAME SIZE\nxvdf 250G\n└─xvdf1 98G /data",
+      "what_to_find": [
+        "The AWS console correctly shows 250GB — the volume resize itself worked at the AWS level",
+        "'lsblk' confirms the raw block device (xvdf) is genuinely 250GB now — the resize did take effect at the hardware/AWS level",
+        "BUT the partition (xvdf1) is still only 98GB, and 'df -h' shows the filesystem still only sees 98GB total, with just 2GB free — the actual problem (low disk space) is NOT resolved despite the volume being bigger",
+        "This is exactly the gap between 'AWS says it's resized' and 'the operating system can actually use the new space' — karthik-dev's 'it's done' was based on the console, not on checking the instance itself"
+      ],
+      "correct_fix": "Run 'growpart /dev/xvdf 1' to extend the partition to fill the full 250GB block device, then run the filesystem-appropriate extend command (resize2fs /dev/xvdf1 for ext4, or xfs_growfs /data for XFS) to extend the actual filesystem to use the newly available space.",
+      "explanation": "This exact spec mistake — volume resize do there in AWS-level, but OS still old size-a report does. Two different step is needed: partition extend (growpart) and filesystem extend (resize2fs/xfs_growfs), both without doing real fix aagathu."
+    },
+    {
+      "id": "C5.3-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C5.3",
+      "question": "Arrange the correct order to fully complete the disk resize, from the AWS console change to the filesystem actually seeing the extra space.",
+      "items": [
+        "Resize the EBS volume in the AWS console (already done in this case)",
+        "Run 'lsblk' to confirm the raw block device now shows the new, larger size",
+        "Run 'growpart' to extend the partition to fill the full block device",
+        "Run the filesystem-appropriate extend command (resize2fs for ext4, xfs_growfs for XFS)",
+        "Run 'df -h' to confirm the filesystem now reports the full new size and usable free space"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Console resize first (already done), then block device confirm must do (lsblk), then partition extend must do (growpart), then filesystem extend must do (resize2fs/xfs_growfs), LAST-a df -in h real confirm must do.",
+      "ren_correct": "Nice sequencing — block device, partition, filesystem, verify — correct in order all check did you do.",
+      "ren_wrong": "Order again paaru — partition extend without doing filesystem extend to do cannot, growpart first is needed for resize2fs/xfs_growfs first."
+    },
+    {
+      "id": "C5.3-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.3",
+      "scenario": "Before running the filesystem extend command, you check what filesystem reporting-db-01's data volume actually uses.",
+      "question": "Why does it matter which specific filesystem-extend command you use?",
+      "options": [
+        "A) It doesn't matter — resize2fs works universally on any filesystem type, including XFS",
+        "B) The correct command depends on the actual filesystem type: resize2fs is specifically for ext2/ext3/ext4 filesystems, while xfs_growfs is specifically for XFS filesystems — running the wrong one for the actual filesystem type will fail or do nothing useful",
+        "C) xfs_growfs is a universal command that works on any filesystem, making the filesystem type irrelevant",
+        "D) The filesystem type only matters for encryption settings, not for resize operations"
+      ],
+      "correct_index": 1,
+      "explanation": "resize2fs and xfs_growfs different different for filesystem specific commands — resize2fs for ext2/3/4, xfs_growfs for XFS. Actual filesystem type check without doing wrong command run did, fail will happen or anything velai what was done.",
+      "ren_correct": "Correct — filesystem type check after doing correct command use must do, universal command onnum not.",
+      "ren_wrong": "A bit think again — resize2fs and xfs_growfs universal not. Actual filesystem for type match but command use must do."
+    },
+    {
+      "id": "C5.3-T7",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C5.3",
+      "scenario": "You run 'growpart /dev/xvdf1 1' (specifying the partition device instead of the disk device) and then try to run resize2fs.",
+      "error_shown": "$ growpart /dev/xvdf1 1\nFAILED: partition 1 not found in /dev/xvdf1 (device does not contain a partition table)\n\n$ resize2fs /dev/xvdf1\nresize2fs: Filesystem does not fit! (still reports the old 98GB size)",
+      "diagnosis": "growpart needs to target the DISK device (xvdf, which contains the partition table) and be told WHICH partition number to grow (1), not the partition device itself (xvdf1). Running growpart against xvdf1 fails because xvdf1 is already a partition, not a disk with a partition table to modify — this is a common mix-up between the disk device and its partitions.",
+      "fix": "Re-run the command correctly targeting the disk device with the partition number as a separate argument: 'growpart /dev/xvdf 1' (grow partition 1 on disk xvdf), THEN run 'resize2fs /dev/xvdf1' (the actual partition device) to extend the filesystem. The two commands take different kinds of device arguments and mixing them up is an easy, common mistake.",
+      "explanation": "This real, common command-syntax gotcha — for growpart disk device + partition number is needed, for resize2fs partition device only is needed. Two commands different different argument expect does, confuse doing easy, but error message-a paathu diagnose to do can."
+    },
+    {
+      "id": "C5.3-T8",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.3",
+      "scenario": "Commands corrected and re-run. Final verification before reporting back.",
+      "broken_config": "$ growpart /dev/xvdf 1\nCHANGED: partition=1 start=2048 old: size=205520896 end=205522944 new: size=524286943 end=524288991\n\n$ resize2fs /dev/xvdf1\nThe filesystem on /dev/xvdf1 is now 65535867 (4k) blocks long.\n\n$ df -h /data\nFilesystem Size Used Avail Use% Mounted on\n/dev/xvdf 246G 96G 138G 42% /data\n\n$ Test write of a 5GB dummy file to /data: SUCCESS",
+      "what_to_find": [
+        "growpart and resize2fs both completed successfully this time, with the correct device arguments",
+        "df -h now correctly shows ~246GB total (the full resized volume, accounting for filesystem overhead), with 138GB genuinely free — not the misleading 98GB/2GB-free from before",
+        "The actual test write confirms real, usable free space exists now, not just a number that looks right in a report"
+      ],
+      "correct_fix": "No further changes needed — the resize is genuinely complete and verified with a real write test, not just a config check.",
+      "explanation": "This 'recognize this is already correct' verify task — we two commands correct-a run after doing, AND real test write after doing confirm we have done, config number only paakama."
+    },
+    {
+      "id": "C5.3-T9",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.3",
+      "scenario": "Before closing this out, ananya-analyst asks whether the EBS volume resize could have been avoided entirely by taking a snapshot-based approach instead — snapshotting the volume, then restoring it as a larger volume from the snapshot.",
+      "question": "Would a snapshot-and-restore approach have avoided the growpart/resize2fs steps entirely?",
+      "options": [
+        "A) Yes — restoring a snapshot to a larger volume automatically extends the filesystem to use the full new size, with no further steps needed",
+        "B) No — even when restoring a snapshot to a larger volume, the same gap applies: the new volume's filesystem still only recognizes the ORIGINAL size until growpart and the filesystem-extend command are run. Snapshot-and-restore changes HOW you get a bigger volume, not the fact that the filesystem still needs to be told to use the extra space",
+        "C) Yes, but only if the snapshot is encrypted",
+        "D) Snapshots can never be restored to a differently-sized volume than the original"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, worth-knowing point — snapshot restore after doing bigger volume create even if done, same gap continue will happen: filesystem still original size only recognize does, growpart + resize2fs (or xfs_growfs) explicitly must do. This volume create panra METHOD only maarum, filesystem-extend requirement maaraathu.",
+      "ren_correct": "Correct — snapshot restore volume creation method only maarum, filesystem-extend step still needed.",
+      "ren_wrong": "A bit think again — snapshot restore even if done same gap will be. Filesystem extend step anything method-lyum needed."
+    },
+    {
+      "id": "C5.3-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C5.3",
+      "cases": {
+        "case_1": "reporting-db-01's data volume — moderate, steady database IOPS needs, no extreme performance requirements",
+        "case_2": "A new, latency-critical payment-processing database needing guaranteed, consistent high IOPS regardless of any other activity on the account",
+        "case_3": "A volume storing large log files that get written sequentially and read in big sequential batches for periodic analysis, rarely accessed randomly",
+        "case_4": "A volume holding old compliance backups that are almost never accessed, where cost is the primary concern"
+      },
+      "correct_answers": {
+        "case_1": "gp3 — balanced, cost-effective performance fits a moderate, steady database workload without paying for guarantees it doesn't need",
+        "case_2": "io2 — guaranteed, consistent high IOPS is exactly io2's purpose, justified here by the payment system's genuine latency-criticality",
+        "case_3": "st1 — throughput-optimized HDD is designed exactly for large sequential read/write patterns like batch log analysis, at lower cost than SSD options",
+        "case_4": "sc1 — cold HDD, the cheapest option, fits rarely-accessed backup data where retrieval speed barely matters"
+      },
+      "scenario": "Meera asks for a clear framework on matching EBS volume type to actual workload needs across the fleet.",
+      "explanation": "Naanku different different requirement — moderate steady (gp3), guaranteed high IOPS critical (io2), large sequential batch (st1), rarely-accessed cost-focused (sc1). This real judgment, io2 everywhere use doing over-engineering, sc1 everywhere use doing performance problems create does.",
+      "ren_correct": "Correct — each case-kum actual requirement (IOPS need, access pattern, cost sensitivity) base after doing right type match did you do.",
+      "ren_wrong": "A bit think again — each case also different different requirement, for each one different different EBS type fit will happen."
+    },
+    {
+      "id": "C5.3-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C5.3",
+      "scenario": "karthik-dev asks whether reporting-db-01 should actually be upgraded to io2 'to be safe,' given the disk-space scare. gp3 costs roughly ₹6.80/GB-month; io2 costs roughly ₹9.50/GB-month for the storage alone, PLUS a per-IOPS charge that gp3 doesn't have at this performance level.",
+      "question": "Is upgrading to io2 a reasonable response to what was actually a disk-space (capacity) problem, not a performance (IOPS) problem?",
+      "solution": "No — the incident was about running out of SPACE, not about insufficient IOPS or performance. reporting-db-01's actual workload (moderate, steady reporting queries) has never shown IOPS-related bottlenecks. Switching to io2 would cost roughly ₹2.70/GB-month more in storage alone (for 250GB, about ₹675/month extra) PLUS ongoing per-IOPS charges, all to solve a problem (guaranteed IOPS) that was never actually the issue. The right response to a space problem is more space (already done) and better monitoring to resize proactively next time, not a different, more expensive volume type.",
+      "explanation": "This real cost judgment — problem what — correctly diagnose doing is important. Space for problem IOPS solution apply doing, unnecessary cost only add does, real problem-a address what was done."
+    },
+    {
+      "id": "C5.3-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.3",
+      "scenario": "Time to report back to Meera on this piece of FQ-189.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"karthik-dev resized the volume, all done.\"",
+        "B) \"Verified karthik-dev's console resize did NOT actually take effect at the OS level — the volume showed 250GB in AWS, but the filesystem still only saw the original 98GB with 2GB free. Extended the partition and filesystem properly (growpart + resize2fs), confirmed with both df -h and a real test write that 138GB is now genuinely usable. Recommended staying on gp3 rather than upgrading to io2, since this was a capacity issue, not a performance issue, and io2 would add real ongoing cost for guarantees this workload doesn't need.\"",
+        "C) \"The volume is bigger now, should be fine going forward.\"",
+        "D) \"Recommended switching to io2 for extra safety given today's scare.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — real gap (console vs OS) explicitly call out must do, real fix verify must do (test write also), AND unnecessary upgrade (io2) correctly avoid doing explain must do, capacity vs performance problem correctly diagnose after doing.",
+      "ren_correct": "This correct report — the real gap explicitly named, fix verified with a real test, and an unnecessary cost avoided with clear reasoning.",
+      "ren_wrong": "This report either vague-a is there or problem-a misdiagnose after doing unnecessary cost (io2) recommend does — capacity for problem performance solution needed not."
+    }
+  ],
+  "act_number": 4,
+  "act_title": "EBS That Survives Termination",
+  "builds_layer": "Block Storage Layer"
+}

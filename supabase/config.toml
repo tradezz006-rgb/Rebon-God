@@ -1,0 +1,13 @@
+project_id = "odaiiniqvgbcbhucakrk"
+
+[functions.voice-assessment]
+verify_jwt = false
+
+[functions.scenario-feedback]
+verify_jwt = false
+
+[functions.code-verify]
+verify_jwt = false
+
+[functions.ask-ava]
+verify_jwt = false

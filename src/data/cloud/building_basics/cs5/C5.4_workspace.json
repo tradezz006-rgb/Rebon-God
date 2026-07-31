@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C5.4",
+  "ticket": "FQ-189",
+  "sender": "Meera Iyer (VP of Finance, CFO's Office)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-189 — Meera Iyer (VP of Finance, CFO's Office)\n\nTwo last things for this ticket. First — I'm told there's an EFS filesystem in the cost breakdown attached to something that only ever runs on one server, which doesn't sound right to me even without the technical details. Second — I want that growing bucket resolved this time, not just narrowed further. We've spent five lessons on storage; let's close this properly.\n\n— Meera",
+  "arc_outro": "Meera Iyer — VP of Finance, CFO's Office\n\nSo it was sitting in a region nobody actually looks at day to day — a compliance export that made sense three years ago, running quietly ever since, for a requirement that doesn't even apply anymore. That's the real pattern across this whole ticket, isn't it — not carelessness, just nobody's job to notice. I'm glad it's finally closed, and I'm glad you didn't just delete three years of exported data without checking what it actually was first.\n\nThat's storage done, and honestly, that's this ticket done. From a s3fs-mounted log script to a lifecycle rule that broke real images to a compliance export nobody remembered — every piece of this had a real, findable reason, and now every piece has an actual owner. Thank you for treating my finance questions like real engineering questions.\n\nRavi mentioned monitoring is next — I have a feeling we're going to find out how much of this was already visible somewhere, if anyone had been looking.\n\n— Meera",
+  "tasks": [
+    {
+      "id": "C5.4-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C5.4",
+      "scenario": "You find the EFS filesystem Meera mentioned: it's mounted on exactly one EC2 instance, running a nightly reconciliation batch job, and has never been mounted anywhere else since it was created.",
+      "question": "Given EFS is designed for shared, multi-instance access, what should you check before concluding this is definitely a mistake?",
+      "options": [
+        "A) Nothing further — single-instance usage alone is sufficient proof this is wrong and should be migrated immediately",
+        "B) Whether there's a genuine FUTURE plan for this to become multi-instance (e.g., a planned migration to a distributed batch architecture) that would justify paying for EFS's shared-access capability now, even though it's single-instance today",
+        "C) Whether the instance has enough IAM permissions to mount EFS, since that's the only thing that actually matters",
+        "D) Whether the EFS filesystem is encrypted, since encryption status determines whether EFS or EBS is the right choice"
+      ],
+      "correct_index": 1,
+      "explanation": "Single-instance usage suspicious-a even if, a genuine future plan (for multi-instance migrate we will do) irundha, that context matter does. But this without, for single-instance EFS pay doing real waste — check doing, assume without doing.",
+      "ren_correct": "Correct — future plan to be — check doing, immediate judgment eduthukkaama.",
+      "ren_wrong": "A bit think again — encryption or IAM permissions this decision-a drive what was done. Genuine future multi-instance plan to be — check must do."
+    },
+    {
+      "id": "C5.4-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.4",
+      "question": "What's EFS's actual, distinguishing value compared to EBS?",
+      "options": [
+        "A) EFS is simply a more modern, universally better replacement for EBS with no real trade-offs",
+        "B) EFS supports genuine CONCURRENT access from MULTIPLE instances simultaneously (a true shared filesystem), which EBS (attached to one instance at a time) cannot do — but this capability costs roughly 3x what EBS costs for equivalent capacity, making EFS worth it only when multi-instance sharing is a real, active requirement",
+        "C) EFS is always cheaper than EBS regardless of use case",
+        "D) EFS can only be used with Lambda functions, never with EC2 instances"
+      ],
+      "correct_index": 1,
+      "explanation": "EFS's real value — multiple instances also SAME in TIME access we can do, real shared filesystem. EBS a for instance only attach will happen. But this capability ~3x cost EBS-a vida — genuinely shared for workload only worth will happen, for single-instance not.",
+      "ren_correct": "Correct — EFS's real value multi-instance concurrent access, 3x cost's trade-off's.",
+      "ren_wrong": "A bit think again — EFS EBS-a vida universally better not. Real value multi-instance sharing, that genuinely needed — only worth will happen."
+    },
+    {
+      "id": "C5.4-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C5.4",
+      "question": "What makes S3 Glacier Vault Lock different from regular S3 lifecycle policies moving data to Glacier?",
+      "options": [
+        "A) There's no real difference — Vault Lock is just a different name for the same Glacier storage class",
+        "B) Vault Lock applies a WORM (Write Once, Read Many) policy that can be made legally immutable — once locked, even the account's own administrators cannot delete or alter the data before the specified retention period ends, which is specifically designed for compliance requirements that need to prove data hasn't been tampered with",
+        "C) Vault Lock is only a UI feature for organizing Glacier objects, with no actual access-control effect",
+        "D) Vault Lock automatically deletes data after the retention period, while regular Glacier keeps it forever"
+      ],
+      "correct_index": 1,
+      "explanation": "Vault Lock real difference — WORM policy, legally immutable we can do, retention period mudiyara varaikkum ACCOUNT ADMIN's also delete/alter to do cannot. This specifically for compliance design has been done, data tamper aagala — prove for doing.",
+      "ren_correct": "Correct — Vault Lock genuinely immutable, admin-a also block does, compliance-specific purpose.",
+      "ren_wrong": "A bit think again — Vault Lock just naming not. Real WORM enforcement, admin-a also to delete cannot retention in period."
+    },
+    {
+      "id": "C5.4-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.4",
+      "scenario": "You confirm the EFS filesystem's actual usage pattern and cost.",
+      "broken_config": "EFS filesystem fs-0a1b2c3d4e5f6789:\n├── Mounted on: exactly 1 EC2 instance (reconciliation-batch-01), since creation 8 months ago\n├── No other instance has ever mounted it (confirmed via CloudTrail mount events)\n├── Current usage: 40GB, growing slowly\n├── Cost: EFS Standard ~₹24.50/GB-month = ~₹980/month for 40GB\n└── Equivalent EBS gp3 volume for the same 40GB: ~₹272/month\n└── No future multi-instance plan exists for this workload (confirmed with the team that owns reconciliation-batch-01)",
+      "what_to_find": [
+        "This EFS filesystem has never been used by more than one instance in its entire 8-month history — the core capability being paid for has never actually been used",
+        "There is no future plan that would justify the shared-access capability either — this isn't a case of 'paying ahead' for a real upcoming need",
+        "The cost difference is real and ongoing: ~₹980/month on EFS versus ~₹272/month on an equivalent EBS volume — roughly ₹708/month, or about ₹8,500/year, for a capability that's never been used and isn't planned to be",
+        "This is exactly the spec's mistake: EFS used for a genuinely single-instance workload where EBS would be sufficient and notably cheaper"
+      ],
+      "correct_fix": "Migrate reconciliation-batch-01's data from EFS to a new EBS volume attached to that instance, verify the batch job runs correctly against the new volume, then decommission the EFS filesystem entirely.",
+      "explanation": "This exact spec mistake — genuinely single-instance for workload EFS use doing, real cost difference is there (~₹8,500/year), a for capability pay doing anything use did not do."
+    },
+    {
+      "id": "C5.4-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C5.4",
+      "question": "Arrange the correct order to migrate reconciliation-batch-01 from EFS to EBS safely.",
+      "items": [
+        "Create a new EBS volume of appropriate size and attach it to reconciliation-batch-01",
+        "Copy all data from the EFS mount to the new EBS volume",
+        "Update the application/batch job configuration to point to the new EBS mount path",
+        "Run the batch job against the new EBS-backed path and verify correct results",
+        "Unmount and decommission the EFS filesystem only after the new setup is confirmed working"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "EBS volume create after doing attach must do first, then data copy must do, then config point must do new for path, then real run after doing verify must do, LAST-a only old EFS decommission must do — verify without doing decommission must not.",
+      "ren_correct": "Nice sequencing — new setup verify after applying old one decommission did you do.",
+      "ren_wrong": "Order again paaru — verify without doing EFS decommission must not, that last step-a must be."
+    },
+    {
+      "id": "C5.4-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.4",
+      "scenario": "Before finalizing the reconciliation-batch-01 migration, karthik-dev asks whether they should just leave a small EFS filesystem around too, 'in case we need shared storage again someday, so we don't have to set it up from scratch.'",
+      "question": "Is keeping an unused EFS filesystem around 'just in case' a reasonable approach?",
+      "options": [
+        "A) Yes — keeping infrastructure around for hypothetical future use is always a good practice regardless of current cost",
+        "B) No — an EFS filesystem with no current workload still costs money for the storage it holds, and setting one up fresh when a genuine multi-instance need actually arises is quick and straightforward. Paying an ongoing cost for a hypothetical, undated future need repeats the exact pattern (unowned resources quietly costing money) that this entire ticket has been about",
+        "C) Yes, but only if the EFS filesystem is completely empty, since empty filesystems are always free",
+        "D) No — EFS filesystems cannot be deleted and recreated later, so it must be decided permanently now"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact same pattern we whole in FQ-189 kandupidichom — 'just in case' resource vachikitte poirundha, unowned cost quietly accumulate will happen. EFS neededpadumbothu fresh-a create doing quick and simple — 'just in case' vachikitrukrthat same mistake repeat doing.",
+      "ren_correct": "Correct — 'just in case' resources exact pattern we whole in ticket fix we have done, repeat must not.",
+      "ren_wrong": "A bit think again — hypothetical future for need ongoing cost pay doing, this exact same pattern we to fix try do."
+    },
+    {
+      "id": "C5.4-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.4",
+      "scenario": "Now that the legacy-exports bucket investigation is finally being closed out, ananya-analyst asks whether Glacier Vault Lock should be applied to the 340GB of accumulated export data immediately, 'just to be safe and compliant.'",
+      "question": "Is applying Vault Lock to this data immediately, before fully understanding it, a good idea?",
+      "options": [
+        "A) Yes — applying Vault Lock immediately is always the safest first step for any data of unclear origin",
+        "B) No — Vault Lock is DELIBERATELY hard to undo (that's its whole point for genuine compliance needs), so applying it to data whose purpose and continued relevance aren't yet fully understood risks permanently locking in data that might actually need to be deleted, corrected, or handled differently once its origin is understood",
+        "C) Yes, but only if the data is first compressed to save storage costs",
+        "D) No — Vault Lock can never be applied to data that's already been written, only to newly-created objects"
+      ],
+      "correct_index": 1,
+      "explanation": "Vault Lock DELIBERATELY hard to undo — genuine compliance for need this real value. But data's purpose still understand —, immediate-a lock doing risky — appropriate action what — (delete, keep, migrate) purinjikitta then decide must do, lock after doing then decide doing not.",
+      "ren_correct": "Correct — Vault Lock hard-to-undo nature-ala, purpose understand varaikkum apply must not.",
+      "ren_wrong": "A bit think again — Vault Lock 'safe default' not, that deliberately irreversible. Purpose understand varaikkum apply must not."
+    },
+    {
+      "id": "C5.4-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C5.4",
+      "scenario": "Finally investigating what's actively assuming legacy-export-service-role. All previous checks were scoped to ap-south-1. This time, you check IAM Access Advisor's per-service detail and CloudTrail across ALL regions, not just the default one.",
+      "error_shown": "$ aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=legacy-export-service-role --region us-east-1\n{\n \"eventName\": \"AssumeRole\",\n \"sourceIPAddress\": \"lambda.amazonaws.com\",\n \"resources\": [{\"resourceName\": \"legacy-customer-export\", \"resourceType\": \"AWS::Lambda::Function\"}]\n}\n(repeating nightly, region: us-east-1 — a region nobody on the current team routinely checks)",
+      "diagnosis": "The role is being assumed by a Lambda function called legacy-customer-export, running in us-east-1 — not ap-south-1, which is why it never showed up in any of the earlier checks that (understandably, but incompletely) only looked at the region FoodQuick actually operates in day to day. Checking the function's own code and an old internal doc found alongside it reveals it was set up roughly 3 years ago to satisfy a data export requirement for a compliance framework FoodQuick was pursuing at the time — a requirement that was later superseded by a different, newer process (confirmed with the compliance team), but this specific Lambda and its nightly schedule were never turned off.",
+      "fix": "Confirm with the compliance team that this specific export is genuinely no longer required (done). Disable the EventBridge schedule triggering the Lambda, then delete the Lambda function and revoke legacy-export-service-role's permissions. Before deleting the 340GB of already-exported data, have compliance/legal confirm no retention obligation applies to the historical exports themselves, separate from the now-obsolete ongoing export process.",
+      "explanation": "This exact mystery payoff, and this in C4.1 we saw 'resources are per-region, check ALL regions' lesson's direct echo — different in context (Lambda) same principle apply aagudhu. This breach not, a superseded compliance process nobody remembered to turn off — CS5 mega-story's exact theme."
+    },
+    {
+      "id": "C5.4-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C5.4",
+      "scenario": "Compliance confirms the historical export data has no retention obligation of its own once the process is decommissioned. Final resolution audit.",
+      "broken_config": "Resolution:\n├── EventBridge schedule for legacy-customer-export: DISABLED\n├── Lambda function legacy-customer-export (us-east-1): DELETED\n├── legacy-export-service-role: permissions revoked, role deleted\n├── Compliance confirmation: historical export data has no independent retention requirement — safe to delete\n├── foodquick-legacy-exports bucket (340GB): scheduled for deletion after a final 30-day grace period (in case anything unexpected surfaces)\n└── New process item: quarterly review must explicitly check ALL regions an account has ever used, not just the primary operating region",
+      "what_to_find": [
+        "The resolution addresses the actual root cause (an obsolete Lambda in an unchecked region) rather than just the visible symptom (the growing bucket)",
+        "Compliance was consulted BEFORE deleting historical data, not after — this respects that engineering judgment alone isn't sufficient for a compliance question",
+        "A 30-day grace period before final deletion is a reasonable, low-cost safety margin given how long this specific investigation took to fully resolve",
+        "The new process item (checking ALL regions, not just the primary one) is the real structural fix — this is what prevents the NEXT forgotten cross-region resource from silently running for years"
+      ],
+      "correct_fix": "No further changes needed — this is a complete, properly-sequenced resolution with appropriate compliance sign-off and a real structural fix, not just a technical cleanup.",
+      "explanation": "This 'recognize this is already correct' verify task — we root cause fix we have done, compliance's properly consult we have done, safety margin vachirukom, AND for future same problem recur aagama process fix we have done."
+    },
+    {
+      "id": "C5.4-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C5.4",
+      "cases": {
+        "case_1": "A new batch job that will genuinely need to run across multiple EC2 instances simultaneously, all reading and writing to the same shared working directory",
+        "case_2": "A single-instance application's local data directory, no sharing ever planned",
+        "case_3": "Financial transaction records that a regulator requires to be provably unaltered for 7 years",
+        "case_4": "Regular application logs that should be retained cheaply for a year but have no special immutability requirement"
+      },
+      "correct_answers": {
+        "case_1": "EFS — genuine multi-instance concurrent shared access is exactly EFS's purpose, worth the cost premium here",
+        "case_2": "EBS — single-instance, no sharing need, EFS's shared-access premium would be pure waste",
+        "case_3": "S3 Glacier with Vault Lock — the genuine, provable-immutability compliance requirement is exactly Vault Lock's purpose",
+        "case_4": "S3 with a standard lifecycle policy (e.g. to IA or Glacier over time) — retention without needing the strict, hard-to-undo immutability of Vault Lock"
+      },
+      "scenario": "Meera wants the final framework for the storage team: when does each of these specialized options (EFS, Vault Lock) actually apply, versus more standard choices.",
+      "explanation": "Naanku different different requirement — genuine multi-instance sharing (EFS), single-instance (EBS), provable regulatory immutability (Vault Lock), ordinary retention (standard lifecycle). This whole CS5's real lesson — specialized, more expensive or more restrictive options genuine matching need if it was only use must do.",
+      "ren_correct": "Correct — each case-kum actual requirement (sharing, immutability, cost) base after doing right option match did you do.",
+      "ren_wrong": "A bit think again — each case also different different requirement, EFS and Vault Lock both specialized, genuine need if it was only use must do."
+    },
+    {
+      "id": "C5.4-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C5.4",
+      "scenario": "Meera wants the full FQ-189 cost summary for her board deck: the EFS-to-EBS migration saves ~₹708/month. The legacy-customer-export Lambda and its associated resources cost negligible compute (~₹50/month), but the REAL cost was the 340GB bucket accumulating at ~8GB/week indefinitely.",
+      "question": "What's the full, honest cost picture to present, combining everything found across all of FQ-189?",
+      "solution": "Direct ongoing savings: ~₹708/month (EFS→EBS) + eliminating the Lambda's ~₹50/month compute + eliminating the bucket's continued growth (at S3 Standard pricing, ~8GB/week indefinitely would have compounded significantly over time, easily exceeding ₹1,000+/month within another year if left unchecked) + the ~₹5,190/month from the C5.1a log script fix + the driver-documents incident's risk (not a direct monthly saving, but a real avoided-cost/liability). Framed honestly: several of these were individually modest, but the PATTERN — unowned, unreviewed resources accumulating quietly — is the real finding, more valuable to fix structurally (the new review processes) than any single number alone.",
+      "explanation": "This whole ticket's final framing — individual numbers modest-a even if, PATTERN real finding. Structural fix (quarterly review, all-regions check) individual dollar savings-a vida real long-term value."
+    },
+    {
+      "id": "C5.4-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C5.4",
+      "scenario": "Time for the final report closing out FQ-189 entirely.",
+      "question": "Which report should you send to Meera?",
+      "options": [
+        "A) \"All storage issues are fixed. Costs are optimized.\"",
+        "B) \"Migrated reconciliation-batch-01 from EFS to EBS (~₹708/month saved, no genuine multi-instance need existed). Fully resolved the growing bucket mystery: a Lambda function in us-east-1 — a region outside our normal day-to-day view — was still running a nightly export for a compliance requirement superseded years ago. Disabled and deleted with compliance sign-off, historical data scheduled for deletion after a 30-day grace period. Added a process requiring quarterly reviews to check ALL regions, not just our primary one. Combined with the log script, image lifecycle, and driver-documents fixes earlier in this ticket, the pattern across all of FQ-189 was the same: unowned, unreviewed resources quietly accumulating cost or risk — now with real ownership and review processes in place.\"",
+        "C) \"Everything is optimized and this will never be a problem again.\"",
+        "D) \"Deleted the old bucket and the unused Lambda, cleaned up the account.\""
+      ],
+      "correct_index": 1,
+      "explanation": "This whole ticket close doing report — specific numbers, full honest mystery resolution WITH compliance sign-off properly mentioned, AND the pattern across the whole ticket connected together. Option D too casual/vague for what was actually a careful, multi-step, compliance-involved resolution.",
+      "ren_correct": "This correct report — specific, connects the whole ticket's pattern together, and properly credits the careful compliance-involved process.",
+      "ren_wrong": "This report either overclaims permanence ('never a problem again') or under-describes a careful process as a casual cleanup."
+    }
+  ],
+  "act_number": 5,
+  "act_title": "Cost Hygiene Across Storage",
+  "builds_layer": "Storage Economics Layer"
+}

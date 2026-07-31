@@ -1,0 +1,202 @@
+{
+  "lesson_id": "C2.5",
+  "act_number": 6,
+  "act_title": "The Final Seal",
+  "builds_layer": "Perimeter Defense Layer",
+  "total_tasks": 10,
+  "arc_intro": "One day before the audit. Five layers secured, the mystery solved, new trust built correctly. Ravi has one last ask: make sure nothing at the outer perimeter can quietly slip again — not just today, but structurally, even if someone forgets everything you just spent this whole investigation learning.",
+  "tasks": [
+    {
+      "id": "C2.5-T1",
+      "sequence": 1,
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "Ravi opens the final meeting: 'Everything we found traces back to human habits — rushed setup, forgotten offboarding, sloppy policies. Tomorrow the auditor won't just check individual configs, they'll check whether we have real guardrails that hold even when a human forgets something. What's missing?'",
+      "question": "What category of protection has this entire investigation NOT covered yet?",
+      "options": [
+        "A) More detailed IAM policies — you've already covered this extensively",
+        "B) Guardrails that don't depend on any individual remembering to do the right thing — root account protection (MFA), account-wide enforcement (password policy), and organization-level rules that override even a mistake (SCPs)",
+        "C) Nothing is missing, the investigation is already complete",
+        "D) Better documentation of the existing IAM policies"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: Guardrails that don't depend on any individual remembering to do the right thing — root account protection (MFA), account-wide enforcement (password policy), and organization-level rules that override even a mistake (SCPs)",
+      "ren_correct": "Exactly — this whole investigation has been about habits failing. Today is about protections that don't rely on habits at all.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.5-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "question": "Root account MFA is enabled. If the root password gets phished tomorrow, what can the attacker do with just the password?",
+      "options": [
+        "A) Log in immediately and take full control",
+        "B) Nothing — login is blocked without the live code from the registered MFA device",
+        "C) Log in with read-only access",
+        "D) Log in if they also know the account email"
+      ],
+      "correct_index": 1,
+      "explanation": "MFA, password only. Registered device- live code is needed.",
+      "ren_correct": "Correct — this is the single highest-leverage protection in the whole account.",
+      "ren_wrong": "Not quite. MFA password only — device code."
+    },
+    {
+      "id": "C2.5-T3",
+      "sequence": 3,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "iam_console",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "This is it — the final check before the auditor arrives tomorrow. Confirm every piece of this entire investigation is actually in place, not just remembered as 'done.'",
+      "broken_config": "Final Pre-Audit Security Snapshot:\n├── Root account MFA: ENABLED ✓\n├── Root account access keys: NONE ✓\n├── Password policy: 14 char minimum, 90-day rotation ✓\n├── IAM users with console access: 13 total\n│   ├── 12 users have MFA enabled\n│   └── 1 user (ananya-analyst) — MFA NOT enabled\n├── Vikram's former account: confirmed deleted, offboarding process updated ✓\n├── The 2 other lingering accounts found in the investigation: deactivated ✓\n├── AWS Organizations: Production, Development, Sandbox OUs configured ✓\n└── SCP on Production OU: restricts to ap-south-1 region ✓",
+      "what_to_find": [
+        "One IAM user — ananya-analyst — still doesn't have MFA enabled, breaking the 'every console user requires MFA' rule",
+        "Everything else across the entire investigation is correctly closed out",
+        "A single gap like this is exactly what an external auditor will find first — it undermines confidence in everything else being correct"
+      ],
+      "correct_fix": "Contact ananya-analyst immediately, walk her through enabling a virtual MFA device, and verify it shows 'Assigned' before this ticket is considered fully closed.",
+      "explanation": "Almost perfect — gap audit- flag. This is Vikram case- lesson- live example — 'almost done'."
+    },
+    {
+      "id": "C2.5-T4",
+      "sequence": 4,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "You message ananya-analyst directly and walk her through MFA setup. She apologizes: 'I meant to do this weeks ago, just never got around to it.'",
+      "question": "Why does her exact phrase — 'meant to do it, never got around to it' — matter more today than it would have at the start of this investigation?",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "This is the exact same pattern that caused every major finding in this investigation — a task that was intended to happen but was deferred indefinitely",
+        "The fix here is small and low-stakes, but it's the same root cause as Vikram's 8-month-old permission, just caught immediately instead of months later",
+        "This is why moving to structural, automatic enforcement (rather than relying on individual follow-through) matters"
+      ],
+      "explanation": "'Meant to do it, never got around to it' — This is Vikram case- exact echo, small scale-, immediately caught. pattern, different size — structural guardrails."
+    },
+    {
+      "id": "C2.5-T5",
+      "sequence": 5,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "priya-dev has AdministratorAccess. She tries to create an S3 bucket in eu-west-1 for a quick European expansion test. The request fails.",
+      "error_shown": "An error occurred (AccessDenied) when calling the CreateBucket operation: User: arn:aws:iam::123456789012:user/priya-dev is not authorized to perform: s3:CreateBucket on resource: \"arn:aws:s3:::foodquick-eu-test\" with an explicit deny in a service control policy",
+      "diagnosis": "priya-dev's AdministratorAccess IAM policy technically allows this action. But the SCP on the Production OU denies all actions outside ap-south-1 — and that Deny is at the organization level, which overrides even AdministratorAccess entirely.",
+      "fix": "Two valid paths: if this is a genuine approved expansion, update the SCP to allow eu-west-1 specifically. If it was just a quick test, create the bucket in the Sandbox OU instead, which doesn't carry this restriction.",
+      "explanation": "Apply least privilege and keep a clear audit trail — that is the FoodQuick standard for FQ-142."
+    },
+    {
+      "id": "C2.5-T6",
+      "sequence": 6,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "A new intern joins FoodQuick next week for a 2-month internship, zero prior AWS experience.",
+      "question": "Which OU should their account go in, and why does this matter more given what you now know about Vikram's case?",
+      "options": [
+        "A) Production OU — simpler to manage one environment",
+        "B) Sandbox OU — its SCP prevents any access to production resources structurally, regardless of what IAM permissions accidentally get granted or forgotten later",
+        "C) Development OU, since interns are part of the dev process",
+        "D) No OU needed, just limit their IAM permissions carefully"
+      ],
+      "correct_index": 1,
+      "explanation": "Sandbox OU- SCP structural protection. Vikram case- — IAM permission only, forget. Sandbox OU-, forget production touch do.",
+      "ren_correct": "Right — and now you can explain exactly WHY, with a real example behind you.",
+      "ren_wrong": "Not quite. IAM only — Sandbox OU structural safety, IAM permission forget."
+    },
+    {
+      "id": "C2.5-T7",
+      "sequence": 7,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "An IAM policy explicitly Allows an action. An SCP explicitly Denies the same action, account-wide, as a temporary freeze during a company event.",
+      "question": "What happens, and why do companies specifically use SCPs (not individual IAM policy edits) for temporary freezes like this?",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "The action is denied — SCP Deny always overrides IAM Allow with no exceptions",
+        "A single SCP change enforces the freeze instantly across every user in the account, without needing to edit each person's individual IAM policy one at a time",
+        "When the freeze ends, removing the SCP restores normal behavior immediately for everyone at once"
+      ],
+      "explanation": "SCP Deny always IAM Allow-. SCP change, entire account- instantly enforce — 13 users- policies edit do."
+    },
+    {
+      "id": "C2.5-T8",
+      "sequence": 8,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "scenario": "Ravi asks the real closing question: 'If we'd had this Organizations and SCP setup BEFORE Vikram left, would any of this have been prevented?' Design the guardrail that answers this properly.",
+      "cases": {
+        "case_1": "Prevent any IAM user from ever creating a new IAM user with AdministratorAccess attached, account-wide, regardless of what their own IAM policy allows.",
+        "case_2": "Guarantee no account in the organization can ever disable CloudTrail logging, regardless of who has AdministratorAccess.",
+        "case_3": "Give the finance team visibility into aggregated billing across all accounts without any operational access to any of them."
+      },
+      "correct_answers": {
+        "case_1": "An SCP denying iam:CreateUser combined with iam:AttachUserPolicy for AdministratorAccess specifically — this would have made it structurally impossible for Vikram's leftover permission to ever be used to create a new admin backdoor, even during the 14-day offboarding gap, even if the IAM permission itself was never revoked in time.",
+        "case_2": "An SCP at the org root denying cloudtrail:StopLogging and cloudtrail:DeleteTrail — unbypassable even by AdministratorAccess.",
+        "case_3": "AWS Organizations consolidated billing plus an IAM role scoped only to billing data, no operational permissions — visibility without operational risk."
+      },
+      "explanation": "Case 1 real answer to Ravi- question. IAM permission revoke do, SCP, Vikram- use do backdoor create do. session."
+    },
+    {
+      "id": "C2.5-T9",
+      "sequence": 9,
+      "type": "quiz",
+      "difficulty": "medium",
+      "environment": "quiz_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "question": "Why is the SCP from T8 (Case 1) a stronger fix than simply being more careful about removing permissions during offboarding?",
+      "options": [
+        "A) It isn't stronger, both approaches are equally reliable",
+        "B) The SCP works even when a human forgets — it doesn't depend on anyone remembering to act correctly during a rushed or delayed offboarding, which is exactly what failed with Vikram",
+        "C) The SCP is only a backup and IAM cleanup is still the real fix",
+        "D) SCPs are easier to configure than IAM policies, that's the only advantage"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct answer: The SCP works even when a human forgets — it doesn't depend on anyone remembering to act correctly during a rushed or delayed offboarding, which is exactly what failed with Vikram",
+      "ren_correct": "This is the whole investigation's lesson in one sentence.",
+      "ren_wrong": "Not quite — revisit the core idea: who can do what, and can we prove it?"
+    },
+    {
+      "id": "C2.5-T10",
+      "sequence": 10,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.5",
+      "max_attempts": 3,
+      "max_length_note": "final report — full session retrospective",
+      "scenario": "The audit is tomorrow. FQ-142 is ready to close. Write the final report — not just this piece, but a short retrospective on the whole investigation.",
+      "question": "Summarize: what FQ-142 actually was, what you found, and the one structural change that will outlast everyone's memory of this specific incident.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "Started as a routine 'clean up shared logins' request and became a full investigation tracing back to one former contractor's incomplete offboarding, 8 months of forgotten permissions",
+        "Every layer secured: Identity, Service Trust, Access Precision, Access Hygiene, Service Integration, and now Perimeter Defense",
+        "The single most important lasting change is the new SCP guardrail — because it protects the account even when, inevitably, someone eventually forgets something again",
+        "FoodQuick is audit-ready"
+      ],
+      "explanation": "FQ-142. Simple ticket-, real investigation-, structural fix-. real cloud engineering — individual fires Not quite —, doing."
+    }
+  ],
+  "arc_outro": "Perimeter Defense Layer: secured. FQ-142 — Secure IAM before audit — is officially resolved. Ravi reads the full retrospective and doesn't say much at first. 'Six weeks ago this was a two-line ticket about shared passwords. You turned it into the reason we'll actually pass tomorrow.' The audit happens the next morning. FoodQuick passes clean. Ravi's next message arrives before lunch: 'Networking's a mess too. You up for FQ-156?'"
+}

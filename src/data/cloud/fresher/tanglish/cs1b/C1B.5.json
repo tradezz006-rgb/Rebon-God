@@ -1,0 +1,324 @@
+{
+  "lesson_id": "C1B.5",
+  "id": "C1B.5",
+  "lesson_title": "CloudWatch: The CCTV and Alarm System",
+  "section_id": "CS1B",
+  "section_name": "Core Services Awareness",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "content_status": "live",
+  "duration_minutes": 5,
+  "prerequisites": "C1B.4",
+  "student_will_learn": [
+    "CloudWatch metrics",
+    "Alarms and thresholds",
+    "Notify before crash"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "CS1B · CloudWatch: The CCTV and Alarm System. Ren teaching mode on.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Phase · CS1B",
+        "CloudWatch: The CCTV and Alarm System"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 1",
+      "ava_speaks": "EC2, S3, IAM, VPC — நாலு pillars முடிஞ்சிடுச்சு. We built a secure, scalable app. But உங்களோட Swiggy clone night 2 AM-க்கு crash ஆனா, உங்களுக்கு எப்படி தெரியும்? Users Twitter-ல திட்டுனதுக்கு அப்பறம் தான் தெரியுமா? That brings us to our final pillar: Amazon CloudWatch.",
+      "emotion": "explaining",
+      "board_actions": [
+        {
+          "type": "clear_board"
+        }
+      ],
+      "whiteboard_action": "clear",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 1,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Pillar 5: Amazon CloudWatch",
+      "ava_speaks": "CloudWatch is the CCTV camera and alarm system for your entire AWS account. Your servers, your databases, your network — everything that happens, CloudWatch continuously watches it.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Pillar 5: Amazon CloudWatch"
+        },
+        {
+          "type": "write_bullet",
+          "text": "CloudWatch = Monitoring and Observability."
+        },
+        {
+          "type": "write_bullet",
+          "text": "The CCTV and Alarm system of your cloud."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Tracks performance and health 24/7."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 5: Amazon CloudWatch",
+        "points": [
+          "CloudWatch = Monitoring and Observability.",
+          "The CCTV and Alarm system of your cloud.",
+          "Tracks performance and health 24/7."
+        ]
+      },
+      "trigger_event": null,
+      "step": 2,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 3",
+      "ava_speaks": "Let's take a real scenario. Flipkart Big Billion Days sale நடக்குது. திடீர்னு ஒரு EC2 server-ஓட CPU 100% hit ஆகி hang ஆகிடுச்சு. Developers தூங்கிட்டு இருக்காங்க. Morning 8 AM தான் crash ஆனதே தெரிஞ்சா? Massive business loss.",
+      "emotion": "serious",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 3,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "CloudWatch Metrics",
+      "ava_speaks": "To fix this, CloudWatch collects 'Metrics'. Metrics-னா data points. CPU usage எவ்ளோ இருக்கு, எவ்ளோ error codes வருது, network traffic எவ்ளோ — இதெல்லாம் CloudWatch second-by-second record பண்ணிட்டே இருக்கும்.",
+      "emotion": "explaining",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "CloudWatch Metrics"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Metrics = Data points over time."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Examples: CPU Utilization, Network In/Out, Error Rates."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Acts like a continuous health check."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "CloudWatch Metrics",
+        "points": [
+          "Metrics = Data points over time.",
+          "Examples: CPU Utilization, Network In/Out, Error Rates.",
+          "Acts like a continuous health check."
+        ]
+      },
+      "trigger_event": null,
+      "step": 4,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 5",
+      "ava_speaks": "But CCTV recording-அ உக்காந்து 24/7 பாத்துட்டே இருக்க முடியாது. So we create 'Alarms'. Example: 'CPU 85% மேல போனா எனக்கு உடனே சொல்லு' னு ஒரு threshold set பண்ணலாம்.",
+      "emotion": "encouraging",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 5,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "CloudWatch Alarms",
+      "ava_speaks": "When that alarm triggers, CloudWatch automatically sends an SMS, Email, or a PagerDuty alert to the on-call engineer's phone. 2 AM problem, 2:01 AM-க்கு detect ஆகிடும். This is how real companies maintain 99.9% uptime.",
+      "emotion": "excited",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "CloudWatch Alarms"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Set specific thresholds (e.g., CPU > 85%)."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Triggers automated actions when crossed."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Sends SMS/Emails to on-call engineers instantly."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "CloudWatch Alarms",
+        "points": [
+          "Set specific thresholds (e.g., CPU > 85%).",
+          "Triggers automated actions when crossed.",
+          "Sends SMS/Emails to on-call engineers instantly."
+        ]
+      },
+      "trigger_event": null,
+      "step": 6,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 7",
+      "ava_speaks": "So, CloudWatch is your ultimate safety net. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": "start_workspace_tasks",
+      "step": 7,
+      "speaker": "Ren"
+    }
+  ],
+  "lesson_flow": [
+    {
+      "step": 1,
+      "speaker": "Ren",
+      "text": "EC2, S3, IAM, VPC — நாலு pillars முடிஞ்சிடுச்சு. We built a secure, scalable app. But உங்களோட Swiggy clone night 2 AM-க்கு crash ஆனா, உங்களுக்கு எப்படி தெரியும்? Users Twitter-ல திட்டுனதுக்கு அப்பறம் தான் தெரியுமா? That brings us to our final pillar: Amazon CloudWatch.",
+      "emotion": "explaining",
+      "whiteboard_action": "clear"
+    },
+    {
+      "step": 2,
+      "speaker": "Ren",
+      "text": "CloudWatch is the CCTV camera and alarm system for your entire AWS account. Your servers, your databases, your network — everything that happens, CloudWatch continuously watches it.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 5: Amazon CloudWatch",
+        "points": [
+          "CloudWatch = Monitoring and Observability.",
+          "The CCTV and Alarm system of your cloud.",
+          "Tracks performance and health 24/7."
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "speaker": "Ren",
+      "text": "Let's take a real scenario. Flipkart Big Billion Days sale நடக்குது. திடீர்னு ஒரு EC2 server-ஓட CPU 100% hit ஆகி hang ஆகிடுச்சு. Developers தூங்கிட்டு இருக்காங்க. Morning 8 AM தான் crash ஆனதே தெரிஞ்சா? Massive business loss.",
+      "emotion": "serious",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 4,
+      "speaker": "Ren",
+      "text": "To fix this, CloudWatch collects 'Metrics'. Metrics-னா data points. CPU usage எவ்ளோ இருக்கு, எவ்ளோ error codes வருது, network traffic எவ்ளோ — இதெல்லாம் CloudWatch second-by-second record பண்ணிட்டே இருக்கும்.",
+      "emotion": "explaining",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "CloudWatch Metrics",
+        "points": [
+          "Metrics = Data points over time.",
+          "Examples: CPU Utilization, Network In/Out, Error Rates.",
+          "Acts like a continuous health check."
+        ]
+      }
+    },
+    {
+      "step": 5,
+      "speaker": "Ren",
+      "text": "But CCTV recording-அ உக்காந்து 24/7 பாத்துட்டே இருக்க முடியாது. So we create 'Alarms'. Example: 'CPU 85% மேல போனா எனக்கு உடனே சொல்லு' னு ஒரு threshold set பண்ணலாம்.",
+      "emotion": "encouraging",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 6,
+      "speaker": "Ren",
+      "text": "When that alarm triggers, CloudWatch automatically sends an SMS, Email, or a PagerDuty alert to the on-call engineer's phone. 2 AM problem, 2:01 AM-க்கு detect ஆகிடும். This is how real companies maintain 99.9% uptime.",
+      "emotion": "excited",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "CloudWatch Alarms",
+        "points": [
+          "Set specific thresholds (e.g., CPU > 85%).",
+          "Triggers automated actions when crossed.",
+          "Sends SMS/Emails to on-call engineers instantly."
+        ]
+      }
+    },
+    {
+      "step": 7,
+      "speaker": "Ren",
+      "text": "So, CloudWatch is your ultimate safety net. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "whiteboard_action": "none",
+      "trigger_event": "start_workspace_tasks"
+    }
+  ],
+  "workspace_metadata": {
+    "workspace_id": "WS_C1B.5",
+    "lesson_id": "C1B.5",
+    "title": "Workspace: The Cloud Alarm System",
+    "type": "scenario_task_set"
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "WS-C1B5-01",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: The Cloud Alarm System",
+      "question": "BookMyShow's backend servers are crashing because 5 lakh people are trying to book tickets for a blockbuster movie at the exact same time. What should the engineering team have configured to get notified *before* the servers completely crash?",
+      "options": [
+        "A dedicated junior engineer assigned to stare at the server dashboard 24/7.",
+        "A CloudWatch Alarm monitoring EC2 CPU Metrics, set to send an SMS/PagerDuty alert to the on-call engineer when CPU hits 85%.",
+        "An IAM Policy to automatically ban users when traffic gets too high.",
+        "A Public Subnet to automatically allow more internet traffic into the database."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "5 manual- monitor doing impossible. CloudWatch Alarm set do, CPU 85% touch on-call engineer- SMS/alert. Server crash fix do.",
+      "ava_feedback_wrong": "5 manual- monitor doing impossible. CloudWatch Alarm set do, CPU 85% touch on-call engineer- SMS/alert. Server crash fix do.",
+      "explanation": "5 manual- monitor doing impossible. CloudWatch Alarm set do, CPU 85% touch on-call engineer- SMS/alert. Server crash fix do.",
+      "if_wrong_route_to": "C1B.5",
+      "source_lesson": "C1B.5",
+      "whiteboard_heading": "Workspace: The Cloud Alarm System",
+      "whiteboard_points": []
+    },
+    {
+      "task_id": "WS-C1B5-02",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: The Cloud Alarm System",
+      "question": "TicketRush sees CPU on the booking fleet climb every evening but nobody is paged until users tweet 'site down.' Eng lead asks you to separate 'watching the number' from 'waking a human.' Which pairing is correct?",
+      "options": [
+        "Metric = IAM rule; Alarm = VPC route.",
+        "Metric = continuous raw measurement (e.g. CPU %); Alarm = automated rule that pages when that metric crosses a threshold.",
+        "Metric terminates the instance; Alarm only restarts it.",
+        "Metric and Alarm are synonyms for the same CloudWatch camera."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Metric = the CCTV feed (CPU %). Alarm = the siren when it crosses 85%. TicketRush needed both — watching alone doesn't wake anyone.",
+      "ava_feedback_wrong": "Don't conflate them. Record the metric always; fire the alarm only when the threshold says the on-call should act.",
+      "explanation": "Metric = continuous raw measurement; Alarm = threshold → action. Watching alone doesn't page humans.",
+      "if_wrong_route_to": "C1B.5",
+      "source_lesson": "C1B.5",
+      "whiteboard_heading": "Workspace: Metric vs Alarm",
+      "whiteboard_points": []
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Concepts clear-aa? Workspace tickets ready. Let's lock this in."
+  }
+}

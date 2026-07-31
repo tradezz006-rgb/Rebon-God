@@ -1,0 +1,324 @@
+{
+  "lesson_id": "C1B.1",
+  "id": "C1B.1",
+  "lesson_title": "EC2: Renting a Computer by the Hour",
+  "section_id": "CS1B",
+  "section_name": "Core Services Awareness",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "content_status": "live",
+  "duration_minutes": 5,
+  "prerequisites": "C1.5",
+  "student_will_learn": [
+    "EC2 as rented virtual servers",
+    "Elasticity: scale up/down",
+    "Instance CPU/RAM choices"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "CS1B · EC2: Renting a Computer by the Hour. Ren teaching mode on.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Phase · CS1B",
+        "EC2: Renting a Computer by the Hour"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 1",
+      "ava_speaks": "Welcome to CS1B! Shared Responsibility Model முடிச்சிட்டீங்க. Super. But cloud-ல real-ஆ வேலை செய்ய, we need to understand the 5 core pillars of AWS. Let's start with the most famous one: Amazon EC2.",
+      "emotion": "encouraging",
+      "board_actions": [
+        {
+          "type": "clear_board"
+        }
+      ],
+      "whiteboard_action": "clear",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 1,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Pillar 1: Amazon EC2",
+      "ava_speaks": "EC2 stands for 'Elastic Compute Cloud'. Jargon-அ விடுங்க. Simply put, EC2-னா renting a computer over the internet. Physical hardware வாங்காம, AWS data center-ல இருக்கிற ஒரு server-அ நாம hourly rent-க்கு எடுக்குறோம்.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Pillar 1: Amazon EC2"
+        },
+        {
+          "type": "write_bullet",
+          "text": "EC2 = Elastic Compute Cloud"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Virtual Server (Renting a computer by the hour)"
+        },
+        {
+          "type": "write_bullet",
+          "text": "The core muscle/brain of your app"
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 1: Amazon EC2",
+        "points": [
+          "EC2 = Elastic Compute Cloud",
+          "Virtual Server (Renting a computer by the hour)",
+          "The core muscle/brain of your app"
+        ]
+      },
+      "trigger_event": null,
+      "step": 2,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 3",
+      "ava_speaks": "Why rent? Think about JioCinema streaming the IPL final. அன்னைக்கு மட்டும் 3 கோடி பேர் live-ஆ பாப்பாங்க. அந்த scale-அ handle பண்ண, they need massive computing power.",
+      "emotion": "explaining",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 3,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 4",
+      "ava_speaks": "3 கோடி பேருக்கு physical servers வாங்குனா, IPL முடிஞ்சதும் அந்த servers சும்மா தான் இருக்கும். Crores of rupees wasted on hardware sitting in a dark room. That is how traditional IT worked. It was a nightmare.",
+      "emotion": "frustrated",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": null,
+      "step": 4,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Elasticity in EC2",
+      "ava_speaks": "Instead, they use EC2. Match start ஆகும்போது ஆயிரக்கணக்கான virtual servers-அ வாடகைக்கு (rent) எடுப்பாங்க. Match முடிஞ்சதும் திருப்பி குடுத்துருவாங்க. You only pay for exactly what you use. This magic is called 'Elasticity'.",
+      "emotion": "excited",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Elasticity in EC2"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Scale UP: Add servers instantly when traffic spikes."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Scale DOWN: Remove servers when traffic drops."
+        },
+        {
+          "type": "write_bullet",
+          "text": "Match over = Bill stops."
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Elasticity in EC2",
+        "points": [
+          "Scale UP: Add servers instantly when traffic spikes.",
+          "Scale DOWN: Remove servers when traffic drops.",
+          "Match over = Bill stops."
+        ]
+      },
+      "trigger_event": null,
+      "step": 5,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Customizing your Instance",
+      "ava_speaks": "When you rent this virtual server (we call it an 'Instance'), you don't just get a generic computer. You get to pick its brain. You choose the exact CPU and RAM. Video rendering-ஆ? Pick a high-CPU instance. Database running-ஆ? Pick high-RAM.",
+      "emotion": "neutral",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Customizing your Instance"
+        },
+        {
+          "type": "write_bullet",
+          "text": "Instance = Your rented virtual server"
+        },
+        {
+          "type": "write_bullet",
+          "text": "CPU = Processing power (for heavy math/logic)"
+        },
+        {
+          "type": "write_bullet",
+          "text": "RAM = Memory (for holding data temporarily)"
+        }
+      ],
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Customizing your Instance",
+        "points": [
+          "Instance = Your rented virtual server",
+          "CPU = Processing power (for heavy math/logic)",
+          "RAM = Memory (for holding data temporarily)"
+        ]
+      },
+      "trigger_event": null,
+      "step": 6,
+      "speaker": "Ren"
+    },
+    {
+      "block_type": "concept_intro",
+      "block_title": "Step 7",
+      "ava_speaks": "Basically, EC2 is the engine of your car. Without it, your code has nowhere to run. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "board_actions": [],
+      "whiteboard_action": "none",
+      "whiteboard_data": null,
+      "trigger_event": "start_workspace_tasks",
+      "step": 7,
+      "speaker": "Ren"
+    }
+  ],
+  "lesson_flow": [
+    {
+      "step": 1,
+      "speaker": "Ren",
+      "text": "Welcome to CS1B! Shared Responsibility Model முடிச்சிட்டீங்க. Super. But cloud-ல real-ஆ வேலை செய்ய, we need to understand the 5 core pillars of AWS. Let's start with the most famous one: Amazon EC2.",
+      "emotion": "encouraging",
+      "whiteboard_action": "clear"
+    },
+    {
+      "step": 2,
+      "speaker": "Ren",
+      "text": "EC2 stands for 'Elastic Compute Cloud'. Jargon-அ விடுங்க. Simply put, EC2-னா renting a computer over the internet. Physical hardware வாங்காம, AWS data center-ல இருக்கிற ஒரு server-அ நாம hourly rent-க்கு எடுக்குறோம்.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Pillar 1: Amazon EC2",
+        "points": [
+          "EC2 = Elastic Compute Cloud",
+          "Virtual Server (Renting a computer by the hour)",
+          "The core muscle/brain of your app"
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "speaker": "Ren",
+      "text": "Why rent? Think about JioCinema streaming the IPL final. அன்னைக்கு மட்டும் 3 கோடி பேர் live-ஆ பாப்பாங்க. அந்த scale-அ handle பண்ண, they need massive computing power.",
+      "emotion": "explaining",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 4,
+      "speaker": "Ren",
+      "text": "3 கோடி பேருக்கு physical servers வாங்குனா, IPL முடிஞ்சதும் அந்த servers சும்மா தான் இருக்கும். Crores of rupees wasted on hardware sitting in a dark room. That is how traditional IT worked. It was a nightmare.",
+      "emotion": "frustrated",
+      "whiteboard_action": "none"
+    },
+    {
+      "step": 5,
+      "speaker": "Ren",
+      "text": "Instead, they use EC2. Match start ஆகும்போது ஆயிரக்கணக்கான virtual servers-அ வாடகைக்கு (rent) எடுப்பாங்க. Match முடிஞ்சதும் திருப்பி குடுத்துருவாங்க. You only pay for exactly what you use. This magic is called 'Elasticity'.",
+      "emotion": "excited",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Elasticity in EC2",
+        "points": [
+          "Scale UP: Add servers instantly when traffic spikes.",
+          "Scale DOWN: Remove servers when traffic drops.",
+          "Match over = Bill stops."
+        ]
+      }
+    },
+    {
+      "step": 6,
+      "speaker": "Ren",
+      "text": "When you rent this virtual server (we call it an 'Instance'), you don't just get a generic computer. You get to pick its brain. You choose the exact CPU and RAM. Video rendering-ஆ? Pick a high-CPU instance. Database running-ஆ? Pick high-RAM.",
+      "emotion": "neutral",
+      "whiteboard_action": "update",
+      "whiteboard_data": {
+        "heading": "Customizing your Instance",
+        "points": [
+          "Instance = Your rented virtual server",
+          "CPU = Processing power (for heavy math/logic)",
+          "RAM = Memory (for holding data temporarily)"
+        ]
+      }
+    },
+    {
+      "step": 7,
+      "speaker": "Ren",
+      "text": "Basically, EC2 is the engine of your car. Without it, your code has nowhere to run. Concepts clear-ஆ? You are now ready to configure this service in the real terminal.",
+      "emotion": "challenging",
+      "whiteboard_action": "none",
+      "trigger_event": "start_workspace_tasks"
+    }
+  ],
+  "workspace_metadata": {
+    "workspace_id": "WS_C1B.1",
+    "lesson_id": "C1B.1",
+    "title": "Workspace: Scaling the Virtual Server",
+    "type": "scenario_task_set"
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "WS-C1B1-01",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: Scaling the Virtual Server",
+      "question": "Swiggy is preparing for New Year's Eve (Dec 31st). They expect a 15x spike in food orders between 7 PM and 1 AM. What is the most cost-effective and reliable compute architecture for this 6-hour window?",
+      "options": [
+        "Buy high-end physical servers for their on-premise data center to handle the 15x traffic securely.",
+        "Pre-configure their EC2 instances to automatically scale up (add more servers) at 6 PM, and scale down at 2 AM.",
+        "Upload the API as static files only — no virtual servers — and hope traffic somehow gets served.",
+        "Upgrade to a single, massive EC2 instance permanently so they never have to worry about traffic spikes again."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Dec 31st only 15x traffic. Permanent- physical server, No EC2 instance- run do massive money waste. EC2 'Elasticity' use do scale up/down doing real engineering.",
+      "ava_feedback_wrong": "Dec 31st only 15x traffic. Permanent- physical server, No EC2 instance- run do massive money waste. EC2 'Elasticity' use do scale up/down doing real engineering.",
+      "explanation": "Dec 31st only 15x traffic. Permanent- physical server, No EC2 instance- run do massive money waste. EC2 'Elasticity' use do scale up/down doing real engineering.",
+      "if_wrong_route_to": "C1B.1",
+      "source_lesson": "C1B.1",
+      "whiteboard_heading": "Workspace: Scaling the Virtual Server",
+      "whiteboard_points": []
+    },
+    {
+      "task_id": "WS-C1B1-02",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "MultipleChoiceComponent",
+      "difficulty": "medium",
+      "topic": "Workspace: Scaling the Virtual Server",
+      "question": "A junior developer says, 'We need to deploy our new Node.js backend API — just leave the code files sitting somewhere, we don't need an EC2 instance.' Why is Ren going to reject this proposal?",
+      "options": [
+        "Because Node.js doesn't run on AWS.",
+        "Because a backend API needs a virtual computer (EC2) to actually RUN the code — storing files alone is not compute.",
+        "Because the backend API code needs an IAM policy to compute.",
+        "Because EC2 cannot handle backend APIs."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Backend code run do 'Compute' (Brain) is needed. EC2 is that compute — the virtual server that executes your API. Files code run. Always match the tool to the right problem.",
+      "ava_feedback_wrong": "Backend code run do 'Compute' (Brain) is needed. EC2 is that compute — the virtual server that executes your API. Files code run. Always match the tool to the right problem.",
+      "explanation": "Backend code run do 'Compute' (Brain) is needed. EC2 is that compute — the virtual server that executes your API. Files code run. Always match the tool to the right problem.",
+      "if_wrong_route_to": "C1B.1",
+      "source_lesson": "C1B.1",
+      "whiteboard_heading": "Workspace: Scaling the Virtual Server",
+      "whiteboard_points": []
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Concepts clear-aa? Workspace tickets ready. Let's lock this in."
+  }
+}

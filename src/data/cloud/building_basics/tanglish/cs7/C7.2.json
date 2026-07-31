@@ -1,0 +1,360 @@
+{
+  "lesson_id": "C7.2",
+  "lesson_title": "Build Network Layer",
+  "section_id": "CS7",
+  "section_name": "Portfolio Project",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C7.1 — Design 3-Tier Architecture",
+  "student_will_learn": [
+    "Build a VPC and its subnets in the correct dependency order",
+    "Attach an Internet Gateway and NAT Gateway, wiring route tables correctly",
+    "Verify connectivity at each layer before proceeding to the next",
+    "Explain why building in dependency order prevents a class of hard-to-debug errors",
+    "Apply the full CS3 networking curriculum as one continuous build, not isolated exercises"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம FoodQuick-ஓட முழு 3-tier architecture-ஐயும் design பண்ணோம் - security groups per tier, cost estimate எல்லாம். இப்போ Ravi-ஓட FQ-218 ticket-ல அடுத்த step - அந்த design-ஐ real network layer-ஆ build பண்றது. இது CS3-ல நாம lesson-லேசன்-ஆ கத்துக்கிட்ட எல்லாத்தையும், ஒரே continuous build-ஆ apply பண்ற ஒரு exercise.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS7 · Lesson C7.2",
+        "Build Network Layer",
+        "Ticket FQ-218 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Building in Dependency Order — Why Sequence Matters",
+      "ava_speaks": "Network layer build பண்றது, ஒரு specific dependency order follow பண்ணணும் - ஒவ்வொரு step-மும், அதுக்கு முன்னாடி step-ஐ சார்ந்திருக்கும். VPC முதல்ல (எல்லாத்துக்கும் foundation). அப்புறம் Subnets (VPC-ஓட CIDR-ஐ பிரிக்கும்). அப்புறம் Internet Gateway (VPC-கூட attach ஆகும்). அப்புறம் Route Tables (subnets-ஐ IGW/NAT-கூட connect பண்ணும்). அப்புறம் NAT Gateway (public subnet-ல தேவை). அப்புறம் Security Groups (instances-க்கு தேவைப்படும்போது). இந்த order-ஐ தப்பா பண்ணா - example, route table-ஐ subnet create பண்றதுக்கு முன்னாடியே attach பண்ண try பண்ணா - errors வரும், ஏன்னா dependencies இன்னும் exist பண்ணல.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Correct Build Order"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Step",
+            "Depends On"
+          ],
+          "rows": [
+            [
+              "1. VPC",
+              "Nothing — this is the foundation"
+            ],
+            [
+              "2. Subnets",
+              "The VPC's CIDR block"
+            ],
+            [
+              "3. Internet Gateway",
+              "The VPC (to attach to)"
+            ],
+            [
+              "4. Route Tables",
+              "Subnets (to associate) and IGW/NAT (as targets)"
+            ],
+            [
+              "5. NAT Gateway",
+              "A public subnet (must live there) and an Elastic IP"
+            ],
+            [
+              "6. Security Groups",
+              "The VPC (scoped to it), attached when instances launch"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Building out of order doesn't just fail cleanly — it often produces confusing partial states that are harder to debug than a clear upfront error."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு engineer, route table create பண்றதுக்கு முன்னாடியே, subnet-ஐ 'public'nு label வெச்சி config பண்ண try பண்றார். இது வேலை செய்யுமா?",
+          "options": [
+            "A) ஆமா, label மட்டும் போதும்",
+            "B) இல்ல, subnet public ஆவதுக்கு, route table-ல IGW route இருக்கணும் - அது இன்னும் create ஆகல",
+            "C) ஆமா, AWS automatic-ஆ route table create பண்ணிடும்",
+            "D) இது ஒரு valid operation இல்லவே இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! C3.2a-ல கத்துக்கிட்டது நினைவிருக்கா - subnet public ஆவது, route table-ல IGW route இருக்கறதால தான், label-ஆல் இல்ல. Route table dependency முதல்ல exist பண்ணனும்.",
+          "ava_wrong": "இல்ல, C3.2a-ல கத்துக்கிட்டது நினைவு வெச்சுக்கோ - subnet-ஐ 'public'nு label வெச்சாலும், route table-ல IGW route இல்லாம அது technically private தான். Dependency order-ஐ follow பண்ணனும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "NAT Gateway create பண்றதுக்கு, என்ன dependency முதல்ல இருக்கணும்?",
+          "options": [
+            "A) ஒரு RDS database",
+            "B) ஒரு already-public subnet (IGW route இருக்கற subnet) மற்றும் ஒரு Elastic IP",
+            "C) ஒரு Security Group",
+            "D) NAT Gateway-க்கு எந்த dependency-மும் இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! C3.3-ல கத்துக்கிட்டது - NAT Gateway, அது தானே public subnet-ல தான் இருக்கணும் (internet access தேவைப்படுதால்), அப்புறம் ஒரு Elastic IP-மும் தேவை.",
+          "ava_wrong": "இல்ல, NAT Gateway-க்கு RDS-ஓட relation இல்ல - அதுக்கு ஒரு public subnet (ஏற்கனவே IGW route வெச்சிருக்கற) தேவை, ஏன்னா NAT Gateway-க்கே internet access வேணும், அப்புறம் ஒரு Elastic IP-மும் தேவை."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Cost of Building Out of Order",
+      "ava_speaks": "FoodQuick-ஓட ஒரு early infrastructure attempt (before this whole rebuild journey), ஒரு engineer, subnets create பண்றதுக்கு முன்னாடியே, EC2 launch try பண்ணி, confusing error messages-ல மணிக்கணக்கா stuck ஆயிருந்தாங்க - VPC இருந்துச்சு, ஆனா subnets இல்லாததால, EC2 launch wizard-ல எந்த valid placement option-மும் தெரியல. Freshworks மாதிரி companies-ஓட infrastructure-as-code practices, exactly இந்த dependency order-ஐ, Terraform/CloudFormation dependency graphs-ல explicit-ஆ enforce பண்றாங்க - manual console clicks-ல இந்த order மறந்துடறது ரொம்ப easy.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Out-of-Order Build vs Sequenced Build"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Building Out of Order",
+            "Building in Dependency Order"
+          ],
+          "rows": [
+            [
+              "Confusing errors with unclear root cause",
+              "Each step either succeeds cleanly or fails with an obvious reason"
+            ],
+            [
+              "Time wasted debugging a symptom, not the actual missing dependency",
+              "Verification at each step catches problems immediately, where they're easy to fix"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Building the Complete Network Layer, Step by Step",
+      "ava_speaks": "karthik-dev இப்போ, FoodQuick-ஓட network layer-ஐ, correct dependency order-ல, ஒவ்வொரு step-லும் connectivity verify பண்ணிட்டே build பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "Step 1: VPC create பண்றோம் - 'foodquick-prod-vpc', CIDR 10.0.0.0/16.",
+            "console_action": {
+              "type": "fill",
+              "path": "VPC Console → Create VPC",
+              "field": "Name, CIDR block",
+              "value": "foodquick-prod-vpc, 10.0.0.0/16",
+              "highlight": "VPC creation form",
+              "result": "The foundation VPC exists — everything else will build inside this"
+            }
+          },
+          {
+            "ava_narration": "Step 2: 4 subnets create பண்றோம் - 2 public (ap-south-1a, 1b), 2 private (ap-south-1a, 1b), C3.2a மற்றும் C3.2b-ல கத்துக்கிட்டது படி.",
+            "console_action": {
+              "type": "fill",
+              "path": "VPC Console → Subnets → Create subnet (x4)",
+              "field": "Subnet CIDRs and AZs",
+              "value": "10.0.1.0/24 (public-1a), 10.0.2.0/24 (private-1a), 10.0.3.0/24 (public-1b), 10.0.4.0/24 (private-1b)",
+              "highlight": "Subnet creation form, repeated for 4 subnets",
+              "result": "4 subnets exist, spanning 2 AZs for redundancy, split into public/private tiers"
+            }
+          },
+          {
+            "ava_narration": "Step 3: Internet Gateway create பண்ணி, VPC-கூட attach பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "VPC Console → Internet Gateways → Create → Attach to VPC",
+              "field": "Name",
+              "value": "foodquick-igw",
+              "highlight": "Attach to VPC action",
+              "result": "The VPC now has a path to the internet, though no subnet uses it yet"
+            }
+          },
+          {
+            "ava_narration": "Step 4: Route table 'foodquick-public-rt' create பண்ணி, 0.0.0.0/0 -> foodquick-igw route add பண்ணி, ரெண்டு public subnets-ஐயும் associate பண்றோம். இப்போதான் அந்த subnets உண்மையிலேயே public ஆகுது.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-public-rt → Add route + Subnet associations",
+              "field": "Route, Associated subnets",
+              "value": "0.0.0.0/0 → foodquick-igw, public-1a + public-1b",
+              "highlight": "Route table with IGW route and subnet associations",
+              "result": "Both public subnets are now genuinely internet-reachable"
+            }
+          },
+          {
+            "ava_narration": "Verify பண்றோம் - ஒரு test EC2 instance public subnet-ல launch பண்ணி, internet access இருக்கானு confirm பண்றோம், அடுத்த step-க்கு போறதுக்கு முன்னாடி.",
+            "console_action": {
+              "type": "click",
+              "path": "Test EC2 instance in public-1a → curl a public endpoint",
+              "highlight": "Successful curl response",
+              "result": "Public subnet connectivity confirmed working before proceeding to build the private subnet's NAT path"
+            }
+          },
+          {
+            "ava_narration": "Step 5: NAT Gateway create பண்றோம், public-1a subnet-ல (private-ல அல்ல - C3.3-ல கத்துக்கிட்ட mistake-ஐ தவிர்க்க), Elastic IP-கூட.",
+            "console_action": {
+              "type": "fill",
+              "path": "VPC Console → NAT Gateways → Create",
+              "field": "Subnet",
+              "value": "public-1a",
+              "highlight": "Subnet dropdown showing public-1a selected",
+              "result": "The NAT Gateway is correctly placed in a public subnet where it has its own internet access"
+            }
+          },
+          {
+            "ava_narration": "Route table 'foodquick-private-rt' create பண்ணி, 0.0.0.0/0 -> foodquick-nat-gw route add பண்ணி, ரெண்டு private subnets-ஐயும் associate பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-private-rt → Add route + Subnet associations",
+              "field": "Route, Associated subnets",
+              "value": "0.0.0.0/0 → foodquick-nat-gw, private-1a + private-1b",
+              "highlight": "Route table with NAT route and subnet associations",
+              "result": "Private subnets now have outbound-only internet access via the NAT Gateway"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The complete network layer is built in correct dependency order — VPC, subnets, IGW, public route table (verified), NAT Gateway, private route table — with connectivity confirmed at the public-subnet checkpoint before building the private-subnet path.",
+          "what_to_notice": "Public subnet connectivity verify பண்றது, private path build பண்றதுக்கு முன்னாடியே நடந்துச்சு - இது ஒவ்வொரு layer-லும் verify பண்ணி proceed பண்றதோட value."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Build Sequence, Visualized",
+      "ava_speaks": "இந்த diagram பாரு - build order-ஐ, dependency arrows-கூட காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "1. VPC (foundation)",
+            "   |",
+            "2. Subnets (4x, split public/private, 2 AZs) <- depends on VPC's CIDR",
+            "   |",
+            "3. Internet Gateway <- attaches to VPC",
+            "   |",
+            "4. Public Route Table (0.0.0.0/0 -> IGW) <- depends on subnets AND IGW existing",
+            "   |  [CHECKPOINT: verify public subnet has internet access]",
+            "   |",
+            "5. NAT Gateway <- depends on a WORKING public subnet",
+            "   |",
+            "6. Private Route Table (0.0.0.0/0 -> NAT) <- depends on subnets AND NAT Gateway existing"
+          ]
+        },
+        "ava_narration": "ஒவ்வொரு step-மும், அதுக்கு மேல இருக்கற step-ஐ சார்ந்திருக்கு - இந்த order-ஐ மீறினா, dependencies missing-ஆ இருக்கும்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Verify Connectivity at Each Layer",
+      "instruction": "FoodQuick-ஓட network layer build ஆனப்பிறகு, ஒவ்வொரு layer-லும் connectivity verify பண்ணு - build பண்ணின உடனே app tier-க்கு போகாம.",
+      "scenario": "karthik-dev network build பண்ணிட்டான், ஆனா Ravi இன்னும் proceed பண்ண approve பண்ணல - ஒவ்வொரு layer-மும் working-ஆ இருக்கானு explicit verification தேவை.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "VPC Console → Route Tables, showing both public and private route tables configured",
+        "current_configuration": "The network layer is built but not yet independently verified layer-by-layer"
+      },
+      "requirements": [
+        "Verify the public subnet's route table correctly points 0.0.0.0/0 to the IGW",
+        "Launch a test instance in a private subnet and confirm it can reach the internet outbound (via NAT) but is NOT directly reachable from the internet",
+        "Confirm the private subnet's route table points 0.0.0.0/0 to the NAT Gateway, not the IGW",
+        "Document each verification result before marking the network layer as ready for the application layer"
+      ],
+      "hints": [
+        "Public route table-ல target IGW-ஆ இருக்கணும் (foodquick-igw), NAT Gateway அல்ல",
+        "Private subnet-ல instance launch பண்ணி, outbound curl try பண்ணு (வேலை செய்யணும்), அப்புறம் அதே instance-க்கு public IP இல்லைனு confirm பண்ணு (இல்லாததால் inbound reachable இல்ல)",
+        "Private route table-ல target NAT Gateway-ஆ இருக்கணும் (foodquick-nat-gw), IGW அல்ல - இது ரெண்டு route tables-மும் confuse பண்ணிடாத common mistake"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Public route table confirmed pointing to IGW; private test instance confirmed to have outbound-only access via NAT with no direct internet reachability; private route table confirmed pointing to NAT Gateway",
+        "ava_correct": "Correct! இப்போ network layer, verified-ஆ, application layer build பண்ண ready-ஆ இருக்கு.",
+        "ava_wrong": "ஒரு verification step-ஐ ஒரு தடவை check பண்ணு - route tables-ல target correct-ஆ இருக்கானு, private instance நேரடியா internet-ல இருந்து reach ஆகாதுனு உறுதி பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Route Tables That Got Swapped",
+      "ava_speaks": "priya-dev, network layer build பண்றப்போ, அவசரத்துல, private subnets-ஐ 'foodquick-public-rt'-கூடவும், public subnets-ஐ 'foodquick-private-rt'-கூடவும் associate பண்ணிடுச்சு - route table names-ஐ சரியா படிக்காம.",
+      "setup": "priya-dev, moving quickly through the build, associates the private subnets with foodquick-public-rt (which routes to the IGW) and the public subnets with foodquick-private-rt (which routes to the NAT Gateway) — the exact opposite of the intended design.",
+      "what_happened": "The 'private' subnet instances (meant to be app servers and databases) are now unexpectedly directly internet-routable, while the 'public' subnet instances (meant to be the ALB) have no direct internet path and can't serve traffic at all.",
+      "broken_config": "Subnet associations (swapped):\nprivate-1a, private-1b -> associated with foodquick-public-rt (0.0.0.0/0 -> IGW)\npublic-1a, public-1b -> associated with foodquick-private-rt (0.0.0.0/0 -> NAT Gateway)",
+      "error_shown": "ALB health check failures: the ALB, sitting in what should be a public subnet, can't be reached from the internet at all. Meanwhile, a security scan flags that 'private' subnet instances are unexpectedly reachable directly from the internet.",
+      "the_real_problem": "Route table names ('public-rt', 'private-rt') ஒரு label மட்டும் - association தப்பா பண்ணா, actual behavior completely reverse ஆயிடும். இது silent-ஆ நடக்கும் mistake - console error எதுவும் காட்டாது, ஏன்னா association technically valid தான், ஆனா intent-ஐ reverse பண்ணிடுச்சு.",
+      "fix": {
+        "corrected_config": "Re-associate correctly: private-1a/1b -> foodquick-private-rt (NAT Gateway route); public-1a/1b -> foodquick-public-rt (IGW route). Verify each association matches the intended subnet purpose, not just the route table's name.",
+        "result": "Public subnets (ALB) regain internet reachability; private subnets (app servers, database) lose their unintended direct internet exposure."
+      },
+      "lesson": "Route table names, actual behavior-ஐ guarantee பண்ணாது - association step-ல, ஒவ்வொரு subnet, correct route table-கூட மட்டும்தான் associate ஆகியிருக்கானு explicit-ஆ verify பண்றது, build process-ஓட ஒரு critical step."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Build Order and Verification",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team wants to skip the 'verify public subnet connectivity' checkpoint to save time, since 'the config looks right.' What's the risk of skipping this verification step?",
+          "answer": "A configuration that 'looks right' on paper (like priya-dev's swapped route tables) can still be functionally wrong — the only way to catch a mistake like a subnet association error is to actually test connectivity, not just visually review the configuration. Skipping verification means the mistake surfaces later, likely during the application layer build, where it's harder to isolate the root cause."
+        },
+        {
+          "question": "Can a NAT Gateway be created before any subnet exists in the VPC?",
+          "answer": "No — a NAT Gateway must be placed in a specific subnet (and that subnet must already be public, i.e. already have its IGW route configured). This is a hard dependency: subnets and their public routing must exist first."
+        },
+        {
+          "question": "If infrastructure-as-code (like Terraform) were used instead of the console, would the dependency-order mistake (like building a route table before its subnet exists) still be possible?",
+          "answer": "Less likely for pure ordering issues — IaC tools typically build a dependency graph and handle ordering automatically. However, a LOGIC mistake like priya-dev's swapped associations is still entirely possible in IaC — the tool ensures things are created in valid order, but it can't catch a human writing the wrong subnet ID into the wrong route table's association block."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Verify Infrastructure Builds Systematically",
+      "ava_speaks": "Real companies-ல, Priya Nair மாதிரி architects, network builds-ஐ, 'build பண்ணிட்டு hope பண்றது' இல்லாம, systematic verification-கூட treat பண்றாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Use infrastructure-as-code (Terraform, CloudFormation) so dependency order is enforced by the tool, not human memory",
+          "detail": "இது priya-dev-ஓட mistake மாதிரி association errors-ஐ முழுசா தடுக்காது, ஆனா ordering mistakes-ஐ significantly குறைக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Run automated connectivity tests (e.g. via VPC Reachability Analyzer, from C3.3) at each layer as part of the build pipeline, not just manual spot-checks",
+          "detail": "இது human verification-ஐ விட consistent-ஆ, ஒவ்வொரு build-லும் repeat பண்ண முடியும்"
+        },
+        {
+          "step": 3,
+          "action": "Tag and name resources with unambiguous, purpose-clear names, and review associations explicitly during any peer review",
+          "detail": "இது route-table-swap மாதிரி silent, label-doesn't-match-behavior mistakes-ஐ review stage-லேயே கண்டுபிடிக்க உதவும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "Terraform / AWS CloudFormation",
+          "use": "Infrastructure-ஐ code-ஆ define பண்ணி, dependency order automatic-ஆ resolve பண்ணும், manual click-order mistakes-ஐ largely நீக்கும்"
+        },
+        {
+          "tool": "VPC Reachability Analyzer (from C3.3)",
+          "use": "Build பண்ணின பிறகு, actual traffic paths correct-ஆ இருக்கானு automated-ஆ verify பண்ண உதவும் - manual curl tests-ஐ விட scalable"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Nalla progress! இன்னைக்கு நாம network layer-ஐ, VPC -> subnets -> IGW -> route tables -> NAT Gateway, correct dependency order-ல build பண்ணோம், ஒவ்வொரு layer-லும் verify பண்ணிட்டே proceed பண்ணோம். மிக முக்கியமா, route table associations தப்பா பண்ணா, labels correct-ஆ இருந்தாலும் behavior completely reverse ஆயிடும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம application layer deploy பண்ணப் போறோம் - EC2, ALB, ASG எல்லாம் இந்த network foundation-ஓட மேல.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C7.2 — Summary",
+      "points": [
+        "✓ Network layer components have a strict dependency order: VPC, subnets, IGW, route tables, NAT Gateway",
+        "✓ Building out of order produces confusing errors that are harder to debug than a missing-dependency error",
+        "✓ Verifying connectivity at each checkpoint before proceeding catches mistakes where they're cheapest to fix",
+        "✓ Route table names don't guarantee correct behavior — subnet associations must be explicitly verified",
+        "✓ This build applied the complete CS3 networking curriculum as one continuous, dependency-ordered exercise"
+      ],
+      "coming_next": "Lesson C7.3: Deploy Application Layer"
+    }
+  }
+}

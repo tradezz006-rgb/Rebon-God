@@ -1,0 +1,313 @@
+{
+  "lesson_id": "C7.4",
+  "lesson_title": "Monitor and Document",
+  "section_id": "CS7",
+  "section_name": "Portfolio Project",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C7.3 — Deploy Application Layer",
+  "student_will_learn": [
+    "Build a complete CloudWatch dashboard covering the whole deployed architecture",
+    "Set up budget alerts to catch cost anomalies before they become a crisis",
+    "Produce a professional architecture diagram suitable for a portfolio",
+    "Structure a clear narrative for presenting this project in a job interview",
+    "Recognize how each individual CS2-CS7 lesson contributed to one coherent, production-grade system"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Application layer deploy ஆச்சு, verify-மும் ஆச்சு. இப்போ Ravi-ஓட FQ-218 ticket-ல கடைசி step - monitoring complete பண்றது, முழு project-ஐயும் document பண்றது. இதுதான் CS7-ஓட கடைசி lesson, அப்புறம் முழு Building Basics-ஓடவும் கடைசி lesson. Ravi ஒரு closing note எழுதி இருக்காங்க - 'FQ-142-ல ஆரம்பிச்ச அந்த Vikram investigation நினைவிருக்கா? அப்போ இருந்து நீ கத்துக்கிட்ட ஒவ்வொரு lesson-மும், இன்னைக்கு இந்த ஒரே architecture-ல வந்து சேருது. இது வெறும் ஒரு exercise இல்ல - இது தான் நீ செய்ய முடிஞ்ச proof.'",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS7 · Lesson C7.4",
+        "Monitor and Document",
+        "Ticket FQ-218 — closing out with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Completing the Observability Picture",
+      "ava_speaks": "C6-ல நாம metrics, logs, alarms, audit trails, compliance monitoring எல்லாம் தனித்தனியா கத்துக்கிட்டோம். இன்னைக்கு அத்தனையையும், இந்த specific deployed architecture-க்கு, ஒரே cohesive practice-ஆ சேர்க்கறோம். ஒரு complete dashboard, ALB, ASG, RDS metrics எல்லாத்தையும் ஒரே பக்கத்துல காட்டும். Budget alerts, cost expectations-ஐ தாண்டினா, immediately தெரியப்படுத்தும் - C5-ல நாம கத்துக்கிட்ட unmanaged cost growth mistakes-ஐ தடுக்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "From Individual Lessons to One Cohesive Practice"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Individual CS6 Lesson",
+            "Applied Here, in C7.4"
+          ],
+          "rows": [
+            [
+              "C6.1 — Dashboards",
+              "One dashboard covering ALB, ASG, and RDS metrics for this specific architecture"
+            ],
+            [
+              "C6.2 — Alarms",
+              "Alarms tuned to this architecture's actual traffic patterns, not generic defaults"
+            ],
+            [
+              "C6.4 — Trusted Advisor",
+              "A budget alert catching cost anomalies specific to this deployment"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "A portfolio project isn't complete when it works — it's complete when it's observable, documented, and explainable to someone who wasn't there when you built it."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு dashboard, ALB-ஓட RequestCount மட்டும் காட்டுது, ASG அல்லது RDS metrics இல்ல. இது complete monitoring-ஆ?",
+          "options": [
+            "A) ஆமா, ALB தான் மிக முக்கியம்",
+            "B) இல்ல, முழு stack-ஓட health-ஐயும் ஒரே பக்கத்துல பார்க்க, எல்லா layers-ஓட key metrics-மும் தேவை",
+            "C) ஆமா, மற்ற metrics தேவையே இல்ல",
+            "D) Dashboard-ல ஒரே ஒரு metric தான் இருக்கணும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! C6.1-ல கத்துக்கிட்டது நினைவிருக்கா - dashboard-ஓட value, multiple sources-ஐ ஒரே பக்கத்துல சேர்க்கறதுல தான் இருக்கு. ALB மட்டும் பார்த்தா, app tier-ல் அல்லது data tier-ல் issue-ஐ miss பண்ணலாம்.",
+          "ava_wrong": "இல்ல, C6.1-ல கத்துக்கிட்டது படி, dashboard-ஓட full value, multiple layers-ஓட metrics ஒரே இடத்துல இருக்கறதுல தான் - ALB மட்டும் பார்த்தா, முழு stack-ஓட health தெரியாது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Budget alert-ஓட purpose என்ன, C5-ல நாம கத்துக்கிட்டதை நினைவு வெச்சு சொல்லு?",
+          "options": [
+            "A) Cost automatic-ஆ குறைச்சிடும்",
+            "B) Spending expectations-ஐ தாண்டினா, proactive-ஆ notify பண்ணும் - unmanaged growth silent-ஆ accumulate ஆவதை தடுக்க",
+            "C) Resources automatic-ஆ delete பண்ணிடும்",
+            "D) Budget alerts-க்கு எந்த real purpose-மும் இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! C5.4-ல நாம பார்த்த 'future flexibility'-க்காக unnecessary EFS cost மாதிரி mistakes, budget alerts இருந்தா, weeks-க்கு பதிலா, days-க்குள்ள கண்டுபிடிக்கப்பட்டிருக்கும்.",
+          "ava_wrong": "இல்ல, budget alerts automatic-ஆ எதையும் delete பண்ணாது அல்லது cost குறைக்காது - அது proactively notify பண்ணும், C5-ல நாம பார்த்த silent cost accumulation mistakes-ஐ, early-ஆ கண்டுபிடிக்க."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Why Documentation Is What Makes a Project a Portfolio Piece",
+      "ava_speaks": "ஒரு working architecture, technically impressive-ஆ இருக்கலாம், ஆனா அதை யாருக்கும் explain பண்ண முடியாம இருந்தா, அது ஒரு portfolio piece இல்ல. Real hiring managers-கிட்ட - Freshworks, Zoho, Razorpay மாதிரி companies-ல interview பண்ணும் engineers - ஒரு candidate 'நான் இதை பண்ணேன்'nு சொல்றது போதாது; 'நான் ஏன் இந்த decision எடுத்தேன், என்ன trade-off இருந்துச்சு, எப்படி verify பண்ணேன்'nு சொல்ல முடியணும். FoodQuick-ஓட entire journey - ஒவ்வொரு mistake, ஒவ்வொரு fix - இதுதான் அந்த story-ஐ கொடுக்குது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "What Interviewers Actually Listen For"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Weak Portfolio Narrative",
+            "Strong Portfolio Narrative"
+          ],
+          "rows": [
+            [
+              "'I built a 3-tier architecture on AWS'",
+              "'I designed security groups per tier after seeing how a default-SG mistake exposed a database — here's how I structurally prevented that'"
+            ],
+            [
+              "'I used Auto Scaling'",
+              "'I set minimum capacity to 2 because I'd seen how min=1 across 2 AZs defeats redundancy during an AZ failure'"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Building the Final Dashboard and Setting Up Budget Alerts",
+      "ava_speaks": "karthik-dev இப்போ, முழு deployed architecture-க்கும் ஒரே comprehensive dashboard build பண்றான், அப்புறம் ananya-analyst budget alerts set பண்றாங்க.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "CloudWatch",
+        "steps": [
+          {
+            "ava_narration": "CloudWatch Console-ல, C6.1-ல create பண்ணின 'foodquick-app-health' dashboard-ஐ, இப்போ முழு stack-ஐயும் cover பண்ண expand பண்றோம் - ALB RequestCount/TargetResponseTime, ASG CPUUtilization/InstanceCount, RDS CPUUtilization/DatabaseConnections.",
+            "console_action": {
+              "type": "fill",
+              "path": "CloudWatch Console → Dashboards → foodquick-app-health → Add widgets",
+              "field": "Widgets",
+              "value": "ALB RequestCount, ALB TargetResponseTime, ASG CPUUtilization, ASG InstanceCount, RDS CPUUtilization, RDS DatabaseConnections",
+              "highlight": "Six widgets now covering all three tiers",
+              "result": "One dashboard now shows the health of the presentation, application, and data tiers together"
+            }
+          },
+          {
+            "ava_narration": "AWS Budgets Console-ல, 'Create budget' click பண்றோம் - monthly cost budget, threshold-ஆ expected spend-ஐ விட 20% அதிகமா set பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "AWS Budgets Console → Create budget",
+              "field": "Budget type, Amount, Alert threshold",
+              "value": "Monthly cost budget, based on C7.1's estimate, alert at 80% and 100% of budgeted amount",
+              "highlight": "Budget threshold configuration",
+              "result": "The team will be alerted well before spend significantly exceeds the C7.1 cost estimate"
+            }
+          },
+          {
+            "ava_narration": "Budget alert-ஐ, foodquick-oncall-alerts SNS topic-கூட (C6.2-ல create பண்ணது) connect பண்றோம் - cost anomalies-மும், operational alerts அதே channel-ல வரும்.",
+            "console_action": {
+              "type": "select",
+              "path": "Budget alert notifications",
+              "field": "SNS topic",
+              "value": "foodquick-oncall-alerts",
+              "highlight": "SNS topic selection for budget alerts",
+              "result": "Cost anomalies now reach the team through the same trusted notification channel as operational alerts"
+            }
+          },
+          {
+            "ava_narration": "இறுதியா, S3-ல (C5.1a, C5.1b-ல கத்துக்கிட்டது படி) ஒரு 'foodquick-project-docs' bucket-ல, architecture diagram மற்றும் README document upload பண்றோம் - correct key naming convention வெச்சு.",
+            "console_action": {
+              "type": "fill",
+              "path": "S3 Console → foodquick-project-docs → Upload",
+              "field": "Key",
+              "value": "portfolio/foodquick-architecture-v1/README.md, portfolio/foodquick-architecture-v1/diagram.png",
+              "highlight": "Well-organized S3 keys for the project documentation",
+              "result": "The project documentation is stored with a clear, organized key structure, ready to be shared or referenced"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The dashboard now covers all three tiers, budget alerts route through the established SNS channel, and project documentation is organized in S3 following the key design principles from C5.1a.",
+          "what_to_notice": "ஒவ்வொரு step-மும், ஒரு earlier lesson-ல கத்துக்கிட்ட specific practice-ஐ reuse பண்ணுது - இது ஒரு தனி exercise இல்ல, முழு course-ஓட synthesis."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "FoodQuick's Journey, Layer by Layer",
+      "ava_speaks": "இந்த final diagram பாரு - இது வெறும் ஒரு architecture இல்ல, இது தான் CS2 முதல் CS7 வரைக்கும், FoodQuick எப்படி transform ஆச்சுன்னு காட்டுற picture.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "FoodQuick — Before (rushed, launch-day decisions) vs After (this course's designed architecture):",
+            "",
+            "IAM: shared credentials, no offboarding process -> Roles, MFA, SCPs, full CloudTrail audit (CS2)",
+            "Network: one afternoon's default VPC -> Multi-AZ VPC, proper subnets, NAT, security groups (CS3)",
+            "Compute: Day-1 guessed instance sizes -> Right-sized, ASG-managed, Reserved+Spot mix (CS4)",
+            "Storage: unmanaged S3 growth -> Lifecycle policies, Block Public Access, encrypted (CS5)",
+            "Monitoring: outages found via Twitter -> Dashboards, alarms, CloudTrail, Config (CS6)",
+            "Architecture: never designed as a whole -> This 3-tier system, built and verified end-to-end (CS7)"
+          ]
+        },
+        "ava_narration": "ஒவ்வொரு row-மும், ஒரு real session, ஒரு real mistake, ஒரு real fix-ஐ represent பண்ணுது - இது தான் நீ இந்த course முழுசும் actually கத்துக்கிட்ட proof."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Write Your Portfolio Narrative",
+      "instruction": "இந்த முழு FoodQuick project-ஐ, ஒரு job interview-ல present பண்ண, ஒரு short, structured narrative எழுது.",
+      "scenario": "Ravi, இந்த project-ஐ உன் portfolio-ல சேர்க்கும்போது, 'நான் இதை பண்ணேன்' சொல்றதை விட, WHY ஒவ்வொரு decision எடுத்தேன்னு explain பண்ண முடியணும்nு advise பண்ணி இருக்காங்க.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "Text editor (portfolio README draft)",
+        "current_configuration": "No narrative has been written yet"
+      },
+      "requirements": [
+        "Describe the architecture in 2-3 sentences (what it is, what it does)",
+        "Pick 2 specific decisions (e.g. security-group-per-tier, health check path verification) and explain the mistake each one deliberately avoids",
+        "Explain how you verified the deployment beyond a single successful response",
+        "End with what you'd do differently or extend next, showing ongoing engineering judgment, not just a finished checklist"
+      ],
+      "hints": [
+        "Interviewers care more about 'ஏன்' than 'என்ன' - 'நான் security group X create பண்ணேன்' சொல்றதை விட, 'C5.2-ல default security group mistake பார்த்ததால், நான் scoped access design பண்ணேன்'nு சொல்றது ரொம்ப strong",
+        "Verification section-ல, C7.3-ஓட student_try exercise (instance termination test) reference பண்ணு - இது 'நான் deep-ஆ verify பண்ணேன்'nு காட்டும்",
+        "'What next' section, ஒரு open, honest engineering mindset காட்டும் - example: 'multi-region expansion இன்னும் பண்ணல, அது அடுத்த step'"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A structured narrative covering the architecture summary, 2 justified decisions tied to specific learned mistakes, the verification approach, and a forward-looking next step",
+        "ava_correct": "Correct! இந்த narrative, ஒரு interview-ல confidently present பண்ண முடியற level-ல இருக்கு - decisions-க்கு reasoning இருக்கு, verification depth தெரியுது.",
+        "ava_wrong": "Narrative-ஐ ஒரு தடவை படி - 'என்ன பண்ணேன்' மட்டும் சொல்லிட்டு, 'ஏன் அப்படி பண்ணேன்'nு missing-ஆ இருக்கா-ன்னு பாரு. Specific lesson references சேர்த்தா, strong-ஆ இருக்கும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Portfolio Project That Couldn't Answer 'Why'",
+      "ava_speaks": "priya-dev, ஒரு interview-க்கு prepare பண்றப்போ, தன் FoodQuick project-ஐ present பண்றாங்க - ஆனா interviewer 'ஏன் இந்த security group design தேர்ந்தெடுத்தீங்க?'nு கேட்டப்போ, 'அது தான் standard practice'nு மட்டும் சொன்னாங்க - deeper reasoning இல்லாம.",
+      "setup": "priya-dev prepares for a technical interview by memorizing what she built (the architecture components, the AWS services used) but doesn't prepare the reasoning behind specific decisions, assuming 'I built a working 3-tier architecture' would be sufficient.",
+      "what_happened": "The interviewer, an experienced cloud architect, asks follow-up 'why' questions — why this security group scoping, why Reserved over Spot for the app tier, why this health check configuration — and priya-dev can only give generic textbook answers, unable to connect decisions back to the specific FoodQuick mistakes that shaped them, even though she genuinely understood and fixed those mistakes during the course.",
+      "broken_config": "Interview preparation: memorized WHAT was built (component list, AWS service names)\nMissing: WHY each decision was made, tied to specific reasoning or prior mistakes\n\nInterviewer's actual evaluation criteria: judgment and reasoning depth, not component recall",
+      "error_shown": "Interview feedback (paraphrased): 'Candidate clearly built something functional, but couldn't articulate the reasoning behind key architectural decisions — answers felt memorized rather than understood.'",
+      "the_real_problem": "priya, உண்மையிலேயே இந்த decisions-ஐ, correct reasons-க்காக தான் எடுத்தாங்க - ஆனா prepare பண்றப்போ, WHAT-ஐ மட்டும் review பண்ணி, WHY-ஐ articulate பண்ண practice பண்ணல. Interview-ல, WHY explain பண்ற ability, WHAT built பண்ணதை விட முக்கியமான signal - ஏன்னா அதுதான் engineering judgment-ஐ காட்டும்.",
+      "fix": {
+        "corrected_config": "Before the next interview, priya-dev writes out (like this lesson's student_try exercise) a structured narrative for each major decision, explicitly connecting it back to the specific CS2-CS7 lesson and mistake that shaped it — practicing saying the 'why' out loud, not just knowing it internally.",
+        "result": "In the next interview, when asked similar 'why' questions, she can clearly trace each decision back to a specific learned lesson, demonstrating exactly the judgment depth interviewers are evaluating for."
+      },
+      "lesson": "Understanding WHY a decision was made, ஆனா அதை articulate பண்ண practice பண்ணாம இருக்கறது, இண்டர்வியூ-ல ஒரு real gap-ஆ தெரியும் - internal understanding-ஐ, clear, spoken narrative-ஆ மாத்துறது, ஒரு தனி, deliberate skill."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Reflecting on the Full Journey",
+      "ava_speaks": "இப்போ 3 quick scenarios - இந்த முழு course-ஐயும் reflect பண்ணி யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "Looking back across CS2-CS7, what single pattern showed up most repeatedly across different mistake scenarios (IAM, VPC, S3, EBS, security groups)?",
+          "answer": "'Convenience now, restrict/fix later' — this exact pattern appeared in the IAM offboarding gap, the public-subnet database, the default security group, the disabled Block Public Access, the console-only EBS resize, and the swapped route tables. Recognizing this as a single recurring failure mode, not many unrelated mistakes, is itself a mature engineering insight."
+        },
+        {
+          "question": "If FoodQuick's team had built this exact 3-tier architecture from day one (instead of the rushed original build), what would have been different about the total effort involved?",
+          "answer": "Less total effort overall, even though upfront design takes longer than a quick rushed build — because every retrofit (CS2's investigation, CS3's network redesign, CS5's cost cleanup, etc.) cost significantly more engineering time than getting it right from the start would have. This is the core argument for investing in design before building."
+        },
+        {
+          "question": "This course's mistake_simulation blocks always show someone ELSE (priya-dev, ananya-analyst, karthik-dev) making the mistake. Why might learning from someone else's realistic mistake be valuable, compared to only learning correct patterns directly?",
+          "answer": "Seeing a plausible, realistic path to a mistake — not just 'here's the right way' — builds the pattern recognition needed to catch a similar mistake before making it yourself. Understanding HOW a reasonable person ends up with a public S3 bucket or a swapped route table is more transferable than memorizing the correct configuration alone."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How This Project Maps to Real Engineering Portfolios",
+      "ava_speaks": "Ravi-ஓட final note - இது தான் real companies-ல, senior engineers தங்க work-ஐ present பண்ற exact pattern.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Document not just the final architecture, but the decision history — what was tried, what didn't work, what was learned",
+          "detail": "இது priya-dev-ஓட interview mistake-ஐ தடுக்கும் - 'why' கேட்டா, ready-ஆ இருக்கணும்"
+        },
+        {
+          "step": 2,
+          "action": "Maintain a living architecture diagram that's updated as the system evolves, not a one-time snapshot",
+          "detail": "Real systems மாறிட்டே இருக்கும் - documentation-மும் அதுக்கு ஏத்த மாதிரி maintain பண்ணனும்"
+        },
+        {
+          "step": 3,
+          "action": "Practice explaining technical decisions to someone without full context — a hiring manager, a new team member — as a regular skill, not just interview prep",
+          "detail": "இது தான் real, transferable communication skill, ஒரு project செய்யறது மட்டும் இல்ல"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Well-Architected Tool (mentioned back in C3.2a)",
+          "use": "Architecture decisions-ஐ AWS-ஓட best practices-கூட compare பண்ணி, documentation-க்கு ஒரு structured framework தரும்"
+        },
+        {
+          "tool": "README.md + architecture diagram in version control",
+          "use": "Project documentation-ஐ, code-கூடவே, versioned, review பண்ணக்கூடிய, up-to-date-ஆ வெச்சுக்க உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "இது தான் Building Basics-ஓட கடைசி lesson - நீ இப்போ முழு monitoring, documentation, portfolio narrative எல்லாம் கத்துக்கிட்ட. இந்த முழு journey-ஐ ஒரு தடவை திரும்பி பாரு - FQ-142-ல, ஒரு unexplained access key-ஐ investigate பண்றதுல ஆரம்பிச்சோம். அப்புறம், network layer, compute layer, storage layer, monitoring layer, ஒவ்வொண்ணையும் properly design பண்ணினோம். இன்னைக்கு, அந்த எல்லாமே, ஒரே working, verified, documented architecture-ஆ சேர்ந்திருக்கு. Ravi சொல்றது சரிதான் - இது வெறும் ஒரு course exercise இல்ல, இது தான் நீ real production systems build பண்ண, debug பண்ண, explain பண்ண முடியும்-னு proof. Working Level-ல, இந்த skills-ஐ real incidents-ல apply பண்ணப் போற - அது அடுத்த chapter.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C7.4 — Summary",
+      "points": [
+        "✓ A complete dashboard covers every tier — presentation, application, and data — in one view",
+        "✓ Budget alerts catch cost anomalies proactively, before they silently accumulate like FoodQuick's past S3 growth",
+        "✓ Documentation with clear WHY reasoning, not just WHAT was built, is what makes a project a real portfolio piece",
+        "✓ Every decision across this capstone traced back to a specific mistake learned somewhere in CS2-CS7",
+        "✓ Building Basics is complete — FoodQuick's infrastructure, started in crisis at FQ-142, is now a properly designed, verified, documented system"
+      ],
+      "coming_next": "Building Basics complete. Next: Working Level — FoodQuick's on-call rotation begins."
+    }
+  }
+}

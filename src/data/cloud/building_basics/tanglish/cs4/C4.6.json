@@ -1,0 +1,322 @@
+{
+  "lesson_id": "C4.6",
+  "lesson_title": "EC2 Pricing Models",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C4.5 — Auto Scaling Groups",
+  "student_will_learn": [
+    "Explain On-Demand, Reserved, and Spot pricing models and how they differ",
+    "Explain how Reserved Instances trade commitment for a significant discount",
+    "Explain how Spot Instances trade interruption risk for a steep discount",
+    "Match a workload's characteristics to the right pricing model",
+    "Design a checkpointing strategy so Spot interruptions don't cause data loss"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம instance types, launching, scaling எல்லாம் பார்த்தோம் - technical side. இப்போ Ravi-ஓட FQ-171 ticket-ல கடைசி கேள்வி - 'இதையெல்லாம் சரியா run பண்ணினாலும், bill ஏன் இவ்ளோ அதிகமா இருக்கு?' இதுதான் CS4-ஓட கடைசி lesson - EC2-ஐ எப்படி cost-effectively pay பண்றதுனு பார்ப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.6",
+        "EC2 Pricing Models",
+        "Ticket FQ-171 — closing out with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "On-Demand, Reserved, and Spot — Three Different Trades",
+      "ava_speaks": "On-Demand, pay-as-you-go - எந்த commitment-மும் இல்ல, hour-க்கு (அல்லது second-க்கு) pay பண்றோம், எப்போ வேணும்னாலும் stop பண்ணலாம். இது flexible, ஆனா most expensive per-hour rate. Reserved Instances, 1 அல்லது 3 வருடம் commit பண்ணா, 40-60% discount கிடைக்கும் - predictable, steady workloads-க்கு நல்லது. Spot Instances, AWS-ஓட unused spare capacity, 70-90% வரைக்கும் discount - ஆனா AWS-க்கு அந்த capacity திரும்ப தேவைப்பட்டா, 2-minute notice-ல உங்க instance interrupt பண்ணிடுவாங்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "On-Demand vs Reserved vs Spot"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Model",
+            "Discount",
+            "Trade-off"
+          ],
+          "rows": [
+            [
+              "On-Demand",
+              "0% (baseline rate)",
+              "Full flexibility, no commitment, highest per-hour cost"
+            ],
+            [
+              "Reserved (1 or 3 yr)",
+              "40-60%",
+              "Must commit to a term; less flexible if needs change"
+            ],
+            [
+              "Spot",
+              "70-90%",
+              "Can be interrupted with only 2 minutes' notice"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "There's no single 'best' pricing model — the right choice depends entirely on whether the workload can tolerate interruption and how predictable its usage is."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "Spot Instance-ஐ AWS எப்போ interrupt பண்ணும்?",
+          "options": [
+            "A) ஒரு fixed schedule-ல, தினமும் ஒரே நேரத்துல",
+            "B) AWS-க்கு அந்த spare capacity திரும்ப தேவைப்படும்போது, 2-minute notice-கூட",
+            "C) Instance ஒரு குறிப்பிட்ட age தாண்டினா",
+            "D) Spot Instances ஒரு போதும் interrupt ஆகாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Spot capacity, AWS-ஓட unused resources - அது திரும்ப தேவைப்பட்டா, 2-minute notice-கூட உங்க instance interrupt ஆயிடும். இது unpredictable.",
+          "ava_wrong": "இல்ல, இதுக்கு fixed schedule கிடையாது - AWS-க்கு அந்த spare capacity திரும்ப தேவைப்படும்போது, குறுகிய 2-minute notice-கூட interrupt நடக்கும், இது workload-ஐ பொறுத்து எப்போ வேணும்னாலும் நடக்கலாம்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு workload, predictable-ஆ, 3 வருடம் தொடர்ந்து run ஆகும்னு நமக்கு தெரியும். எந்த pricing model-ல அதிக savings கிடைக்கும்?",
+          "options": [
+            "A) On-Demand, flexibility-க்காக",
+            "B) 3-year Reserved Instance, commitment-ஓட exchange-ல significant discount",
+            "C) Spot, cheapest ஆனதால எப்போவும் best",
+            "D) Pricing model எதுவா இருந்தாலும் ஒரே cost"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Predictable, long-term workload-க்கு, 3-year Reserved commitment-ஓட exchange-ல, 40-60% discount கிடைக்கும் - இது On-Demand flexibility-ஐ இழக்கிறோம், ஆனா அந்த flexibility இங்க தேவையும் இல்ல.",
+          "ava_wrong": "இல்ல, Spot cheapest-ஆ இருந்தாலும், interruption risk இருக்கு - predictable, continuously run ஆக வேண்டிய workload-க்கு அது பொருந்தாது. Reserved தான் இங்க best fit, commitment predictable-ஆ இருக்கறதால."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Matching Pricing Model to Workload Shape",
+      "ava_speaks": "FoodQuick-ஓட payment processing API, 24/7 predictable-ஆ run ஆகணும் - ஒரு நிமிஷம் கூட interruption ஆகக் கூடாது. இதுக்கு Reserved Instances தேர்ந்தெடுத்தாங்க - 3-year commitment பண்ணி, 55% cost save பண்ணிட்டாங்க, ஏன்னா அந்த workload-ஓட shape stable-ஆ, long-term-ஆ இருக்கும்னு தெரியும். அதே சமயம், FoodQuick-ஓட ML recommendation model training job-க்கு, Spot Instances தேர்ந்தெடுத்தாங்க - அது interruption-ஐ tolerate பண்ண முடியும் (checkpointing வெச்சு), 80% cost save ஆச்சு. Zomato மாதிரி companies-ஓட engineering blogs-லயும், exactly இதே pattern பேசப்படும் - 'ஒரு single pricing model எல்லாத்துக்கும் use பண்ணாதீங்க, workload shape-ஐ பொறுத்து mix பண்ணுங்க'.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "FoodQuick's Mixed Pricing Strategy"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Workload",
+            "Pricing Model",
+            "Reasoning"
+          ],
+          "rows": [
+            [
+              "Payment processing API",
+              "Reserved (3-year)",
+              "24/7 predictable, zero tolerance for interruption — 55% savings locked in"
+            ],
+            [
+              "ML recommendation training",
+              "Spot",
+              "Interruption-tolerant with checkpointing — 80% savings on a batch job"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up a Spot Fleet With Checkpointing",
+      "ava_speaks": "karthik-dev இப்போ ML training job-க்கு Spot Instances configure பண்றான், அப்புறம் interruption handle பண்ண checkpointing add பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "Launch template-ல, Purchasing option-ல 'Spot Instances' select பண்றோம், maximum price-ஆ On-Demand price-ஓட equal-ஆ வெச்சிடுவோம் - default recommended setting.",
+            "console_action": {
+              "type": "select",
+              "path": "Launch template → Advanced details → Purchasing option",
+              "field": "Purchasing option",
+              "value": "Spot Instances",
+              "highlight": "Spot Instances radio button",
+              "result": "The launch template now requests Spot capacity instead of On-Demand"
+            }
+          },
+          {
+            "ava_narration": "Interruption behavior-ஆ 'Stop' select பண்றோம் - 'Terminate'-க்கு பதிலா, இது root EBS volume-ஐ preserve பண்ணும், instance restart ஆனா அதே state-ல தொடரலாம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Spot options → Interruption behavior",
+              "field": "Interruption behavior",
+              "value": "Stop",
+              "highlight": "Interruption behavior dropdown",
+              "result": "If AWS reclaims this capacity, the instance stops (preserving its EBS volume) instead of terminating"
+            }
+          },
+          {
+            "ava_narration": "Training script-க்குள்ள, ஒரு checkpoint mechanism add பண்றோம் - ஒவ்வொரு 10 minutes-க்கும், model progress-ஐ S3-க்கு upload பண்ணும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Training script (user data or application code)",
+              "field": "Checkpoint interval, Checkpoint destination",
+              "value": "every 10 minutes, s3://foodquick-ml-checkpoints/",
+              "highlight": "Checkpointing configuration",
+              "result": "The training job now saves its progress to S3 every 10 minutes, regardless of Spot interruption timing"
+            }
+          },
+          {
+            "ava_narration": "Instance-க்குள்ள, IMDS-ல இருந்து Spot interruption notice-ஐ periodic-ஆ poll பண்ற ஒரு small script add பண்றோம் - இது 2-minute warning கிடைச்சதும், immediate-ஆ ஒரு final checkpoint save பண்ணும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Monitoring script",
+              "field": "Polling endpoint",
+              "value": "http://169.254.169.254/latest/meta-data/spot/instance-action",
+              "highlight": "IMDS polling endpoint",
+              "result": "The training job saves a final, up-to-date checkpoint the moment an interruption notice appears, minimizing lost progress"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "The ML training workload now runs on Spot Instances at a fraction of On-Demand cost, with periodic checkpointing to S3 and an interruption-notice listener ensuring that a Spot reclaim never loses more than a few minutes of progress.",
+          "what_to_notice": "Checkpointing இல்லாம Spot use பண்றது, ரொம்ப risky - progress முழுசா lost ஆகலாம். Checkpointing வெச்சிருந்தா, interruption ஒரு minor inconvenience மட்டும், data loss இல்ல."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How a Spot Interruption Plays Out With Checkpointing",
+      "ava_speaks": "இந்த diagram பாரு - checkpointing இருந்தா, interruption எப்படி handle ஆகும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "Training job running on Spot Instance:",
+            "  00:00 - Job starts",
+            "  00:10 - Checkpoint saved to S3 (progress: 10%)",
+            "  00:20 - Checkpoint saved to S3 (progress: 22%)",
+            "  00:27 - AWS sends 2-minute interruption notice",
+            "  00:27 - Script detects notice, saves final checkpoint immediately (progress: 29%)",
+            "  00:29 - Instance reclaimed by AWS",
+            "  00:31 - New Spot Instance launches, resumes from the 29% checkpoint",
+            "",
+            "Total progress lost: under 2 minutes worth, not the entire job"
+          ]
+        },
+        "ava_narration": "Checkpointing இல்லாம இருந்திருந்தா, இந்த interruption-ல முழு 27 நிமிஷ progress-மும் lost ஆயிருக்கும் - checkpointing இருக்கறதால, few minutes மட்டும்தான் இழந்தோம்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Choose the Right Pricing Model for Each Workload",
+      "instruction": "FoodQuick-ஓட 4 workloads-க்கு, சரியான pricing model தேர்ந்தெடு.",
+      "scenario": "Ravi 4 workloads list பண்ணி இருக்காங்க: the production order-processing API (must run 24/7, zero tolerance for downtime), a nightly batch job that regenerates search indexes (can restart from scratch if interrupted, runs for 2 hours every night), a dev/test environment used unpredictably by engineers during work hours, and a 3-year committed data warehouse instance with completely stable, predictable usage.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Purchasing options comparison",
+        "current_configuration": "None of the 4 workloads have a pricing model assigned yet"
+      },
+      "requirements": [
+        "Assign the production order-processing API to Reserved (or On-Demand as a flexible fallback, but Reserved is preferred for the cost savings on a 24/7 predictable workload)",
+        "Assign the nightly search-index batch job to Spot, since it can restart from scratch if interrupted",
+        "Assign the unpredictable dev/test environment to On-Demand",
+        "Assign the 3-year committed data warehouse instance to a 3-year Reserved Instance"
+      ],
+      "hints": [
+        "'Zero tolerance for downtime' + predictable usage points strongly toward Reserved - it locks in savings without the interruption risk of Spot",
+        "'Can restart from scratch if interrupted' is exactly the profile Spot is built for - maximum savings, and interruption isn't costly here",
+        "Unpredictable usage pattern doesn't fit a Reserved commitment well - On-Demand's flexibility is worth more than the discount here"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "production API -> Reserved, nightly batch job -> Spot, unpredictable dev/test -> On-Demand, 3-year data warehouse -> 3-year Reserved",
+        "ava_correct": "Correct! ஒவ்வொரு workload-ஓட tolerance-ஐயும், predictability-ஐயும் பொறுத்து, correct model தேர்ந்தெடுத்திருக்க.",
+        "ava_wrong": "ஒரு match தப்பா இருக்கு போல - ஒவ்வொரு workload-மும் interruption-ஐ tolerate பண்ணுமா, அதோட usage predictable-ஆ இருக்குமான்னு திரும்ப யோசி."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Payment API That Was Moved to Spot to 'Save Cost'",
+      "ava_speaks": "ananya-analyst, cost report பார்த்தப்போ, EC2 bill-ல Spot Instances எவ்ளோ கம்மியா இருக்குனு பார்த்து impress ஆனாங்க. அவங்க proposal - FoodQuick-ஓட payment processing API-ஐயும் Spot-க்கு move பண்ணி, cost save பண்றது.",
+      "setup": "ananya-analyst, focused purely on cost savings, proposes moving FoodQuick's production payment-processing API from Reserved Instances to Spot Instances, projecting significant monthly savings based on Spot's discount percentage alone.",
+      "what_happened": "During a routine AWS capacity reclaim, the Spot Instance running the payment API is interrupted mid-transaction-processing. Since the workload wasn't designed with any interruption handling, several in-flight payment requests fail, and the service experiences a 90-second gap in availability during business hours.",
+      "broken_config": "Payment processing API instance:\nPricing model: Spot (changed from Reserved)\nInterruption handling: none — the application was never designed to expect an interruption\nRedundancy: single instance handling payment processing directly, no graceful failover for interruption",
+      "error_shown": "PagerDuty alert: foodquick-payment-api health check failing. Error logs: connection reset mid-request for 14 in-flight payment transactions during the 90-second gap between Spot interruption and manual intervention.",
+      "the_real_problem": "Cost savings-ஐ மட்டும் பார்த்து, workload-ஓட actual tolerance-ஐ கணக்கில் எடுக்கல. Payment processing, zero downtime தேவைப்படற ஒரு critical workload - அதை Spot-க்கு move பண்றது, 'discount percentage' ஒரு number மட்டும் தான் பார்த்து, business risk-ஐ முழுசா கவனிக்காம பண்ணப்பட்ட முடிவு.",
+      "fix": {
+        "corrected_config": "Revert foodquick-payment-api back to Reserved Instances. If cost optimization is still desired for this workload, explore Savings Plans (a more flexible commitment-based discount) rather than Spot, since the interruption risk is fundamentally incompatible with a payment-critical service.",
+        "result": "Payment processing returns to its previous reliability level, with the cost-optimization effort redirected toward genuinely interruption-tolerant workloads like the ML training and batch jobs instead."
+      },
+      "lesson": "Pricing model தேர்ந்தெடுக்கும்போது, discount percentage மட்டும் பார்க்கக் கூடாது - workload-ஓட interruption tolerance-ஐ முதலில் கணக்கில் எடுக்கணும், இல்லனா cost savings-ஐ விட மிக அதிகமான business cost வரும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Pricing Model Trade-offs",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team commits to a 3-year Reserved Instance for a workload, but 8 months later the business pivots and no longer needs that exact instance type. What's the real cost of this commitment mismatch?",
+          "answer": "The team is either paying for capacity they no longer fully use, or needs to sell/exchange the Reserved Instance (AWS offers some flexibility through Instance Size Flexibility or Convertible Reserved Instances, but it's not as simple as just walking away). This is exactly the trade-off Reserved pricing involves — the discount is real, but so is the reduced flexibility if plans change."
+        },
+        {
+          "question": "A team runs a Spot fleet for a stateless web-serving workload with no checkpointing needed, behind a load balancer with plenty of redundant instances. Is Spot a reasonable choice here even without checkpointing logic?",
+          "answer": "Yes — checkpointing matters for workloads carrying in-progress state that would be lost. A stateless web server behind a load balancer with redundancy can simply lose one instance to an interruption while others keep serving traffic, and the ASG replaces it — no state to lose, no checkpointing needed."
+        },
+        {
+          "question": "FoodQuick wants Reserved-level savings but doesn't want to commit to a specific instance type for 3 years, since their architecture might change. What AWS offering addresses this specific tension?",
+          "answer": "Savings Plans — they offer similar or better discounts than Reserved Instances but apply flexibly across instance families and sizes (and even across compute services in some plan types), rather than locking in one specific instance type for the full term."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Build a Deliberate Pricing Mix, Not a Single Default",
+      "ava_speaks": "Real companies-ல, EC2 cost optimization ஒரு one-time decision இல்ல - அது workload portfolio-ஐ தொடர்ந்து review பண்ணி, correct pricing mix maintain பண்ற ஒரு ongoing practice.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Categorize every workload by its interruption tolerance and usage predictability before choosing a pricing model",
+          "detail": "இது ananya-analyst-ஓட payment-API mistake மாதிரி, cost-only decisions-ஐ தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Use AWS Cost Explorer's Reserved Instance and Savings Plans recommendations to identify genuinely stable workloads worth committing to",
+          "detail": "இது data-driven-ஆ commitment decisions எடுக்க உதவும், guesswork இல்லாம"
+        },
+        {
+          "step": 3,
+          "action": "Regularly audit which workloads are still on On-Demand that could safely move to Reserved or Spot as usage patterns stabilize or become better understood",
+          "detail": "இது ongoing cost optimization-ஐ ஒரு one-time project இல்ல, தொடர்ந்த practice-ஆ மாற்றும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Cost Explorer",
+          "use": "Usage patterns-ஐ analyze பண்ணி, Reserved Instance மற்றும் Savings Plans-க்கான data-driven recommendations தரும்"
+        },
+        {
+          "tool": "EC2 Spot Instance interruption notices (via IMDS or EventBridge)",
+          "use": "Applications-ஐ interruption-aware-ஆ build பண்ண, 2-minute warning-ஐ programmatically detect பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம On-Demand, Reserved, Spot pricing models எல்லாம் கத்துக்கிட்டோம், ஒவ்வொரு workload-க்கும் correct model எப்படி தேர்ந்தெடுக்கறதுனு பார்த்தோம். மிக முக்கியமா, discount percentage மட்டும் பார்க்காம, workload-ஓட interruption tolerance-ஐ முதலில் கணக்கில் எடுக்கணும்னு உறுதியா கத்துக்கிட்ட. இதுகூட CS4 Compute முடிஞ்சிடுச்சு - instance types-ல இருந்து ஆரம்பிச்சு, launching, management, AMIs, load balancing, scaling, pricing வரைக்கும் full compute foundation கட்டிட்டோம். Ravi-ஓட FQ-171 ticket-ஓட second phase complete. அடுத்த session-ல நாம CS5 Storage-க்கு போவோம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.6 — Summary",
+      "points": [
+        "✓ On-Demand offers full flexibility with no discount; Reserved trades commitment for 40-60% savings; Spot trades interruption risk for 70-90% savings",
+        "✓ Reserved Instances suit predictable, long-term, always-on workloads",
+        "✓ Spot Instances suit interruption-tolerant workloads, ideally with checkpointing to minimize lost progress",
+        "✓ Pricing model choice should be driven by a workload's interruption tolerance, not discount percentage alone",
+        "✓ Moving a critical, zero-downtime workload to Spot to save cost can create far more business risk than the savings are worth"
+      ],
+      "coming_next": "Session CS5: Storage — starting with C5.1a, S3 Basics"
+    }
+  }
+}

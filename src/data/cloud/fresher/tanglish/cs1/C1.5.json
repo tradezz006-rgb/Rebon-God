@@ -1,0 +1,381 @@
+{
+  "lesson_id": "C1.5",
+  "id": "C1.5",
+  "lesson_title": "The Shared Responsibility Model",
+  "section_id": "CS1",
+  "section_name": "Cloud Foundations",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 17,
+  "prerequisites": "C1.4",
+  "student_will_learn": [
+    "The concept of 'Security OF the Cloud' vs 'Security IN the Cloud'",
+    "What AWS is responsible for (Physical, Global Network)",
+    "What the Customer is responsible for (Data, Passwords, Firewalls)",
+    "How responsibility shifts based on service type (EC2 vs RDS)"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Welcome to the final lesson of this session! Cloud-ல beginners நம்புற மிகப்பெரிய பொய் ஒன்னு இருக்கு: 'AWS ரொம்ப secure, அதனால நம்ம data hack ஆகாது'. அது முற்றிலும் தவறு. AWS-ஓட security ஒரு apartment building-ஓட security மாதிரி. Main gate-ஐ அவங்க பாதுகாப்பாங்க, ஆனா உங்க வீட்டு கதவை நீங்க தான் lock பண்ணனும். Today we learn The Shared Responsibility Model. Let's go.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Pace · Session 1 · Lesson 1.5",
+        "The Shared Responsibility Model",
+        "Security OF the Cloud vs Security IN the Cloud"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Who is Responsible for What?",
+      "ava_speaks": "AWS security-ஐ ரெண்டா பிரிக்கிறாங்க.\n\n1. Security OF the Cloud (AWS Responsibility): அவங்களோட Data Centers, physical servers, network cables, cooling systems. இதுல யாருமே physical-ஆ திருட முடியாது. இதை AWS பாத்துப்பாங்க.\n\n2. Security IN the Cloud (Your Responsibility): நீங்க launch பண்ற EC2 server-க்கு என்ன password வைக்கிறீங்க, எந்தெந்த ports-ஐ open-ல வெக்கிறீங்க (Firewall rules), customer data-வை encrypt பண்றீங்களா இல்லையா.. இது எல்லாமே 100% உங்க பொறுப்பு. உங்க password hack ஆனா AWS பொறுப்பாகாது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Shared Responsibility Split"
+        },
+        {
+          "type": "draw_diagram",
+          "title": "The Security Stack",
+          "diagram": {
+            "ascii": [
+              "[ CUSTOMER ] : Customer Data, IAM Passwords, Firewall (Security Groups), OS Updates",
+              "--------------------------------------------------------------------------------",
+              "[    AWS   ] : Physical Hardware, Data Centers, Global Network, Hypervisors"
+            ]
+          }
+        },
+        {
+          "type": "write_callout",
+          "text": "Analogy:\nAWS = The Building Owner (Secures the main entrance)\nYou = The Tenant (Responsible for locking your own apartment door)"
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "உங்களுடைய EC2 server-ல் OS update பண்ணாமல் விட்டதால் ஒரு hacker உள்ளே நுழைந்துவிட்டார். இதற்கு யார் பொறுப்பு?",
+          "options": [
+            "A) AWS பொறுப்பு. அவர்கள் OS-ஐ update செய்திருக்க வேண்டும்.",
+            "B) Customer பொறுப்பு. EC2 OS-ஐ update செய்வது 'Security IN the cloud' கீழ் வரும்."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! EC2-ல என்ன OS ஓடுது, அதை எப்போ update பண்ணனும்னு முடிவு பண்றது நீங்க தான். AWS அதுக்குள்ள தலையிட மாட்டாங்க.",
+          "ava_wrong": "தவறு! EC2 server-ல் உள்ள OS-ஐ patch செய்வது முழுக்க முழுக்க Customer-ன் பொறுப்பு."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "AWS-ன் RDS (Managed Database) சேவையில் ஒரு bug காரணமாக data அழிந்துவிடுகிறது. இதற்கு யார் பொறுப்பு?",
+          "options": [
+            "A) AWS பொறுப்பு. Managed service-ன் engine reliability அவர்களின் பொறுப்பு.",
+            "B) Customer பொறுப்பு."
+          ],
+          "correct_index": 0,
+          "ava_correct": "Spot on! RDS ஒரு Managed Service. அதோட software engine-ஐ maintain பண்றது AWS-ஓட வேலை. அங்க bug வந்தா அது அவங்க தப்பு தான்.",
+          "ava_wrong": "இல்லை! RDS என்பது Managed Service. அதன் core software engine-ஐ maintain செய்வது AWS-ன் பொறுப்பு."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The Fintech Fine (₹75 Lakhs)",
+      "ava_speaks": "இந்த rule-ஐ புரியாததால ஒரு Fintech startup-க்கு நடந்த disaster இது.\n\n2021-ல ஒரு புது startup, 'AWS ரொம்ப secure'னு நினைச்சுட்டு, அவங்களோட customer database-ஓட Firewall (Security Group)-ஐ உலகத்துல இருக்குற யாரு வேணாலும் access பண்ற மாதிரி (0.0.0.0/0) open-ல வெச்சிட்டாங்க. ஒரு attacker ஈஸியா password-ஐ guess பண்ணி, 2 லட்சம் customers-ஓட records-ஐ திருடிட்டான்.\n\nஇதுக்காக SEBI அந்த startup-க்கு ₹75 Lakh fine போட்டாங்க. AWS இதுக்கு எந்த வகையிலும் பொறுப்பாகல, ஏன்னா Firewall rules செட் பண்றது Customer-ஓட responsibility.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Cost of Assuming 'It's Secure'"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "Incident: Database Port 5432 left open to the internet (0.0.0.0/0).\nResult: 2,00,000 records stolen.\nPenalty: ₹75 Lakh fine from SEBI.\nAWS Fault? ZERO. Configuring the Security Group is the customer's job."
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Live: Where Responsibilities Shift",
+      "ava_speaks": "AWS Console-ல எந்தெந்த இடத்துல நம்மளோட பொறுப்பு ஆரம்பிக்குதுன்னு live-ஆ பார்ப்போம்.",
+      "editor_session": {
+        "language": "browser",
+        "filename": "AWS Management Console",
+        "environment": "visual_ui",
+        "steps": [
+          {
+            "ava_narration": "First, IAM Service. இங்க users-க்கு password செட் பண்றதும், permissions குடுக்குறதும் நம்ம வேலை (Customer Responsibility).",
+            "code": "IAM -> Users -> Create User\nSet Permissions (Customer controlled)",
+            "highlight_lines": [
+              2
+            ]
+          },
+          {
+            "ava_narration": "அடுத்து EC2. இங்க Security Groups (Firewall)-ல எந்தெந்த IP address-ஐ allow பண்ணனும்னு rules எழுதுறது நம்ம வேலை.",
+            "code": "EC2 -> Security Groups -> Inbound Rules\nRule: Allow SSH from Office IP ONLY (Customer controlled)",
+            "highlight_lines": [
+              2
+            ]
+          },
+          {
+            "ava_narration": "ஆனால் RDS Database-ஐ பொறுத்தவரை, அதோட underlying physical server-ஐயும், backup software-ஐயும் AWS manage பண்ணுவாங்க. நம்ம வேலை data-ஐ மட்டும் காப்பாத்துறது.",
+            "code": "RDS -> Automated Backups Enabled (AWS Managed)\nRDS -> Master Password (Customer Managed)",
+            "highlight_lines": [
+              1,
+              2
+            ]
+          }
+        ],
+        "expected_output": {
+          "mumbai": "Clear separation of controls visible in the UI.",
+          "what_to_notice": "Console-ல் AWS நமக்கு நிறைய tools குடுத்திருக்காங்க. அதை சரியா configure பண்றது நம்ம பொறுப்பு."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Responsibility Spectrum",
+      "ava_speaks": "நீங்க எந்த service-ஐ use பண்றீங்கங்குறத பொறுத்து பொறுப்புகள் மாறும். IaaS (EC2) use பண்ணா உங்களுக்கு நிறைய வேலை இருக்கும். SaaS use பண்ணா AWS நிறைய வேலைய பாத்துப்பாங்க.",
+      "output_preview": {
+        "type": "concept_board",
+        "title": "Service Type vs Responsibility",
+        "what_to_look_for": [
+          "EC2 (Infrastructure): Customer does mostly everything (OS, Data, App).",
+          "RDS (Platform): AWS handles OS and DB Engine; Customer handles Data.",
+          "S3 (Storage): AWS handles infra; Customer handles Bucket Permissions."
+        ],
+        "ava_narration": "Service-க்கு தகுந்த மாதிரி உங்க responsibility குறையும், ஆனா Data Security எப்பவுமே உங்க கைல தான்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "உங்க Turn — Classify Responsibilities",
+      "instruction": "கீழே உள்ள 5 விஷயங்களை, இது 'AWS Responsibility' ஆ அல்லது 'Customer Responsibility' ஆ என்று பிரிக்கவும்.",
+      "requirements": [
+        "1. Physical Data Center-ல் Flood வராமல் தடுப்பது.",
+        "2. EC2 Windows Server-ல் Antivirus install செய்வது.",
+        "3. S3 Bucket-ஐ Public ஆக மாற்றாமல் தடுப்பது.",
+        "4. AWS Global Network-ல் உள்ள cables-ஐ மாற்றுவது.",
+        "5. IAM User-ன் password-ஐ 12 characters-க்கு வைப்பது."
+      ],
+      "starter_code": "Classify:\n1. Flood Prevention -> [AWS / Customer]\n2. EC2 Antivirus -> [AWS / Customer]\n3. S3 Permissions -> [AWS / Customer]\n4. Network Cables -> [AWS / Customer]\n5. IAM Passwords -> [AWS / Customer]",
+      "hints": [
+        "Physical/Hardware சம்பந்தப்பட்ட எல்லாமே AWS.",
+        "Config/Software சம்பந்தப்பட்ட எல்லாமே Customer."
+      ],
+      "ava_solution": {
+        "explanation": "1. AWS (Physical). 2. Customer (OS Level). 3. Customer (Configuration). 4. AWS (Physical Infra). 5. Customer (Security Policy)."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The 'SOC 2 Certified' Trap",
+      "ava_speaks": "Security certificates பத்தி தப்பா புரிஞ்சிக்கிட்டதால வர மிகப்பெரிய ஆபத்து இது.",
+      "setup": "Developer ஒருத்தர், 'AWS வந்து SOC 2 Certified, அவங்க ரொம்ப secure' அப்படின்னு team-கிட்ட சொல்லிட்டு, EC2 server-ஓட SSH Port (22)-ஐ யாரு வேணாலும் access பண்ற மாதிரி open-ல வெச்சிடுறார்.",
+      "what_happened": "அடுத்த நாளே Hackers அந்த server-குள்ள நுழைஞ்சு Crypto miner install பண்ணிடுறாங்க. 3 நாள்ல ₹2 லட்சம் bill வந்துடுச்சு.",
+      "the_real_problem": "AWS வாங்குன SOC 2 Certificate அவங்களோட Data Center buildings-க்குத் தான். உங்க தப்பான configuration-க்கு அந்த certificate எந்த பாதுகாப்பும் தராது.",
+      "fix": {
+        "code": "1. Never leave Port 22 open to 0.0.0.0/0.\n2. Restrict it to your specific Office IP Address.",
+        "result": "Hackers-ஆல உங்க network-ஐ தொடவே முடியாது."
+      },
+      "lesson": "AWS compliance covers their infrastructure. Your configuration is YOUR security."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "3 Quick Questions",
+      "ava_speaks": "உங்க responsibility knowledge-ஐ செக் பண்ண 3 scenarios.",
+      "challenges": [
+        {
+          "question": "ஒரு hospital அவங்களோட patient records-ஐ S3-ல் store பண்ணிருக்காங்க. அதை தவறுதலாக Public ஆக மாற்றிவிட்டார்கள். Government auditor யாருக்கு penalty போடுவார்?",
+          "answer": "Hospital-க்கு (Customer). S3 bucket permissions-ஐ manage செய்வது customer-ன் பொறுப்பு."
+        },
+        {
+          "question": "AWS Global Network-ல் ஏற்பட்ட ஒரு fiber cut காரணமாக உங்களுடைய EC2 server 2 மணிநேரம் offline-ல் இருக்கிறது. இதை சரிசெய்ய வேண்டியது யார்?",
+          "answer": "AWS. Global network connectivity மற்றும் hardware failures எல்லாமே AWS-ன் பொறுப்பு."
+        },
+        {
+          "question": "ஒரு developer 3 மாதங்களாக database password-ஐ 'admin123' என்று வைத்திருக்கிறார். இதை AWS கண்டுபிடித்து மாற்றுமா?",
+          "answer": "மாற்றாது. Passwords மற்றும் Access Management (IAM) 100% Customer பொறுப்பு."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Real Development-ல எப்படி நடக்கும்",
+      "ava_speaks": "ஒரு Cloud Security Engineer-ஓட mindset இப்படி தான் இருக்கும்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Assume AWS secures the facility",
+          "detail": "Data Center security பத்தி நம்ம கவலைப்பட தேவையில்லை."
+        },
+        {
+          "step": 2,
+          "action": "Secure the Configurations",
+          "detail": "Security Groups, IAM Passwords, Encryption எல்லாமே சரியா இருக்கானு தினமும் audit பண்ணுவாங்க."
+        },
+        {
+          "step": 3,
+          "action": "Principle of Least Privilege",
+          "detail": "யாருக்கு எந்த permission தேவையோ, அதை மட்டுமே குடுப்பாங்க. Extra-வா எதையும் தர மாட்டாங்க (We will learn this in CS2)."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Security Hub",
+          "use": "Customer-ன் security பொறுப்புகளை சரியாக செய்துள்ளோமா என செக் செய்ய."
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "AWS Cloud-ல் நீங்க ஒரு விஷயத்தை தெளிவா புரிஞ்சுக்கணும். Physical infrastructure-ஐ பாதுகாப்பது AWS-ஓட வேலை. ஆனா அந்த infrastructure-க்குள்ள நீங்க வெக்கிற data, passwords, firewall rules எல்லாமே உங்களோட பொறுப்பு. 'Cloud is secure by default' அப்படிங்கிறது ஒரு மிகப்பெரிய பொய். You have to secure your piece of the cloud.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson 1.5 — Summary",
+      "points": [
+        "✓ Security OF the Cloud (AWS): Physical Data Centers, Network, Hypervisors.",
+        "✓ Security IN the Cloud (You): OS Patching, Passwords, Security Groups, Data Encryption.",
+        "✓ Managed Services (e.g., RDS): AWS takes on more responsibility, but YOU still own the data.",
+        "✓ Golden Rule: A secure cloud requires proper customer configuration."
+      ],
+      "coming_next": "Session Assessment! (Transitioning to Building Basics)"
+    }
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "C1.5-T1",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Security OF vs IN the Cloud",
+      "scenario_text": "During MedGo's security questionnaire, a hospital asks: 'Who locks the Mumbai data-center doors and guards the racks your EC2 runs on?' Under the Shared Responsibility Model, what is the right answer?",
+      "options": [
+        "MedGo — we must hire guards for every AWS building we use.",
+        "Shared equally — MedGo and AWS each staff half the doors.",
+        "AWS — physical facilities and hardware are Security OF the Cloud."
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Physical building/hardware = AWS (OF the Cloud). MedGo still owns passwords, configs, and patient data (IN the Cloud).",
+      "ava_feedback_wrong": "You don't guard AWS buildings. Physical layer is AWS. Your configs and data are still on you.",
+      "whiteboard_heading": "MedGo — OF the Cloud",
+      "whiteboard_points": [
+        "Security OF the Cloud = AWS",
+        "Physical Data Centers & Servers",
+        "Global Network Infrastructure"
+      ]
+    },
+    {
+      "task_id": "C1.5-T2",
+      "task_number": 2,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "OS Patching on EC2",
+      "scenario_text": "A ransomware kit hits MedGo's EC2 consult box via a 10-month-old unpatched Linux kernel. Leadership asks who owns the miss. Correct call?",
+      "options": [
+        "AWS — they should auto-patch every EC2 OS.",
+        "MedGo (the customer) — OS patching on EC2 is Security IN the Cloud."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "EC2 = you own the OS lifecycle. AWS owns the building and hypervisor, not your kernel updates.",
+      "ava_feedback_wrong": "On EC2, patching is customer work. Don't blame the data-center certification for an unpatched guest OS.",
+      "whiteboard_heading": "MedGo EC2 Patch Duty",
+      "whiteboard_points": [
+        "Security IN the Cloud",
+        "OS Updates & Patching = Customer",
+        "AWS does not auto-patch your EC2 OS"
+      ]
+    },
+    {
+      "task_id": "C1.5-T3",
+      "task_number": 3,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "The compliance certificate trap",
+      "scenario_text": "A MedGo engineer leaves the patient-DB Security Group open to 0.0.0.0/0 and argues: 'AWS is SOC 2 / ISO certified, so open ports are fine.' Is that argument valid?",
+      "options": [
+        "Yes — AWS certifications automatically harden every customer port.",
+        "No — certifications cover AWS's infrastructure; a wide-open Security Group is MedGo's configuration failure."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Certificates don't forgive bad firewall rules. Open 0.0.0.0/0 on patient data is 100% MedGo liability.",
+      "ava_feedback_wrong": "SOC 2 on AWS buildings ≠ safe customer configs. Close the SG; own the blast radius.",
+      "whiteboard_heading": "MedGo Certification Trap",
+      "whiteboard_points": [
+        "Compliance covers AWS infrastructure",
+        "Certifications DO NOT fix bad configs",
+        "Open ports = customer liability"
+      ]
+    },
+    {
+      "task_id": "C1.5-T4",
+      "task_number": 4,
+      "type": "match_task",
+      "ui_component": "MatchComponent",
+      "difficulty": "fresher",
+      "topic": "Classify MedGo responsibilities",
+      "left_items": [
+        "A failed disk in the Mumbai rack hosting MedGo EC2 is replaced",
+        "MedGo rotates IAM passwords for clinic staff",
+        "MedGo applies the latest security patch on its EC2 Linux AMI",
+        "AWS keeps the data-center cooling plant online during summer"
+      ],
+      "right_items": [
+        "AWS (hardware)",
+        "MedGo / Customer (access control)",
+        "MedGo / Customer (OS level)",
+        "AWS (facility)"
+      ],
+      "correct_pairs": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "ava_feedback_correct": "Hardware/facility → AWS. Passwords/OS → MedGo. Shared model applied to real tickets.",
+      "ava_feedback_wrong": "If it's the building or the physical disk, AWS. If it's your login or your guest OS, MedGo.",
+      "whiteboard_heading": "MedGo Responsibility Split",
+      "whiteboard_points": [
+        "AWS = Hardware & Facility",
+        "Customer = Software, Config, & Access"
+      ]
+    },
+    {
+      "task_id": "C1.5-T5",
+      "task_number": 5,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Managed Services (RDS vs EC2)",
+      "scenario_text": "MedGo migrates the appointments DB from self-managed MySQL on EC2 to Amazon RDS. What responsibility actually moves to AWS — and what still stays with MedGo?",
+      "options": [
+        "AWS now owns protecting the patient rows inside the database; MedGo can ignore data access controls.",
+        "AWS takes OS + database-engine patching/maintenance; MedGo still owns the data, accounts, and who can query it.",
+        "AWS now owns MedGo IAM user passwords for every clinic."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "RDS shifts OS/engine ops to AWS. Data confidentiality and access remain MedGo's — always.",
+      "ava_feedback_wrong": "Managed ≠ 'AWS owns our patient data.' Engine/OS yes; data + IAM still you.",
+      "whiteboard_heading": "MedGo RDS Boundary",
+      "whiteboard_points": [
+        "AWS manages OS and DB engine",
+        "Customer STILL manages data and access"
+      ]
+    }
+  ],
+  "content_status": "live"
+}

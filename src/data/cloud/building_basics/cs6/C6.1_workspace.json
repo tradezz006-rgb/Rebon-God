@@ -1,0 +1,230 @@
+{
+  "lesson_id": "C6.1",
+  "ticket": "FQ-203",
+  "sender": "Deepak Menon (DevOps Lead)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-203 — Deepak Menon (DevOps Lead)\n\nI'm the new DevOps hire — first dedicated headcount for infrastructure monitoring at FoodQuick, which itself should tell you something about how this has been handled until now. Ravi's brought me in because the company keeps finding out about production issues from customer complaints on social media, not from anything internal.\n\nBefore I build anything new, I want a full picture of what's actually already being logged and monitored — and I have a feeling a good chunk of it has been quietly running up a bill nobody's looked at.\n\n— Deepak\n\nP.S. — Ravi mentioned you've done good work on the last three tickets. Good, I'd rather inherit a well-understood account than a mystery box.",
+  "arc_outro": "Deepak Menon (DevOps Lead)\n\nExactly the kind of thing I expected to find — years of logs nobody ever told CloudWatch to forget, quietly costing real money the whole time. Retention policies in place now, and Logs Insights is going to save real time going forward instead of manually scrolling through log streams.\n\nOne more thing you found while you were in there, though — that alarm. HighErrorRate-order-service has apparently been firing into an SNS topic with zero working subscribers for who knows how long. That's not a logging problem, that's a 'we thought we were watching and we weren't' problem, and it's exactly the kind of thing this whole ticket exists to fix. Let's keep an eye on that as we go.\n\n— Deepak",
+  "tasks": [
+    {
+      "id": "C6.1-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C6.1",
+      "scenario": "Your first task under Deepak: review the retention settings on every CloudWatch Logs group currently in the account, before building any new monitoring.",
+      "question": "Why start with retention settings specifically, rather than jumping straight into building new dashboards or alarms?",
+      "options": [
+        "A) Retention settings don't actually matter much, this is just a formality before the real work begins",
+        "B) Retention settings directly control an ongoing, silently-accruing cost — if logs have been accumulating indefinitely, that's real money being spent right now, every day, before any new monitoring work even begins. It's worth understanding and fixing an existing leak before adding anything new on top of it",
+        "C) New dashboards and alarms cannot be created until every log group's retention is manually reviewed, as a hard AWS requirement",
+        "D) Retention settings only matter for compliance audits, not for anything related to cost or monitoring practice"
+      ],
+      "correct_index": 1,
+      "explanation": "Retention settings ongoing, silent cost-a directly control does — indefinite-a logs accumulate aagitirundha, real money everyday spend aagitu is there, we anything new velai start first. Existing leak first fix doing, then new work add doing makes sense.",
+      "ren_correct": "Correct — existing silent cost leak first address doing, new work add first.",
+      "ren_wrong": "A bit think again — retention settings just formality not. This real, ongoing cost control does, first check must do."
+    },
+    {
+      "id": "C6.1-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.1",
+      "question": "What is a CloudWatch namespace, and what's it used for?",
+      "options": [
+        "A) A namespace is a security boundary that prevents different AWS accounts from seeing each other's metrics, with no other purpose",
+        "B) A namespace is a logical container that groups related metrics together (e.g. AWS/EC2 for EC2 metrics, AWS/RDS for RDS metrics, or a custom namespace like FoodQuick/OrderService for application-specific metrics) — it's how CloudWatch organizes and separates different sources of metric data",
+        "C) A namespace is a billing construct with no relationship to how metrics are actually organized",
+        "D) Every AWS account can only have exactly one namespace, shared across all services"
+      ],
+      "correct_index": 1,
+      "explanation": "Namespace — logical container, related metrics-a group for doing — AWS/EC2, AWS/RDS like built-in ones, or custom namespace (FoodQuick/OrderService like) application-specific for metrics. This CloudWatch metrics-a organize doing.",
+      "ren_correct": "Correct — namespace logical grouping, metrics organize in order to do.",
+      "ren_wrong": "A bit think again — namespace security boundary not, that logical grouping only for metrics."
+    },
+    {
+      "id": "C6.1-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C6.1",
+      "question": "What's the relationship between a CloudWatch Logs GROUP and a log STREAM within it?",
+      "options": [
+        "A) They're the same thing, just two different names used interchangeably",
+        "B) A log group is a container (typically one per application/service, e.g. /aws/lambda/order-processor), and within it, individual log streams represent separate sequences of log events, typically one per source instance, container, or invocation — a group can hold many streams",
+        "C) A log stream can belong to multiple log groups simultaneously",
+        "D) Log groups are created automatically only for RDS, never for any other AWS service"
+      ],
+      "correct_index": 1,
+      "explanation": "Log group — container (typically for application/service one), inside that log streams — individual sources (instance, container, invocation) oda separate sequences. A in group multiple streams can be, that real relationship.",
+      "ren_correct": "Correct — group container, streams inside that individual sources's sequences.",
+      "ren_wrong": "A bit think again — group um stream also same not. Group container, streams inside that multiple sources's data."
+    },
+    {
+      "id": "C6.1-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.1",
+      "scenario": "You pull retention settings across every log group in the account.",
+      "broken_config": "Log group retention audit:\n├── /aws/lambda/order-processor: retention = NEVER EXPIRE (created 22 months ago)\n├── /var/log/order-service (via CloudWatch agent): retention = NEVER EXPIRE (created 20 months ago)\n├── /aws/lambda/notification-sender: retention = NEVER EXPIRE (created 18 months ago)\n├── /aws/rds/reporting-db-01/postgresql: retention = 7 days (correctly configured)\n└── Total accumulated log volume across the 3 \"never expire\" groups: ~2.1TB\n\nCloudWatch Logs storage pricing: ~₹2.60/GB-month for stored (ingested) log data",
+      "what_to_find": [
+        "Three log groups have been accumulating logs with NO retention limit for 18-22 months — this wasn't a deliberate decision, it's simply what happens when nobody explicitly sets a retention policy (CloudWatch's default is to never expire logs)",
+        "2.1TB of accumulated log data represents real, ongoing storage cost that's been silently accruing this whole time",
+        "The one correctly-configured group (RDS postgresql logs, 7-day retention) proves this isn't a universal account setting — someone deliberately configured that one correctly, while the others were simply never touched",
+        "This is exactly the spec's mistake: no retention policy set, logs accumulating for many months, costing real money nobody was watching"
+      ],
+      "correct_fix": "Set explicit retention policies on all three \"never expire\" log groups, based on actual need (debugging logs typically need weeks to a few months, not indefinite retention), and delete or archive the genuinely stale accumulated data beyond what's actually still useful.",
+      "explanation": "This exact spec mistake — retention policy set did not do, CloudWatch default 'never expire', silent-a accumulate will happen. 2.1TB real cost, months-a kanakku for doing pona thousands of rupees already spend aagiruchu."
+    },
+    {
+      "id": "C6.1-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C6.1",
+      "question": "Arrange the correct order to fix the retention issue safely, without losing anything genuinely still needed.",
+      "items": [
+        "Check with each service's owning team whether any of the accumulated log history is still actively referenced (e.g. for an ongoing investigation or compliance need)",
+        "Export any genuinely still-needed historical logs to cheaper, longer-term storage (e.g. S3) before applying a shorter retention policy",
+        "Set an appropriate retention policy (e.g. 30-90 days) on each log group going forward",
+        "Verify the retention policy is actually applied and will take effect for future log data",
+        "Document the chosen retention period and reasoning for each log group"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "First check must do anything still needed-a is, then genuinely-needed data export must do cheaper for storage, then retention policy set must do, then verify must do, LAST-a document must do future for reference.",
+      "ren_correct": "Nice sequencing — check first before deleting anything, export what's needed, then apply the policy.",
+      "ren_wrong": "Order again paaru — anything still needed-a to be check without doing retention policy apply must not, data loss can happen."
+    },
+    {
+      "id": "C6.1-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.1",
+      "scenario": "karthik-dev asks whether all three log groups should just get the same retention period 'to keep things simple' — say, 30 days across the board.",
+      "question": "Is a single, uniform 30-day retention period across all these log groups the right call?",
+      "options": [
+        "A) Yes — uniform retention is always simpler and simplicity should be prioritized over any other consideration",
+        "B) Not necessarily — different log types can have genuinely different needs. Application debug logs (order-processor, notification-sender) may reasonably need only 30-90 days for troubleshooting, but logs with any compliance or audit relevance might need a longer, specifically-justified retention period rather than defaulting to the same number as everything else",
+        "C) No — CloudWatch technically only supports one retention period per AWS account, applied to every log group simultaneously",
+        "D) Yes, but only if all three services are owned by the same team"
+      ],
+      "correct_index": 1,
+      "explanation": "Uniform retention simple-a thonalam, but different log for types genuinely different needs can be — debug for logs short retention podhum, compliance/audit relevance that is there for logs vera, specifically-justified retention period neededpadalam. Blanket rule real judgment not.",
+      "ren_correct": "Correct — log type's actual need base after doing retention decide must do, blanket rule without.",
+      "ren_wrong": "A bit think again — 'simple' — ella log group-kum same retention giving real judgment not. Actual need different different can be."
+    },
+    {
+      "id": "C6.1-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.1",
+      "scenario": "Before deleting anything, Deepak wants to know roughly how many actual errors are buried in the 2.1TB of accumulated order-processor logs, without manually scrolling through months of raw log streams.",
+      "question": "What's the right tool for quickly answering this kind of question across a large volume of existing logs?",
+      "options": [
+        "A) Manually download all 2.1TB and search through it locally with a text editor",
+        "B) CloudWatch Logs Insights — a purpose-built query language for searching and aggregating across log groups, letting you write a query (e.g. filtering for \"ERROR\" and counting occurrences over time) and get results in seconds to minutes, without manually reading raw logs",
+        "C) There's no way to search historical logs at this volume; only real-time streaming logs can ever be searched",
+        "D) CloudWatch Alarms are the correct tool for searching historical log content"
+      ],
+      "correct_index": 1,
+      "explanation": "Logs Insights exact-a for this design do — query language use after doing, large volume logs-a fast-a search/aggregate we can do, manually scroll doing vendaam. This real, practical value — 2.1TB-a manually looking at impossible, Logs Insights in seconds answer gives.",
+      "ren_correct": "Correct — Logs Insights real tool for this, manual scrolling-a vida very fast.",
+      "ren_wrong": "A bit think again — manually 2.1TB looking at impractical. Logs Insights purpose-built tool for this."
+    },
+    {
+      "id": "C6.1-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C6.1",
+      "scenario": "While reviewing existing CloudWatch resources as part of this same audit, you notice an alarm called HighErrorRate-order-service, currently showing repeated ALARM state transitions in its history over the past several months.",
+      "error_shown": "$ aws cloudwatch describe-alarm-history --alarm-name HighErrorRate-order-service\n[47 ALARM state transitions over the past 6 months]\n\n$ aws sns get-topic-attributes --topic-arn arn:aws:sns:ap-south-1:xxxx:order-service-alerts\n\"SubscriptionsConfirmed\": \"0\",\n\"SubscriptionsPending\": \"0\"\n(zero confirmed subscribers — the topic exists, the alarm fires into it correctly, but nothing and no one is actually listening)",
+      "diagnosis": "This alarm has been correctly detecting real elevated error rates 47 times over 6 months and correctly notifying its configured SNS topic every time — but that topic has zero subscribers, confirmed or pending. Somewhere along the way, whoever used to be subscribed (likely an email subscription that was removed, or an employee who left without the subscription being transferred) stopped receiving these, and nobody set up a replacement. The monitoring technically worked; the notification path to an actual human was silently broken.",
+      "fix": "This is a separate, ongoing finding — do not fix it in isolation as a quick patch. Flag it explicitly to Deepak as a real example of exactly the 'flying blind' pattern this whole ticket exists to address, and continue the broader monitoring audit with this open, to be addressed properly (likely in the alarms/SNS work coming up) rather than a rushed one-line fix.",
+      "explanation": "This CS6's own mystery, plant doing — this breach not, cost waste also not, this 'we thought we were watching and we weren't' pattern's real example. 47 times correctly fire aachu, but yaarum kelakkala. This deeper for investigation needed, quick for patch not."
+    },
+    {
+      "id": "C6.1-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C6.1",
+      "scenario": "Retention policies applied. Final audit before reporting back.",
+      "broken_config": "Post-fix log group audit:\n├── /aws/lambda/order-processor: retention = 90 days (debug/troubleshooting need, documented)\n├── /var/log/order-service: retention = 90 days (same reasoning, documented)\n├── /aws/lambda/notification-sender: retention = 30 days (lower ongoing debug value, documented)\n├── /aws/rds/reporting-db-01/postgresql: retention = 7 days (unchanged, already correct)\n└── Genuinely stale data beyond the new retention windows: confirmed with each owning team as safe to age out, none exported (nothing flagged as still needed)",
+      "what_to_find": [
+        "Each log group now has an explicit, documented retention period based on its actual debugging value, not a blanket default",
+        "The RDS postgresql logs were correctly left unchanged since they were already properly configured",
+        "Before applying the new limits, teams were actually consulted (per the T5 plan) rather than assuming nothing was needed — this audit confirms that step was genuinely done, not skipped",
+        "Going forward, log storage costs are now bounded and predictable instead of growing indefinitely"
+      ],
+      "correct_fix": "No further changes needed — retention is now properly configured and documented across the board, with the necessary team consultation genuinely completed beforehand.",
+      "explanation": "This 'recognize this is already correct' verify task — we retention properly set we have done, documented-a is there, AND team consultation genuinely we have done, skip did not do."
+    },
+    {
+      "id": "C6.1-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C6.1",
+      "cases": {
+        "case_1": "Application debug logs used only for occasional troubleshooting, no compliance relevance",
+        "case_2": "Logs related to authentication/access events, which might be needed if a security question arises weeks or months later",
+        "case_3": "Extremely high-volume, low-value debug logs from a noisy library that rarely helps diagnose anything",
+        "case_4": "Logs a specific regulatory requirement mandates keeping for at least 1 year"
+      },
+      "correct_answers": {
+        "case_1": "Short retention (30-90 days) — enough window for typical troubleshooting, no reason to pay for longer storage",
+        "case_2": "Longer retention (e.g. 6-12 months), decided deliberately based on realistic investigation timelines, not left at the accidental default of 'forever'",
+        "case_3": "Very short retention (7-14 days) or filtering at the source to reduce volume before it's even stored, since the log's actual debugging value is low relative to its volume",
+        "case_4": "Retention matching or exceeding the specific regulatory minimum, documented with the requirement it satisfies — not guessed at"
+      },
+      "scenario": "Deepak wants a documented framework for choosing retention periods going forward, based on this audit's lessons.",
+      "explanation": "Naanku different different log type — routine debug (short), potentially-needed-later (longer, deliberate), noisy-low-value (very short or filtered), regulatory-mandated (exact requirement match). This real judgment, 'never expire' default-a rely doing not edhukkum.",
+      "ren_correct": "Correct — each log type-kum actual value and requirement base after doing retention decide did you do.",
+      "ren_wrong": "A bit think again — each log type also different different actual need is there, blanket default (never expire or one fixed number) real judgment not."
+    },
+    {
+      "id": "C6.1-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C6.1",
+      "scenario": "Deepak wants the real historical cost number for his first report to Ravi. The 2.1TB of accumulated logs cost roughly ₹2.60/GB-month to store, and had been accumulating for an average of about 20 months across the three affected log groups.",
+      "question": "What's a reasonable estimate of the total historical cost of this oversight, and what's the go-forward savings from the new retention policies?",
+      "solution": "Estimating the average accumulated volume over the 20-month period at roughly half the final 2.1TB (since it grew from zero) gives a rough historical cost estimate of approximately 1,050GB average × ₹2.60/GB-month × 20 months ≈ ₹54,600 in cumulative storage costs for log data with little to no remaining debugging value. Going forward, capping retention at 90/90/30 days instead of indefinite growth means storage cost stabilizes at a small, bounded amount per month instead of continuing to grow forever — a predictable, low ongoing cost instead of an ever-increasing one.",
+      "explanation": "This real historical cost estimate — exact number kaikkathu (growth rate assume must do), but reasonable estimate real magnitude kaatuthu. in Go-forward bounded cost, indefinite for growth instead of — this real, ongoing value."
+    },
+    {
+      "id": "C6.1-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C6.1",
+      "scenario": "Time to report back to Deepak on this first piece of FQ-203.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the log retention issue. Everything's under control now.\"",
+        "B) \"Found three log groups accumulating logs with no retention limit for 18-22 months (~2.1TB, an estimated ~₹54,600 in historical storage cost) — confirmed with owning teams nothing was still needed, applied documented retention (90/90/30 days) based on actual debugging value. Also demonstrated Logs Insights for quickly querying large log volumes going forward. Separately, found HighErrorRate-order-service has correctly fired 47 times over 6 months into an SNS topic with zero subscribers — monitoring worked, but nobody was actually notified. Flagging this as a distinct, unresolved 'flying blind' finding for the alarms/SNS work ahead, not patching it as a quick one-line fix.\"",
+        "C) \"Cleaned up some old logs, nothing else to report.\"",
+        "D) \"Found an alarm issue and fixed the subscription immediately so it's resolved.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — real historical cost number, the actual fix with reasoning (team consultation), AND the mystery finding clearly flagged as intentionally NOT quick-patched. Option D dangerous — quick patch doing, WHY it happened — understand, same thing again to happenlam.",
+      "ren_correct": "This correct report — specific numbers, documented reasoning, and the mystery correctly flagged for deeper investigation rather than a rushed fix.",
+      "ren_wrong": "This report either vague-a is there or mystery-a quick-patch after doing (D) — root cause understand fix doing, again to happenlam."
+    }
+  ],
+  "act_number": 1,
+  "act_title": "Dashboards That Show the Whole Stack",
+  "builds_layer": "Visibility Layer"
+}

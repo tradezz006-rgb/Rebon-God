@@ -1,0 +1,305 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* REBON — open sky, chosen path, verified proof */
+    --background: 240 6% 4%;       /* #09090B */
+    --foreground: 0 0% 98%;        /* #FAFAFA */
+
+    --card: 240 4% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 4% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 262 83% 58%;        /* #7C3AED violet */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4% 12%;
+    --secondary-foreground: 240 5% 84%;
+
+    --muted: 240 4% 14%;
+    --muted-foreground: 240 4% 65%; /* #A1A1AA */
+
+    --accent: 255 92% 76%;         /* #A78BFA Ren's presence */
+    --accent-foreground: 240 6% 4%;
+
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;          /* #27272A */
+    --input: 240 4% 16%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.25rem;
+
+    --amber: 38 92% 50%;           /* #F59E0B domain nodes */
+    --emerald: 160 84% 39%;        /* #10B981 achievement */
+    --violet-light: 255 92% 76%;   /* #A78BFA */
+
+    --coral: 262 83% 58%;
+    --coral-light: 255 92% 76%;
+    --coral-dark: 262 70% 45%;
+
+    --navy: 240 6% 4%;
+    --navy-light: 240 4% 8%;
+    --navy-lighter: 240 4% 12%;
+
+    --silver: 240 4% 65%;
+    --silver-light: 0 0% 90%;
+    --silver-dark: 240 4% 40%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 98%;
+
+    --info: 262 83% 58%;
+    --info-foreground: 0 0% 98%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(255 92% 76%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(240 4% 8%) 0%, hsl(240 6% 4%) 100%);
+    --gradient-glow: radial-gradient(800px circle at 50% 100%, hsl(262 83% 58% / 0.12), transparent 55%);
+    --gradient-atmosphere:
+      radial-gradient(ellipse 80% 50% at 70% 50%, hsl(262 83% 58% / 0.08), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 20% 80%, hsl(38 92% 50% / 0.06), transparent 50%),
+      linear-gradient(180deg, hsl(240 6% 4%) 0%, hsl(240 6% 5%) 100%);
+
+    --shadow-glow: 0 0 40px -12px hsl(262 83% 58% / 0.35);
+    --shadow-card: 0 1px 0 hsl(0 0% 100% / 0.04);
+    --shadow-elevated: 0 24px 48px -24px hsl(0 0% 0% / 0.85);
+
+    --transition-smooth: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+
+    --sidebar-background: 240 6% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4% 12%;
+    --sidebar-accent-foreground: 240 5% 84%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Lexend Mega', sans-serif;
+    @apply font-bold;
+    letter-spacing: 0.04em;
+  }
+
+  ::selection {
+    background: hsl(262 83% 58% / 0.35);
+    color: hsl(0 0% 98%);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Lexend Mega', sans-serif;
+    letter-spacing: 0.04em;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .font-mono-data {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-hero);
+  }
+
+  .text-amber-brand {
+    color: #F59E0B;
+  }
+
+  .text-violet-brand {
+    color: #7C3AED;
+  }
+
+  .text-emerald-brand {
+    color: #10B981;
+  }
+
+  .bg-gradient-hero {
+    background-image: var(--gradient-hero);
+  }
+
+  .bg-atmosphere {
+    background-image: var(--gradient-atmosphere);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .glass {
+    @apply bg-background/80 backdrop-blur-xl border border-border;
+  }
+
+  .brand-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card);
+  }
+
+  .brand-card:hover {
+    border-color: hsl(0 0% 100% / 0.12);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .hairline {
+    border-color: #27272A;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* ── Domain Universe (immersive space domain selector) ─────────────── */
+@keyframes universe-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes universe-orbit-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes universe-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.9; }
+}
+@keyframes universe-sun-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 hsl(38 92% 50% / 0.55), 0 0 24px 2px hsl(38 92% 50% / 0.45); }
+  70% { box-shadow: 0 0 0 12px hsl(38 92% 50% / 0), 0 0 30px 4px hsl(38 92% 50% / 0.35); }
+  100% { box-shadow: 0 0 0 0 hsl(38 92% 50% / 0), 0 0 24px 2px hsl(38 92% 50% / 0.45); }
+}
+@keyframes meteor-fall {
+  0% { transform: translate3d(0,0,0) rotate(var(--m-rot)); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate3d(var(--m-dx), var(--m-dy), 0) rotate(var(--m-rot)); opacity: 0; }
+}
+
+.universe-orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 9999px;
+  border: 1px solid hsl(255 30% 60% / 0.08);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+/* Orbit discs stack — must not steal clicks from planets underneath */
+.orbit-holder {
+  pointer-events: none;
+}
+.universe-spin {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  animation-name: universe-orbit;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  pointer-events: none;
+}
+.universe-counterspin {
+  animation-name: universe-orbit-reverse;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  pointer-events: auto;
+}
+.universe-frozen .universe-spin,
+.universe-frozen .universe-counterspin {
+  animation-play-state: paused !important;
+}
+.universe-meteor {
+  position: absolute;
+  height: 1.5px;
+  width: 90px;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  filter: drop-shadow(0 0 6px #fff);
+  animation: meteor-fall linear forwards;
+  pointer-events: none;
+}
+
+/* Lesson / Ren environment (preserved from prior theme) */
+@keyframes ava-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+@keyframes ava-intro-appear {
+  from { opacity: 0; transform: scale(0.92); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+.ava-environment {
+  position: fixed;
+  inset: 0;
+  background: #09090B;
+  overflow: hidden;
+}
+.ava-intro-animate {
+  animation: ava-intro-appear 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}

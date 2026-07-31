@@ -1,0 +1,197 @@
+{
+  "1.1": {
+    "blocks": {
+      "1": {
+        "main": "/audio/session1/1.1/block_1_concept_intro.mp3",
+        "iq_1_correct": "/audio/session1/1.1/iq_1_correct.mp3",
+        "iq_1_wrong": "/audio/session1/1.1/iq_1_wrong.mp3"
+      },
+      "2": {
+        "main": "/audio/session1/1.1/block_2_why_companies.mp3"
+      },
+      "3": {
+        "main": "/audio/session1/1.1/block_3_live_build.mp3",
+        "step_1": "/audio/session1/1.1/block_3_step_1.mp3",
+        "step_2": "/audio/session1/1.1/block_3_step_2.mp3",
+        "step_3": "/audio/session1/1.1/block_3_step_3.mp3"
+      },
+      "4": {
+        "main": "/audio/session1/1.1/block_4_visual_output.mp3"
+      },
+      "5": {
+        "correct": "/audio/session1/1.1/block_5_correct.mp3",
+        "hint": "/audio/session1/1.1/block_5_hint.mp3"
+      },
+      "6": {
+        "main": "/audio/session1/1.1/block_6_mistake_simulation.mp3"
+      },
+      "7": {
+        "main": "/audio/session1/1.1/block_7_mini_challenge.mp3",
+        "challenge_1_answer": "/audio/session1/1.1/challenge_1_answer.mp3",
+        "challenge_2_answer": "/audio/session1/1.1/challenge_2_answer.mp3",
+        "challenge_3_answer": "/audio/session1/1.1/challenge_3_answer.mp3"
+      },
+      "8": {
+        "main": "/audio/session1/1.1/block_8_real_workflow.mp3"
+      }
+    },
+    "intro": "/audio/session1/1.1/intro.mp3",
+    "summary": "/audio/session1/1.1/summary.mp3"
+  },
+  "1.2": {
+    "blocks": {
+      "1": {
+        "main": "/audio/session1/1.2/block_1_concept_intro.mp3",
+        "iq_1_correct": "/audio/session1/1.2/iq_1_correct.mp3",
+        "iq_1_wrong": "/audio/session1/1.2/iq_1_wrong.mp3"
+      },
+      "2": {
+        "main": "/audio/session1/1.2/block_2_why_companies.mp3"
+      },
+      "3": {
+        "main": "/audio/session1/1.2/block_3_live_build.mp3",
+        "step_1": "/audio/session1/1.2/block_3_step_1.mp3",
+        "step_2": "/audio/session1/1.2/block_3_step_2.mp3",
+        "step_3": "/audio/session1/1.2/block_3_step_3.mp3",
+        "step_4": "/audio/session1/1.2/block_3_step_4.mp3"
+      },
+      "4": {
+        "main": "/audio/session1/1.2/block_4_visual_output.mp3"
+      },
+      "5": {
+        "hint": "/audio/session1/1.2/block_5_hint.mp3"
+      },
+      "6": {
+        "main": "/audio/session1/1.2/block_6_mistake_simulation.mp3"
+      },
+      "7": {
+        "main": "/audio/session1/1.2/block_7_mini_challenge.mp3",
+        "challenge_1_answer": "/audio/session1/1.2/challenge_1_answer.mp3",
+        "challenge_2_answer": "/audio/session1/1.2/challenge_2_answer.mp3",
+        "challenge_3_answer": "/audio/session1/1.2/challenge_3_answer.mp3"
+      },
+      "8": {
+        "main": "/audio/session1/1.2/block_8_real_workflow.mp3"
+      }
+    },
+    "intro": "/audio/session1/1.2/intro.mp3",
+    "summary": "/audio/session1/1.2/summary.mp3"
+  },
+  "1.3": {
+    "blocks": {
+      "1": {
+        "main": "/audio/session1/1.3/block_1_concept_intro.mp3",
+        "iq_1_correct": "/audio/session1/1.3/iq_1_correct.mp3",
+        "iq_1_wrong": "/audio/session1/1.3/iq_1_wrong.mp3"
+      },
+      "2": {
+        "main": "/audio/session1/1.3/block_2_why_companies.mp3"
+      },
+      "3": {
+        "main": "/audio/session1/1.3/block_3_live_build.mp3",
+        "step_1": "/audio/session1/1.3/block_3_step_1.mp3",
+        "step_2": "/audio/session1/1.3/block_3_step_2.mp3",
+        "step_3": "/audio/session1/1.3/block_3_step_3.mp3",
+        "step_4": "/audio/session1/1.3/block_3_step_4.mp3"
+      },
+      "4": {
+        "main": "/audio/session1/1.3/block_4_visual_output.mp3"
+      },
+      "5": {
+        "hint": "/audio/session1/1.3/block_5_hint.mp3"
+      },
+      "6": {
+        "main": "/audio/session1/1.3/block_6_mistake_simulation.mp3"
+      },
+      "7": {
+        "main": "/audio/session1/1.3/block_7_mini_challenge.mp3"
+      },
+      "8": {
+        "main": "/audio/session1/1.3/block_8_real_workflow.mp3"
+      }
+    },
+    "intro": "/audio/session1/1.3/intro.mp3",
+    "summary": "/audio/session1/1.3/summary.mp3"
+  },
+  "1.4": {
+    "blocks": {
+      "1": {
+        "main": "/audio/session1/1.4/block_1_concept_intro.mp3",
+        "iq_1_correct": "/audio/session1/1.4/iq_1_correct.mp3",
+        "iq_1_wrong": "/audio/session1/1.4/iq_1_wrong.mp3"
+      },
+      "2": {
+        "main": "/audio/session1/1.4/block_2_why_companies.mp3"
+      },
+      "3": {
+        "main": "/audio/session1/1.4/block_3_live_build.mp3",
+        "step_1": "/audio/session1/1.4/block_3_step_1.mp3",
+        "step_2": "/audio/session1/1.4/block_3_step_2.mp3",
+        "step_3": "/audio/session1/1.4/block_3_step_3.mp3",
+        "step_4": "/audio/session1/1.4/block_3_step_4.mp3"
+      },
+      "4": {
+        "main": "/audio/session1/1.4/block_4_visual_output.mp3"
+      },
+      "5": {
+        "correct": "/audio/session1/1.4/block_5_correct.mp3",
+        "hint": "/audio/session1/1.4/block_5_hint.mp3"
+      },
+      "6": {
+        "main": "/audio/session1/1.4/block_6_mistake_simulation.mp3"
+      },
+      "7": {
+        "main": "/audio/session1/1.4/block_7_mini_challenge.mp3",
+        "challenge_1_answer": "/audio/session1/1.4/challenge_1_answer.mp3",
+        "challenge_2_answer": "/audio/session1/1.4/challenge_2_answer.mp3",
+        "challenge_3_answer": "/audio/session1/1.4/challenge_3_answer.mp3",
+        "challenge_4_answer": "/audio/session1/1.4/challenge_4_answer.mp3",
+        "challenge_5_answer": "/audio/session1/1.4/challenge_5_answer.mp3"
+      },
+      "8": {
+        "main": "/audio/session1/1.4/block_8_real_workflow.mp3"
+      }
+    },
+    "intro": "/audio/session1/1.4/intro.mp3",
+    "summary": "/audio/session1/1.4/summary.mp3"
+  },
+  "1.5": {
+    "blocks": {
+      "1": {
+        "main": "/audio/session1/1.5/block_1_concept_intro.mp3",
+        "iq_1_correct": "/audio/session1/1.5/iq_1_correct.mp3",
+        "iq_1_wrong": "/audio/session1/1.5/iq_1_wrong.mp3"
+      },
+      "2": {
+        "main": "/audio/session1/1.5/block_2_why_companies.mp3"
+      },
+      "3": {
+        "main": "/audio/session1/1.5/block_3_live_build.mp3",
+        "step_1": "/audio/session1/1.5/block_3_step_1.mp3",
+        "step_2": "/audio/session1/1.5/block_3_step_2.mp3",
+        "step_3": "/audio/session1/1.5/block_3_step_3.mp3",
+        "step_4": "/audio/session1/1.5/block_3_step_4.mp3"
+      },
+      "4": {
+        "main": "/audio/session1/1.5/block_4_visual_output.mp3"
+      },
+      "5": {
+        "hint": "/audio/session1/1.5/block_5_hint.mp3"
+      },
+      "6": {
+        "main": "/audio/session1/1.5/block_6_mistake_simulation.mp3"
+      },
+      "7": {
+        "main": "/audio/session1/1.5/block_7_mini_challenge.mp3",
+        "challenge_1_answer": "/audio/session1/1.5/challenge_1_answer.mp3",
+        "challenge_2_answer": "/audio/session1/1.5/challenge_2_answer.mp3",
+        "challenge_3_answer": "/audio/session1/1.5/challenge_3_answer.mp3"
+      },
+      "8": {
+        "main": "/audio/session1/1.5/block_8_real_workflow.mp3"
+      }
+    },
+    "intro": "/audio/session1/1.5/intro.mp3",
+    "summary": "/audio/session1/1.5/summary.mp3"
+  }
+}

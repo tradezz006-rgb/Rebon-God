@@ -1,0 +1,233 @@
+{
+  "lesson_id": "C4.2b",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nLet's go deeper on actually managing a running instance, not just launching one and walking away. Two things: I want a look at how order-service's instances get their initial configuration when they boot, and I want Session Manager properly set up on everything, not just theorized about.\n\nAlso, heads up — karthik-dev mentioned he's not 100% sure where his laptop with the SSH keys is right now. Probably nothing. But let's make sure we're not one lost laptop away from a real problem.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nGood timing on the Session Manager setup — turned out karthik-dev's laptop really was gone, and with it, the only copy of the private key for one of the instances. A month ago that would've meant rebuilding it from scratch. Instead, you got in through Session Manager without missing a beat, generated a fresh key pair, and kept working. That's exactly why we set it up properly instead of just talking about it.\n\nNext: let's talk about what happens when someone makes a change directly on a running instance and there's no record of it anywhere — and what a proper AMI/snapshot strategy actually looks like instead.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.2b-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.2b",
+      "scenario": "Ravi wants a look at how order-service's EC2 instances get their initial configuration when they first boot up, as part of tightening how the team manages running instances day to day.",
+      "question": "Which two AWS-native mechanisms are most relevant to check first for how an instance configures itself and learns about its own environment at boot time?",
+      "options": [
+        "A) CloudFront and Route 53 — these control how traffic reaches the instance, which is unrelated to self-configuration",
+        "B) User data (a script that runs at first boot to bootstrap the instance) and the instance metadata service (which lets the instance query its own details like instance ID, IAM role credentials, and more, from within itself)",
+        "C) Security groups and NACLs — these are the only things that affect what an instance can do at boot",
+        "D) The AMI's name tag — this is the only source of configuration information available to a running instance"
+      ],
+      "correct_index": 1,
+      "explanation": "User data and the instance metadata service are exactly the two things that matter here — user data bootstraps the instance at first boot, and the metadata service lets a running instance ask AWS about itself (instance ID, IAM role creds, etc.) without needing anything hardcoded. Security groups control network access, not configuration — different concern entirely.",
+      "ren_correct": "Correct-a is there — user data and metadata service real answer, boot-time for configuration.",
+      "ren_wrong": "A bit think again — security groups network access control does, configuration not. User data and metadata service correct answer."
+    },
+    {
+      "id": "C4.2b-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.2b",
+      "question": "What is the EC2 instance metadata service, and how does an instance access it?",
+      "options": [
+        "A) A public API on the internet that anyone can query for any instance's details",
+        "B) A special link-local address (169.254.169.254) reachable only from WITHIN the instance itself, letting it query its own instance ID, IAM role credentials, and other details without any external network call or hardcoded credentials",
+        "C) A separate paid AWS service that must be explicitly subscribed to before use",
+        "D) A DNS record that must be manually created for each instance"
+      ],
+      "correct_index": 1,
+      "explanation": "Metadata service — 169.254.169.254 — this link-local address, for instance ulla irundhu only access we can do, from outside irundhu not. This real value: IAM role credentials automatic gives, hardcoded key anything in instance vekkanum not.",
+      "ren_correct": "Correct-a is clear — metadata service link-local, instance's ullaye only accessible.",
+      "ren_wrong": "Metadata service's basic nature miss you did. This in 169.254.169.254, instance's ullaye only access we can do, public in internet not."
+    },
+    {
+      "id": "C4.2b-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.2b",
+      "question": "An EC2 instance's user data script installs some packages and writes a config file on first launch. If the instance is later STOPPED and then STARTED again (not terminated/relaunched), does the user data script run again automatically?",
+      "options": [
+        "A) Yes — user data always re-runs on every single boot, including after a stop/start cycle",
+        "B) By default, no — user data runs only once, at the instance's very first boot after launch. A stop/start cycle does not re-trigger it unless the instance is specifically configured to re-run user data on every boot",
+        "C) User data never runs at all unless manually triggered by an administrator",
+        "D) User data only runs if the instance type is changed during the stop"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, commonly-missed point — user data DEFAULT-a first boot only run will happen. Stop/start even if done, second time run aagathu (unless specific-a re-run configure if we had done). This assume done configuration drift expect to do must not.",
+      "ren_correct": "Correct — user data default-a once only run will happen, first in boot. This important distinction.",
+      "ren_wrong": "A bit off track. User data default-a EVERY in boot run aagathu — first boot only, unless specifically configure if we had done."
+    },
+    {
+      "id": "C4.2b-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.2b",
+      "scenario": "You review order-service's current user data script, used to bootstrap new instances when the ASG launches them.",
+      "broken_config": "order-service launch template — User Data script:\n#!/bin/bash\napt-get update -y\napt-get install -y nodejs npm\ngit clone https://github.com/foodquick/order-service.git /opt/order-service\ncd /opt/order-service && npm install\n\n# Database connection config\nexport DB_HOST=foodquick-orders-db.xxxx.ap-south-1.rds.amazonaws.com\nexport DB_PASSWORD=Fq2024ProdPass!\nexport RAZORPAY_API_KEY=rzp_live_9k2m4n8p1q\n\nnpm start",
+      "what_to_find": [
+        "The database password and a live payment API key are hardcoded directly in plaintext in the user data script",
+        "User data is visible to anyone who can query the instance's metadata service from within the instance (169.254.169.254/latest/user-data) — this is not a hidden or encrypted location, it's readable by design",
+        "This means any process, script, or person with shell access on the instance can trivially read out the production DB password and live payment API key, just by querying the metadata endpoint",
+        "This is a much bigger exposure than a typical config file, since user data persists as long as the instance exists and is queryable at any time, not just at boot"
+      ],
+      "correct_fix": "Remove the hardcoded secrets from user data entirely. Store DB_PASSWORD and RAZORPAY_API_KEY in AWS Systems Manager Parameter Store (as SecureString) or Secrets Manager instead, and have the user data script (or the application itself, at startup) fetch them securely via an IAM role at boot time — never embed real secrets directly in user data.",
+      "explanation": "This real, serious security gap — user data readable-a is there, secret store not. Password and API key we in plaintext vekkardhu A BIG mistake. Parameter Store or Secrets Manager correct place — IAM role mulama fetch must do, hardcode must not."
+    },
+    {
+      "id": "C4.2b-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.2b",
+      "question": "Arrange the correct order to fix the user data script and remove the hardcoded secrets safely.",
+      "items": [
+        "Store DB_PASSWORD and RAZORPAY_API_KEY as SecureString parameters in Systems Manager Parameter Store",
+        "Attach an IAM role to the launch template that grants read access to those specific parameters",
+        "Update the user data script to fetch the secrets from Parameter Store at boot time instead of using hardcoded values",
+        "Launch a test instance and verify it can successfully fetch the secrets and start the application",
+        "Remove the hardcoded secrets from the old user data script entirely, and rotate the exposed DB password and API key since they were exposed in plaintext previously"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "Secrets first store must do Parameter in Store, then IAM role attach must do for access, then script update must do fetch for doing, then test must do velai doing, LAST-a old hardcoded values remove must do AND already-exposed credentials rotate must do — antha old password/key already leaked-a was there, so puthusa generate must do.",
+      "ren_correct": "Nice sequencing — and rotate do marakkama serthiteenga, already-exposed for credentials this is important.",
+      "ren_wrong": "Order again paaru — already-exposed credentials-a just remove doing podhadhu, ROTATE must do, ywhat that old values already leaked-a was there."
+    },
+    {
+      "id": "C4.2b-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2b",
+      "scenario": "karthik-dev asks: 'If secrets come from Parameter Store now instead of user data, does that mean every new instance the ASG launches will need someone to manually run the fetch command after boot?'",
+      "question": "How should you answer?",
+      "options": [
+        "A) Yes — Parameter Store values must always be fetched manually by a person after every launch",
+        "B) No — the fetch happens automatically as part of the user data script itself, which still runs at first boot. The difference is the user data script now calls the AWS CLI/SDK to pull the secret value at boot time (using the instance's IAM role), instead of the secret being hardcoded in the script's plaintext",
+        "C) No — Parameter Store secrets are automatically injected into every instance with no user data involvement at all",
+        "D) Secrets from Parameter Store can only be used by Lambda functions, never by EC2 instances"
+      ],
+      "correct_index": 1,
+      "explanation": "User data still first in boot automatic-a run will happen — mari differentiation what —, that secret fetch for doing AWS CLI/SDK use does (IAM role mulama), in plaintext hardcode for doing instead. Automation same-a will be, source only change aagudhu.",
+      "ren_correct": "Correct — automation same, source of secret only change aagudhu, in hardcoded irundhu Parameter Store for fetch.",
+      "ren_wrong": "A bit off track. User data still automatic-a run will happen, manual fetch needed not — script itself IAM role mulama secret fetch do."
+    },
+    {
+      "id": "C4.2b-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2b",
+      "scenario": "Separately, you're setting up Session Manager access properly across the fleet. You confirm the SSM Agent is pre-installed on the AMI being used (it is, on most modern Amazon Linux/Ubuntu AMIs). You try connecting to notification-worker via Session Manager and it fails to show up as a manageable instance in the console.",
+      "question": "Given the SSM Agent is already installed and running, what's the most likely missing piece?",
+      "options": [
+        "A) The instance needs to be rebooted for Session Manager to notice it exists",
+        "B) The instance is missing an IAM role/instance profile with the required SSM permissions (e.g. the AmazonSSMManagedInstanceCore policy) — without this, the SSM Agent has no way to authenticate to the Systems Manager service, even if it's running locally",
+        "C) Session Manager requires a security group rule allowing inbound traffic on a specific port, which is likely missing",
+        "D) Session Manager only works with instances launched in the last 30 days"
+      ],
+      "correct_index": 1,
+      "explanation": "SSM Agent installed-a even if, for that IAM role not —, Systems Manager service's authenticate to do cannot. This real, common gap — agent present, role missing. Security group rule needed not, ywhat Session Manager outbound-only connection use does, agent's in side irundhu.",
+      "ren_correct": "Correct — agent present-a even if, IAM role without authenticate to do cannot. This real gap.",
+      "ren_wrong": "A bit think again — security group rule needed not for this. IAM role/instance profile missing piece, agent authenticate must dona."
+    },
+    {
+      "id": "C4.2b-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.2b",
+      "scenario": "A week after fixing notification-worker's IAM role and confirming Session Manager works across the fleet, karthik-dev calls in a panic — his laptop, with the only copy of the .pem private key for one of the order-service instances, was stolen. He assumes the instance now needs to be terminated and completely rebuilt from scratch.",
+      "error_shown": "$ ssh -i lost-key.pem ec2-user@<instance-ip>\nPermission denied (publickey).\n\n(the .pem file no longer exists anywhere — it was only ever saved on the stolen laptop)",
+      "diagnosis": "SSH access genuinely depends entirely on possessing the private key file — with it gone, SSH into this instance really is impossible, and karthik-dev's instinct that SSH access is lost is correct. But Session Manager access does NOT depend on the key pair at all — it authenticates purely through IAM. Since this instance already has the IAM role and SSM Agent properly configured (from the earlier fleet-wide fix), it remains fully reachable through Session Manager, completely independent of the lost key.",
+      "fix": "Connect to the instance via Session Manager (no key needed at all). From inside that session, generate a new SSH key pair, add the new public key to ~/.ssh/authorized_keys, and securely distribute the new private key to karthik-dev going forward — restoring SSH access without ever needing to terminate or rebuild anything.",
+      "explanation": "This exact real payoff of setting up Session Manager properly earlier — SSH key completely lost-a even if, IAM-based access different vazhi giving. This in C4.2a theoretical-a we saw 'why Session Manager is better' concept, ippo REAL in crisis real-a use but moment."
+    },
+    {
+      "id": "C4.2b-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.2b",
+      "scenario": "After recovering access via Session Manager and restoring SSH with a fresh key pair, you audit the final state.",
+      "broken_config": "Instance access recovery audit:\n├── Session Manager: successfully connected without any key pair, using instance's IAM role (AmazonSSMManagedInstanceCore policy attached) ✓\n├── New key pair generated inside the Session Manager session, new public key added to ~/.ssh/authorized_keys ✓\n├── Old (lost) key pair: removed from AWS Key Pairs list, since it can no longer be trusted (unknown who now physically has it, given the laptop theft) ✓\n├── New private key: distributed to karthik-dev via the company's password manager, not email or Slack ✓\n└── Fleet-wide check: confirmed all other order-service instances already have the same IAM role + SSM Agent setup from the earlier fix — none of them are single-key-dependent either",
+      "what_to_find": [
+        "Session Manager access worked exactly as designed — zero dependency on the lost key pair",
+        "The OLD key pair being removed from AWS entirely is the right call — since it's now potentially in an unknown person's possession (stolen laptop), it can never be trusted as private again",
+        "Distributing the new key via the password manager (not email/Slack) avoids recreating the same kind of exposure risk that caused this incident in the first place",
+        "The fleet-wide check confirms this isn't a one-off lucky save — every instance has the same IAM-role-based safety net now, not just the one that happened to need it this time"
+      ],
+      "correct_fix": "No further changes needed — this was handled correctly end to end. Document the incident (lost laptop, key compromised, recovered cleanly via Session Manager) as a real example for the team of why the fleet-wide Session Manager setup mattered.",
+      "explanation": "This 'recognize this is already correct' type verify task — we correct-a handle we have done, ippo confirm doing velai. Old key completely retire doing correct decision, ywhat that evan kitta is therla ippo."
+    },
+    {
+      "id": "C4.2b-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.2b",
+      "scenario": "Ravi asks for a standing policy going forward: should every new EC2 instance FoodQuick launches get an IAM role with SSM permissions by default, even ones where SSH is planned to be the primary access method?",
+      "options": [
+        "A) No — only set up Session Manager on instances where SSH access is explicitly not wanted, to keep things simple",
+        "B) Yes — give every instance an SSM-capable IAM role by default via the launch template/AMI baseline, regardless of whether SSH is also planned. This costs nothing extra and means the exact single-point-of-failure scenario that just happened (one lost key pair threatening full rebuild) can never happen again on any instance",
+        "C) No — Session Manager should only be set up manually, case by case, after a specific need arises",
+        "D) Only apply this to production instances — dev/test instances don't need the same safety net"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact structural fix, CS2/CS3's pattern-ye continue doing — A specific problem fix for doing instead, EVERY future for instance automatic-a that safety net to be doing. Cost onnum not for this, and this exact same crisis in future recur aaganum — block does. Dev/test instances-kum this same-a apply aaganum, ywhat avanga laptop also steal can happen.",
+      "ren_correct": "Correct — free-a that is there safety net-a everyone-kum default-a giving, real structural thinking.",
+      "ren_wrong": "A bit think again — this case-by-case decide doing not, DEFAULT-a everyone-kum must be. Free-a that is there protection-a manual for setup vittu vekka must not."
+    },
+    {
+      "id": "C4.2b-T11",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2b",
+      "scenario": "While reviewing metadata service usage across the fleet, ananya-analyst asks a security-adjacent question: 'I read that the metadata service has caused real breaches at other companies through something called SSRF. Should we be worried?'",
+      "question": "What's the accurate, current answer regarding metadata service security?",
+      "options": [
+        "A) There's no real risk — the metadata service has never been involved in any real-world security incident",
+        "B) It's a real, documented risk pattern — older instances/AMIs may still default to IMDSv1, where a Server-Side Request Forgery (SSRF) vulnerability in an application could trick it into fetching IAM credentials from the metadata endpoint on the attacker's behalf. IMDSv2 (token-based, session-oriented) closes most of this gap and should be the default/required setting on all instances",
+        "C) The only fix is to disable the metadata service entirely on every instance, which has no downsides",
+        "D) SSRF only affects on-premises servers, never cloud instances like EC2"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, documented risk — in IMDSv1 SSRF vulnerability a in app irundha, attacker that use done metadata in endpoint irundhu IAM credentials eduthukkalam. IMDSv2 (token-based) idha mostly close does. Metadata service-a completely disable doing option not — that IAM role credentials fetch for doing needed, so IMDSv2 enforce doing correct approach, disable doing not.",
+      "ren_correct": "Correct — IMDSv2 real fix, disable doing not, ywhat metadata service needed IAM for credentials.",
+      "ren_wrong": "A bit think again — this 'no risk at all' um not, 'disable everything' um not. IMDSv2 enforce doing balanced, correct approach."
+    },
+    {
+      "id": "C4.2b-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2b",
+      "scenario": "Time to report back to Ravi on this piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the user data script. Also, karthik-dev lost his key but it's sorted.\"",
+        "B) \"Removed hardcoded DB password and payment API key from order-service's user data — now fetched securely from Parameter Store via IAM role, and rotated both credentials since they'd been exposed in plaintext. Set up Session Manager fleet-wide (IAM role + SSM Agent). This paid off immediately: karthik-dev's laptop was stolen along with the only SSH key for one instance — recovered full access via Session Manager with zero downtime, generated a new key pair, and retired the old one entirely. Also flagged IMDSv2 as the standing default going forward given its SSRF protection.\"",
+        "C) \"Everything's set up now. No incidents to report.\"",
+        "D) \"karthik-dev's laptop situation is being handled separately by IT, not really related to this ticket.\"'"
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — antha security gap (hardcoded secrets) AND antha real incident (lost laptop, recovered via Session Manager) both clearly mention must do, specific-a, honest-a. 'Not really related to this ticket' — wrong — this exact same FQ-171 work's direct result-a save aachu.",
+      "ren_correct": "This correct report — specific, honest, and connects the real incident back to the work that made the save possible.",
+      "ren_wrong": "This report either real details miss does or antha incident-a this ticket's vera-a treat does — real-a this direct result."
+    }
+  ],
+  "act_number": 3,
+  "act_title": "Day-to-Day Instance Operations",
+  "builds_layer": "Runtime Control Layer"
+}

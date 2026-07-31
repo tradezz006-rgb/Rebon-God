@@ -1,0 +1,330 @@
+{
+  "lesson_id": "C3.3",
+  "lesson_title": "Internet Gateway, NAT Gateway, and Route Tables",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C3.2b — Multi-AZ Design",
+  "student_will_learn": [
+    "Explain what a route table does and how it decides where traffic goes",
+    "Explain how an Internet Gateway provides bidirectional internet access to a public subnet",
+    "Explain how a NAT Gateway provides outbound-only internet access to a private subnet",
+    "Identify why a NAT Gateway must itself live in a public subnet, not a private one",
+    "Debug a private subnet that has no outbound internet access due to incorrect NAT Gateway placement"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம subnets create பண்ணோம், multi-AZ-ஆ spread பண்ணோம். ஆனா ஒரு subnet public-ஆ இருக்கணும்னா, route table-ல Internet Gateway-க்கு route வேணும்னு நாம last lessons-ல சொன்னோம் - அது எப்படி set பண்றதுனு இன்னைக்கு பார்ப்போம். அப்புறம், private subnet-ல இருக்கற app servers, security updates download பண்றதுக்கு எப்படி internet access பெறும்னு பார்ப்போம் - அது NAT Gateway.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.3",
+        "Internet Gateway, NAT Gateway, and Route Tables",
+        "Ticket FQ-156 — continuing with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Route Tables Decide Where Every Packet Goes",
+      "ava_speaks": "Route table-ஐ ஒரு GPS மாதிரி நினைச்சுக்கோங்க - ஒவ்வொரு subnet-ஓட traffic, எந்த destination-க்கு போகணும்னா, எந்த வழியா போகணும்னு route table தான் சொல்லும். Default-ஆ, ஒவ்வொரு VPC-க்குள்ளயும் traffic (10.0.0.0/16-க்குள்ள) local-ஆ route ஆகும் - இது automatic. ஆனா internet-க்கு போகணும் (0.0.0.0/0) அப்போ, route table-ல அதுக்கு ஒரு specific entry வேணும் - அதுதான் Internet Gateway அல்லது NAT Gateway-ஐ point பண்ணும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "How a Route Table Entry Works"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Destination",
+            "Target"
+          ],
+          "rows": [
+            [
+              "10.0.0.0/16 (within the VPC)",
+              "local (automatic, always present)"
+            ],
+            [
+              "0.0.0.0/0 (anywhere on the internet, from a public subnet)",
+              "Internet Gateway"
+            ],
+            [
+              "0.0.0.0/0 (anywhere on the internet, from a private subnet)",
+              "NAT Gateway"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "A subnet's public/private status is determined entirely by which route table it's associated with and what that table's 0.0.0.0/0 route points to."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு route table-ல 0.0.0.0/0 destination, Internet Gateway-ஐ point பண்றது என்ன அர்த்தம்?",
+          "options": [
+            "A) VPC-க்குள்ள internal traffic மட்டும் route ஆகும்",
+            "B) Internet-க்கு போகற எந்த traffic-மும் Internet Gateway வழியா போகும்",
+            "C) இந்த subnet delete ஆகிடும்",
+            "D) இந்த route table வேற subnet-க்கு copy ஆகும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! 0.0.0.0/0 destination-ல எந்த target இருக்குனு பாத்தா, அந்த subnet-ஓட internet traffic எங்க போகுதுனு தெரியும்.",
+          "ava_wrong": "இல்ல, 0.0.0.0/0 destination இருக்கறது 'internet-ல எங்க வேணும்னாலும்'nu அர்த்தம் - target column-ல என்ன இருக்குதோ, அதுவழியா அந்த traffic போகும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "VPC-க்குள்ள 10.0.1.5 இருந்து 10.0.2.10-க்கு traffic போகணும். இது எந்த route entry use பண்ணும்?",
+          "options": [
+            "A) 0.0.0.0/0 -> Internet Gateway",
+            "B) 10.0.0.0/16 -> local",
+            "C) 0.0.0.0/0 -> NAT Gateway",
+            "D) அது route table-ஐயே use பண்ணாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! ரெண்டு IPs-மும் VPC-ஓட 10.0.0.0/16 range-க்குள்ளதான், அதனால 'local' route தான் use ஆகும் - internet gateway தேவையே இல்ல.",
+          "ava_wrong": "இல்ல, ரெண்டு IPs-மும் VPC-க்குள்ளதான் இருக்கு, அதனால இது internet traffic இல்ல - 'local' route தான் இதை handle பண்ணும், automatic-ஆ."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Why the NAT Gateway Placement Rule Trips Up Even Experienced Engineers",
+      "ava_speaks": "NAT Gateway-ஓட ஒரு counter-intuitive rule இருக்கு - அது private subnet-க்கு internet access குடுக்குதுன்னாலும், அது தானே ஒரு public subnet-ல தான் இருக்கணும். இந்த rule புரியாம, பல teams தப்பா NAT Gateway-ஐ private subnet-ல போட்டு, hours-கணக்கா debug பண்ணி இருக்காங்க. Zoho, Freshworks மாதிரி companies-ஓட internal engineering wikis-ல, இதுதான் top-3 'first VPC design mistakes' list-ல இடம் பிடிக்கும் ஒரு common issue.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "IGW vs NAT Gateway — Different Jobs, Different Placement"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Internet Gateway (IGW)",
+            "NAT Gateway"
+          ],
+          "rows": [
+            [
+              "Attached to the VPC itself, not a subnet",
+              "Created inside a specific subnet — must be a PUBLIC subnet"
+            ],
+            [
+              "Bidirectional — inbound and outbound",
+              "Outbound only — private resources can reach out, nothing can reach in"
+            ],
+            [
+              "Free to use",
+              "Billed per hour plus per GB processed"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Wiring Up the Internet Gateway and NAT Gateway",
+      "ava_speaks": "karthik-dev இப்போ foodquick-prod-vpc-க்கு Internet Gateway attach பண்றான், route tables update பண்றான், அப்புறம் private subnet-க்கு NAT Gateway set பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல VPC Console-ல Internet Gateways-க்கு போய், 'Create internet gateway' click பண்றோம், 'foodquick-igw'nu பேரு வெச்சு create பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "VPC Console → Internet Gateways → Create internet gateway",
+              "field": "Name tag",
+              "value": "foodquick-igw",
+              "highlight": "Create internet gateway button",
+              "result": "An Internet Gateway is created, currently detached from any VPC"
+            }
+          },
+          {
+            "ava_narration": "அதை foodquick-prod-vpc-கூட attach பண்றோம் - 'Actions' -> 'Attach to VPC'.",
+            "console_action": {
+              "type": "select",
+              "path": "Internet Gateways → foodquick-igw → Actions → Attach to VPC",
+              "field": "VPC",
+              "value": "foodquick-prod-vpc",
+              "highlight": "Attach to VPC option",
+              "result": "The Internet Gateway is now attached to foodquick-prod-vpc"
+            }
+          },
+          {
+            "ava_narration": "இப்போ Route Tables-க்கு போய், public subnets-ஓட route table-ல, 0.0.0.0/0 destination-க்கு foodquick-igw-ஐ target-ஆ add பண்றோம். இப்போதான் foodquick-public-1a, foodquick-public-1b உண்மையிலேயே public ஆகும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-public-rt → Routes → Add route",
+              "field": "Destination, Target",
+              "value": "0.0.0.0/0, foodquick-igw",
+              "highlight": "Add route button and target dropdown",
+              "result": "The public route table now sends all internet-bound traffic through the Internet Gateway"
+            }
+          },
+          {
+            "ava_narration": "NAT Gateway create பண்ண, VPC Console-ல NAT Gateways-க்கு போய், 'Create NAT gateway' click பண்றோம். Subnet-ல foodquick-public-1a select பண்றோம் - NAT Gateway PUBLIC subnet-ல தான் இருக்கணும்.",
+            "console_action": {
+              "type": "select",
+              "path": "VPC Console → NAT Gateways → Create NAT gateway",
+              "field": "Subnet",
+              "value": "foodquick-public-1a",
+              "highlight": "Subnet dropdown — must be a public subnet",
+              "result": "AWS begins provisioning a NAT Gateway inside the public subnet, with an Elastic IP attached"
+            }
+          },
+          {
+            "ava_narration": "NAT Gateway ready ஆனப்புறம், foodquick-private-1a, 1b subnets-ஓட route table-ல, 0.0.0.0/0 destination-ஐ இந்த NAT Gateway-ஐ point பண்ணி add பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-private-rt → Routes → Add route",
+              "field": "Destination, Target",
+              "value": "0.0.0.0/0, foodquick-nat-gw",
+              "highlight": "Add route button and target dropdown",
+              "result": "Private subnet resources can now reach the internet outbound, but nothing from the internet can reach them"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Public subnets have bidirectional internet access through the Internet Gateway. Private subnets have outbound-only internet access through the NAT Gateway, which itself sits in a public subnet.",
+          "what_to_notice": "NAT Gateway private subnet-க்கு internet access குடுத்தாலும், அது தானே public subnet-ல தான் இருக்கு - இதுதான் இன்னைக்கு நாம concept_intro-ல பேசின rule."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How Traffic Flows Through IGW vs NAT Gateway",
+      "ava_speaks": "இந்த diagram பாரு - ரெண்டு பாதைகளும் தெளிவா தெரியும்.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Internet",
+            "   |  (bidirectional)",
+            "Internet Gateway",
+            "   |",
+            "Public Subnet (ALB, NAT Gateway)",
+            "   |  (outbound only, via NAT Gateway)",
+            "Private Subnet (app servers, database)",
+            "",
+            "Inbound request from the internet -> reaches ALB in public subnet -> never reaches private subnet directly",
+            "Outbound request from private subnet (e.g. downloading a security patch) -> NAT Gateway -> Internet Gateway -> internet"
+          ]
+        },
+        "ava_narration": "Private subnet-ல இருக்கற app server, outbound-ஆ ஒரு request அனுப்பலாம், ஆனா internet-ல இருந்து யாரும் நேரடியா அந்த app server-ஐ reach பண்ண முடியாது - இதுதான் NAT Gateway-ஓட 'outbound only' rule."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Fix a Private Subnet With No Internet Access",
+      "instruction": "FoodQuick-ஓட ap-south-1b private subnet-ல இருக்கற app servers, security patches download பண்ண முடியாம இருக்காங்க. Route table-ஐ சரி பண்ணு.",
+      "scenario": "foodquick-private-1b subnet-ல இருக்கற app servers, outbound HTTPS requests-க்கு timeout ஆகுது. NAT Gateway already foodquick-public-1a-ல create பண்ணி இருக்காங்க, ஆனா foodquick-private-1b-ஓட route table-ல அதுக்கான entry இல்ல.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "VPC Console → Route Tables → foodquick-private-1b-rt",
+        "current_configuration": "The route table only has the default local route (10.0.0.0/16 -> local), no route to the NAT Gateway"
+      },
+      "requirements": [
+        "Open the route table associated with foodquick-private-1b",
+        "Add a route with destination 0.0.0.0/0",
+        "Point that route's target to the existing NAT Gateway (foodquick-nat-gw)",
+        "Confirm the route table is correctly associated with the foodquick-private-1b subnet"
+      ],
+      "hints": [
+        "Route table-ல existing local route-ஐ தொடாத - அதுக்கு பக்கத்துல ஒரு புது route add பண்ணு",
+        "NAT Gateway target dropdown-ல NAT Gateway IDs list ஆகும் - foodquick-nat-gw select பண்ணு, Internet Gateway அல்ல",
+        "Route add பண்ணின பிறகு, subnet associations tab-ல foodquick-private-1b இந்த route table-கூடதான் associate ஆயிருக்கானு confirm பண்ணு"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "foodquick-private-1b-rt now has a 0.0.0.0/0 -> foodquick-nat-gw route, and app servers in that subnet can reach the internet outbound",
+        "ava_correct": "Correct! இப்போ ap-south-1b-ல இருக்கற app servers-மும் outbound internet access பெறும் - security patches download பண்ண முடியும்.",
+        "ava_wrong": "Route table-ல 0.0.0.0/0 entry இருக்கானு check பண்ணு, அது correct NAT Gateway-ஐ point பண்றானு பாரு - Internet Gateway select பண்ணிட்டா, private subnet-க்கு அது வேலை செய்யாது."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The NAT Gateway With No Internet Access of Its Own",
+      "ava_speaks": "priya-dev ஒரு NAT Gateway create பண்றான், ஆனா அவசரத்துல subnet dropdown-ல தப்பா foodquick-private-1a-ஐ select பண்ணிட்டான் - public subnet-க்கு பதிலா. என்ன ஆச்சுனு பாருங்க.",
+      "setup": "priya-dev creates a NAT Gateway intended to give the private subnet's app servers outbound internet access, but accidentally selects foodquick-private-1a as the NAT Gateway's own subnet instead of foodquick-public-1a.",
+      "what_happened": "The NAT Gateway itself has no path to the internet, since it's sitting in a subnet whose route table doesn't route to an Internet Gateway. Every app server that routes through this NAT Gateway also fails to reach the internet.",
+      "broken_config": "NAT Gateway: foodquick-nat-gw\nSubnet: foodquick-private-1a (WRONG — this subnet has no route to an Internet Gateway)\n\nRoute table for foodquick-private-1a (where app servers live):\n{\n  \"destination\": \"0.0.0.0/0\",\n  \"target\": \"foodquick-nat-gw\"\n}",
+      "error_shown": "curl: (28) Failed to connect to security-updates.example.com port 443: Connection timed out — from an EC2 instance in foodquick-private-1a attempting to download a package update",
+      "the_real_problem": "NAT Gateway-ஓட முழு வேலையே, அது private subnet-க்கு internet access குடுக்கறதுதான் - ஆனா அதுக்கு அது தானே ஒரு working internet path வேணும். NAT Gateway private subnet-ல இருந்தா, அது தானே internet-ஐ reach பண்ண முடியாது, அதனால அது எதுக்கும் forward பண்ண முடியாது - அது ஒரு middle-man, ஆனா அந்த middle-man-கே வெளிய போற வழி தெரியாது.",
+      "fix": {
+        "corrected_config": "Delete the misplaced NAT Gateway. Create a new one with:\nSubnet: foodquick-public-1a (correct — this subnet has a route to foodquick-igw)\n\nRoute table for foodquick-private-1a stays the same, now pointing to the correctly-placed NAT Gateway.",
+        "result": "The NAT Gateway can now reach the internet through the Internet Gateway in its own public subnet, and forwards outbound traffic for the private subnet's app servers correctly."
+      },
+      "lesson": "NAT Gateway 'private subnet-க்கு internet கொடுக்குது'nu நினைச்சு, அதையே private subnet-ல போடக்கூடாது - அது எப்போவும் PUBLIC subnet-ல தான் இருக்கணும், இல்லனா அதுக்கே internet access இருக்காது."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Route Table and Gateway Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "An engineer wants an EC2 instance in a private subnet to accept inbound connections directly from the internet for a quick test. Can adding a route to a NAT Gateway achieve this?",
+          "answer": "No. A NAT Gateway is outbound-only by design — it lets private resources initiate connections out, but nothing from the internet can initiate a connection in through it. Achieving inbound access would require moving the resource to a public subnet (with its own risks) or using a different mechanism entirely, like a load balancer in the public subnet forwarding to it."
+        },
+        {
+          "question": "FoodQuick has 3 private subnets across 3 AZs, but only one NAT Gateway in one public subnet. What's the availability risk here?",
+          "answer": "If that single NAT Gateway's AZ has an outage, all 3 private subnets lose outbound internet access simultaneously, even though the private subnets themselves are spread across AZs. Best practice is one NAT Gateway per AZ, so each private subnet routes through a NAT Gateway in its own AZ."
+        },
+        {
+          "question": "A route table has two entries for 0.0.0.0/0 — one pointing to an Internet Gateway and one pointing to a NAT Gateway. Is this a valid configuration?",
+          "answer": "No — a route table can only have one route per unique destination CIDR. Two 0.0.0.0/0 entries would conflict; AWS would reject the second one. A subnet is either public (routes 0.0.0.0/0 to an IGW) or routes through a NAT Gateway, not both at once."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Production Networks Are Wired for Cost and Resilience",
+      "ava_speaks": "Real production setups-ல, NAT Gateway placement ஒரு cost-vs-resilience trade-off-மும் கூட. Priya Nair மாதிரி architects, இந்த trade-off-ஐ explicit-ஆ decide பண்ணுவாங்க, accident-ஆ இல்ல.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Decide between one shared NAT Gateway (cheaper) or one NAT Gateway per AZ (more resilient, more cost)",
+          "detail": "Small startups பொதுவா ஒரே NAT Gateway-ல ஆரம்பிச்சு, scale ஆகும்போது per-AZ-க்கு switch பண்றாங்க - இது ஒரு conscious cost decision"
+        },
+        {
+          "step": 2,
+          "action": "Tag every route table clearly with which subnet tier it serves",
+          "detail": "இது future engineers-க்கு, 'இது எந்த route table, எதுக்காக'னு உடனே தெரிய உதவும்"
+        },
+        {
+          "step": 3,
+          "action": "Monitor NAT Gateway data processing costs via Cost Explorer, since it's billed per GB",
+          "detail": "Unexpected-ஆ high outbound traffic (example: large log uploads) NAT Gateway bill-ஐ சட்டுனு உயர்த்திடும் - இதை கவனிக்காம இருந்தா bill shock வரும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "VPC Reachability Analyzer",
+          "use": "ஒரு resource இருந்து இன்னொண்ணுக்கு traffic path உண்மையிலேயே இருக்கானு, route tables மற்றும் security groups எல்லாத்தையும் trace பண்ணி காட்டும் - manual-ஆ ஒவ்வொரு route table-ஐயும் check பண்ற வேலையை குறைக்கும்"
+        },
+        {
+          "tool": "AWS Cost Explorer, filtered by NAT Gateway",
+          "use": "NAT Gateway data processing charges தனியா track பண்ண உதவும், அது often unexpectedly high-ஆ இருக்கும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம route tables எப்படி traffic-ஐ direct பண்ணும், Internet Gateway bidirectional access எப்படி குடுக்கும், NAT Gateway outbound-only access எப்படி குடுக்கும்னு கத்துக்கிட்டோம். மிக முக்கியமா, NAT Gateway எப்போவும் public subnet-ல தான் இருக்கணும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம Security Groups vs NACLs பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.3 — Summary",
+      "points": [
+        "✓ Route tables decide where each subnet's traffic goes, based on destination CIDR",
+        "✓ An Internet Gateway provides bidirectional internet access to a public subnet",
+        "✓ A NAT Gateway provides outbound-only internet access for a private subnet",
+        "✓ A NAT Gateway must itself live in a public subnet — it cannot forward traffic it can't reach the internet with",
+        "✓ Two subnets in different AZs each need their own route to a NAT Gateway, ideally one NAT Gateway per AZ for resilience"
+      ],
+      "coming_next": "Lesson C3.4: Security Groups vs NACLs"
+    }
+  }
+}

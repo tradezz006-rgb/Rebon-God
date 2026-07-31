@@ -1,0 +1,320 @@
+{
+  "lesson_id": "C5.4",
+  "lesson_title": "EFS and Glacier Vault Lock",
+  "section_id": "CS5",
+  "section_name": "Storage",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "C5.3 — EBS Volumes",
+  "student_will_learn": [
+    "Explain what EFS is and how it differs from EBS in terms of multi-instance access",
+    "Explain why EFS costs roughly 3x more than EBS per GB and when that cost is justified",
+    "Explain what Glacier Vault Lock is and how it enforces WORM (write-once-read-many) compliance",
+    "Mount an EFS filesystem across multiple EC2 instances",
+    "Identify when EFS is the wrong choice for a workload that doesn't genuinely need shared access"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Last lesson-ல நாம EBS volumes பார்த்தோம் - ஒரு volume, ஒரு instance-கூட attach ஆகும். ஆனா CFO-ஓட FQ-189 ticket-ல ஒரு புது கேள்வி - 'multiple servers, ஒரே shared files-ஐ access பண்ணணும்னா, என்ன பண்றது?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற EFS. அப்புறம், 'compliance documents-ஐ யாராலும் delete பண்ணவே முடியாதுனு உறுதி பண்ண முடியுமா?'nு பார்ப்போம் - இது Glacier Vault Lock. இதுகூட CS5 Storage-ஓட கடைசி lesson.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS5 · Lesson C5.4",
+        "EFS and Glacier Vault Lock",
+        "Ticket FQ-189 — closing out with CFO's Office"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "EFS — Shared File Storage Across Multiple Instances",
+      "ava_speaks": "EFS (Elastic File System), EBS-ல இருந்து fundamentally வேற - EBS ஒரு volume, ஒரே ஒரு instance-கூட மட்டும் attach ஆகும் (ஒரு சில exceptions தவிர). EFS, multiple EC2 instances-ல இருந்து, simultaneous-ஆ, ஒரே shared filesystem-ஐ mount பண்ண முடியும் - NFS protocol வழியா. ஆனா இந்த flexibility-க்கு ஒரு cost இருக்கு - EFS, per-GB storage cost-ல roughly EBS-ஐ விட 3 மடங்கு அதிகம். அதனால EFS-ஐ, genuinely shared access தேவைப்படற workloads-க்கு மட்டும் use பண்ணணும் - single-instance workloads-க்கு, EBS தான் cheaper, correct choice.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "EBS vs EFS"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "EBS",
+            "EFS"
+          ],
+          "rows": [
+            [
+              "Attaches to a single instance at a time (mostly)",
+              "Mounts simultaneously across many instances"
+            ],
+            [
+              "Block storage, lower cost per GB",
+              "Network file storage (NFS), roughly 3x EBS cost per GB"
+            ],
+            [
+              "Right choice for single-instance workloads",
+              "Right choice ONLY when genuine multi-instance shared access is needed"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "EFS's cost premium is the price of shared access. If a workload doesn't actually need multiple instances reading/writing the same files simultaneously, that premium buys nothing."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு single EC2 instance-ல run ஆகற application-க்கு, extra storage தேவை. EBS-ஆ EFS-ஆ correct choice?",
+          "options": [
+            "A) EFS, ஏன்னா அது more scalable",
+            "B) EBS, ஏன்னா single-instance workload-க்கு shared access தேவையே இல்ல, EFS-ஓட extra cost justify ஆகாது",
+            "C) ரெண்டுமே ஒரே cost",
+            "D) EFS மட்டும் EC2-கூட compatible"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Single instance-க்கு shared access தேவை இல்ல, அதனால EFS-ஓட 3x cost premium justify ஆகாது - EBS தான் இங்க correct, cost-effective choice.",
+          "ava_wrong": "இல்ல, EFS 'more scalable' தான், ஆனா அந்த scalability இங்க தேவையே இல்ல. Single instance workload-க்கு, EBS தான் correct - EFS-ஓட extra cost, use பண்ணாத ஒரு feature-க்காக pay பண்றது மாதிரி."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "EFS, ஒரே சமயத்தில் 10 instances-ல இருந்து mount ஆகி இருக்கு. ஒரு instance ஒரு file update பண்ணா, மற்ற 9 instances-க்கு அது தெரியுமா?",
+          "options": [
+            "A) இல்ல, ஒவ்வொரு instance-க்கும் தனி copy இருக்கும்",
+            "B) ஆமா, EFS ஒரே shared filesystem - அனைத்து instances-மும் ஒரே, consistent file view பார்க்கும்",
+            "C) Manual sync பண்ணனும், automatic இல்ல",
+            "D) EFS ஒரே சமயத்தில் ஒரே ஒரு instance-ல தான் mount ஆகும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! EFS-ஓட முழு point இதுதான் - ஒரே shared filesystem, எல்லா mounted instances-மும் ஒரே, consistent, real-time file view பார்க்கும்.",
+          "ava_wrong": "இல்ல, EFS-ஓட core value proposition தான் இது - shared, consistent filesystem, multiple instances simultaneous-ஆ mount பண்ணி, ஒரே files-ஐ real-time-ல பார்க்க முடியும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Glacier Vault Lock — When 'Delete This' Should Never Be Possible",
+      "ava_speaks": "Financial services, healthcare மாதிரி regulated industries-ல, சில records-ஐ ஒரு fixed retention period வரைக்கும், யாராலும் - admin ஆனாலும் சரி - delete அல்லது modify பண்ண முடியாத மாதிரி store பண்ணணும் compliance requirement இருக்கும். இதுதான் WORM (Write Once, Read Many). Glacier Vault Lock, ஒரு Vault Lock policy apply பண்ணி, ஒரு retention period-ஐ lock பண்ணிடும் - அந்த policy apply ஆனப்புறம், அதை AWS root account-ஆல் கூட override பண்ண முடியாது, retention period expire ஆகும் வரைக்கும். FoodQuick-ஓட financial audit records, இந்த level protection தேவைப்படுது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Glacier Vault Lock — Immutable by Design"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Regular S3/Glacier Storage",
+            "Glacier Vault Lock"
+          ],
+          "rows": [
+            [
+              "An admin with sufficient permissions can delete or modify objects",
+              "Once locked, NO ONE — including AWS account root — can delete or modify before the retention period ends"
+            ],
+            [
+              "Compliance relies on process and permissions discipline",
+              "Compliance is enforced at the infrastructure level, immune to permission mistakes or insider risk"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Mounting EFS Across App Servers and Locking a Compliance Vault",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட shared configuration files-க்கு EFS mount பண்றான், அப்புறம் ananya-analyst financial audit records-க்கு ஒரு Glacier Vault Lock policy apply பண்றாங்க.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EFS",
+        "steps": [
+          {
+            "ava_narration": "EFS Console-ல 'Create file system' click பண்றோம், name 'foodquick-shared-config', VPC-ஆ foodquick-prod-vpc select பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "EFS Console → Create file system",
+              "field": "Name, VPC",
+              "value": "foodquick-shared-config, foodquick-prod-vpc",
+              "highlight": "File system name and VPC selection",
+              "result": "A new EFS filesystem is created, ready to be mounted from instances in this VPC"
+            }
+          },
+          {
+            "ava_narration": "Mount targets, ஒவ்வொரு AZ-க்கும் create ஆகும் - foodquick-private-1a, foodquick-private-1b, app servers இருக்கற subnets-ல.",
+            "console_action": {
+              "type": "select",
+              "path": "Network access",
+              "field": "Mount target subnets",
+              "value": "foodquick-private-1a, foodquick-private-1b",
+              "highlight": "Mount target subnet selection",
+              "result": "EFS is now reachable from instances in both AZs where app servers live"
+            }
+          },
+          {
+            "ava_narration": "Instance-க்குள்ள, 'sudo mount -t efs fs-0abc123:/ /mnt/shared-config' run பண்றோம் - இப்போ இந்த instance-ல /mnt/shared-config, shared EFS filesystem-ஐ point பண்ணும்.",
+            "console_action": {
+              "type": "click",
+              "path": "Terminal (each app server instance) → sudo mount -t efs fs-0abc123:/ /mnt/shared-config",
+              "highlight": "Mount command output",
+              "result": "Multiple app server instances can now read and write to the same shared configuration files simultaneously"
+            }
+          },
+          {
+            "ava_narration": "இப்போ Glacier side-க்கு போவோம். S3 Glacier Console-ல, foodquick-audit-records vault-ஐ select பண்ணி, 'Lock policy' -> 'Create policy' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "S3 Glacier Console → foodquick-audit-records → Lock policy → Create policy",
+              "highlight": "Create policy button",
+              "result": "The Vault Lock policy editor opens"
+            }
+          },
+          {
+            "ava_narration": "Policy-ல, 7 வருடம் (2555 நாள்) retention period define பண்றோம் - இந்த period முடியற வரைக்கும் எந்த object-மும் delete பண்ண முடியாது, root account-ஆ இருந்தாலும் சரி. 'Initiate policy' click பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Lock policy editor",
+              "field": "Retention period",
+              "value": "2555 days (7 years)",
+              "highlight": "Retention period field",
+              "result": "The policy enters an in-progress state, requiring confirmation within 24 hours before it becomes permanently locked"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "App servers now share configuration files via EFS across two AZs, and financial audit records are protected by a Glacier Vault Lock policy that no one can override before the 7-year retention period ends.",
+          "what_to_notice": "Vault Lock policy 'Initiate' பண்ணின பிறகு, 24 மணி நேரத்துக்குள்ள 'Complete' பண்ணி confirm பண்ணனும் - இல்லனா அது automatically cancel ஆகிடும். இந்த 24-hour window, தப்பான policy-ஐ accidentally permanently lock பண்றதை தடுக்கும் safety measure."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "EBS vs EFS Access Patterns, Side by Side",
+      "ava_speaks": "இந்த diagram பாரு - EBS-ஓட single-instance attachment-க்கும், EFS-ஓட multi-instance shared access-க்கும் உள்ள வித்தியாசம்.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "EBS (block storage, single attachment):",
+            "  EC2 Instance A --- EBS Volume (only A can use this volume)",
+            "  EC2 Instance B --- EBS Volume (a separate volume, only B can use this)",
+            "",
+            "EFS (network file storage, shared):",
+            "  EC2 Instance A --\\",
+            "  EC2 Instance B ---> EFS Filesystem (all instances read/write the SAME files simultaneously)",
+            "  EC2 Instance C --/"
+          ]
+        },
+        "ava_narration": "EBS-ல, ஒவ்வொரு instance-க்கும் தனி, independent storage - EFS-ல, எல்லாருக்கும் ஒரே shared storage."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Choose EBS or EFS for Three Scenarios",
+      "instruction": "கீழ இருக்கற 3 scenarios-க்கு, EBS சரியா EFS சரியான்னு தேர்ந்தெடு.",
+      "scenario": "Ravi 3 different storage needs list பண்ணி இருக்காங்க: 1) A single database instance needing dedicated, high-performance disk storage. 2) A fleet of 6 web servers behind a load balancer, all of which need to read and write to the same set of uploaded user files simultaneously. 3) A single batch-processing instance's temporary working directory during a job.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "Storage service comparison view",
+        "current_configuration": "None of the 3 scenarios have a storage choice assigned yet"
+      },
+      "requirements": [
+        "Assign the single database instance to EBS (specifically io2 or gp3 depending on IOPS needs, from the last lesson)",
+        "Assign the 6-web-server shared file scenario to EFS, since genuine multi-instance simultaneous access is required",
+        "Assign the single batch-processing instance's temporary directory to EBS, since only one instance ever needs it",
+        "Explain in each case why the alternative choice would be wrong"
+      ],
+      "hints": [
+        "Key question ஒவ்வொரு scenario-க்கும்: 'இது genuinely multiple instances-ல இருந்து simultaneous access தேவைப்படுமா?' - இல்லைனா, EBS தான் correct, cheaper choice",
+        "6 web servers ஒரே files-ஐ share பண்றது, EFS-ஓட textbook use case - இதுக்கு EBS use பண்ணா, files sync பண்ணுறதுக்கு custom logic தேவைப்படும்",
+        "'single instance' phrase எந்த scenario-ல வந்தாலும், அது EBS-ஐ point பண்ணும் ஒரு strong signal - EFS-ஓட shared-access premium அங்க justify ஆகாது"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Database instance -> EBS, 6 web servers sharing files -> EFS, single batch instance temp directory -> EBS, each with correct reasoning about single vs multi-instance access",
+        "ava_correct": "Correct! Genuine shared-access தேவைப்படற ஒரே ஒரு scenario-க்கு மட்டும் EFS தேர்ந்தெடுத்திருக்க - மற்ற ரெண்டும் single-instance, அதனால EBS தான் cost-effective.",
+        "ava_wrong": "ஒரு choice தப்பா இருக்கு போல - ஒவ்வொரு scenario-ல, genuinely எத்தனை instances simultaneous-ஆ access பண்ணணும்னு திரும்ப யோசி."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "EFS Used for a Workload That Never Needed Sharing",
+      "ava_speaks": "priya-dev, ஒரு single-instance batch-processing job-க்கு storage set பண்றப்போ, 'EFS scalable-ஆ இருக்கும், future-ல தேவைப்படலாம்'nு நினைச்சு, EFS தேர்ந்தெடுத்தாங்க - அந்த job உண்மையில ஒரே ஒரு instance-ல தான் ஒரு போதும் run ஆகும்.",
+      "setup": "priya-dev sets up storage for a nightly batch-processing job that always runs on exactly one instance, choosing EFS 'for future flexibility' even though there's no current or planned need for multi-instance access.",
+      "what_happened": "Three months later, a cost review flags this EFS filesystem as an unusually expensive line item for what is, functionally, single-instance temporary working storage — paying roughly 3x the per-GB cost of EBS for a shared-access capability that has never once been used.",
+      "broken_config": "Storage: foodquick-batch-temp-efs (EFS)\nMount targets: 1 (only ever mounted from a single instance, foodquick-batch-processor)\nActual concurrent mounts observed over 3 months: never more than 1\nMonthly cost: significantly higher than an equivalent EBS volume would have cost for the same capacity",
+      "error_shown": "Cost Explorer finding: foodquick-batch-temp-efs storage cost is 3.1x higher than an equivalent-capacity EBS gp3 volume would cost, with zero evidence of multi-instance access in CloudWatch EFS client connection metrics.",
+      "the_real_problem": "'Future flexibility' ஒரு real, immediate need இல்லாம, ஒரு premium feature-க்கு pay பண்ற காரணமா இருக்கக் கூடாது. EFS-ஓட cost premium, ஒரு specific capability (shared, simultaneous multi-instance access)-க்கான cost - அந்த capability use ஆகாத வரைக்கும், அது வெறும் unnecessary extra cost தான்.",
+      "fix": {
+        "corrected_config": "Migrate the batch job's temporary storage from EFS to a standard EBS gp3 volume attached directly to foodquick-batch-processor. If genuine multi-instance access becomes a real requirement in the future, EFS can be adopted at that point, when the need actually exists.",
+        "result": "Storage cost for this workload drops by roughly two-thirds, with no loss of functionality, since the job never used or needed shared access in the first place."
+      },
+      "lesson": "'Future-ல தேவைப்படலாம்'nு, ஒரு real தேவை இல்லாம, ஒரு premium storage option தேர்ந்தெடுக்கறது, unnecessary recurring cost-ஆ மாறும் - EFS-ஐ, genuine, current, multi-instance shared access தேவைப்படும்போது மட்டும் தேர்ந்தெடு."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Storage Choice and Compliance",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A company applies a Glacier Vault Lock policy with a 7-year retention period, then a week later realizes they made an error in which records were included. Can they simply delete or modify the locked vault to fix the mistake?",
+          "answer": "No — that's the entire point of Vault Lock. Once a lock policy is completed (confirmed after the 24-hour window), it cannot be altered or removed by anyone, including AWS account root, until the retention period expires. This is why the 24-hour 'in progress' window before finalizing exists — to catch mistakes BEFORE the lock becomes permanent."
+        },
+        {
+          "question": "A team has 3 EC2 instances behind a load balancer, each currently maintaining its own separate local copy of uploaded user files, requiring a custom sync process to keep them consistent. What would switching to EFS eliminate?",
+          "answer": "It would eliminate the need for the custom sync process entirely — all 3 instances would read and write to the same shared filesystem directly, always seeing the same, consistent set of files without any additional synchronization logic."
+        },
+        {
+          "question": "A regulated company needs financial records to be tamper-proof for exactly 5 years, then automatically eligible for deletion afterward per their data retention policy. Does Glacier Vault Lock support this, or does it require records to be kept forever?",
+          "answer": "Vault Lock supports exactly this — the retention period is configurable to whatever length compliance requires (5 years here), and after that period ends, normal deletion becomes possible again. It's not permanent forever-storage, just enforced immutability for the specified window."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Decide Between EBS, EFS, and S3 for a New Workload",
+      "ava_speaks": "Real companies-ல, storage service தேர்ந்தெடுக்கறது ஒரு quick decision framework follow பண்ணும் - 'flexibility future-ல தேவைப்படலாம்' மாதிரி vague reasoning-ஐ நம்பாம.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Ask: does this data need to be accessed by multiple instances simultaneously, right now or in a concretely planned near-term feature?",
+          "detail": "'ஆமா, concretely'nு பதில் வந்தால் மட்டும் EFS consider பண்ணு - vague 'future-ல தேவைப்படலாம்' போதாது"
+        },
+        {
+          "step": 2,
+          "action": "If the data is really objects (files accessed via URL/API, not needing filesystem semantics), consider S3 instead of either EBS or EFS",
+          "detail": "இது C5.1a-ல கத்துக்கிட்ட bucket/object model-ஐ, correct use case-க்கு direct பண்ணும்"
+        },
+        {
+          "step": 3,
+          "action": "For compliance-critical data with legal retention requirements, evaluate Glacier Vault Lock early in the design, not as an afterthought retrofitted later",
+          "detail": "Retention requirements, storage architecture-ஐ affect பண்ணும் - இதை ஆரம்பத்திலேயே கணக்கில் எடுக்கறது நல்லது"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Storage Gateway",
+          "use": "On-premises applications-க்கு, S3-ஐ ஒரு file interface-ஆ expose பண்ணி, hybrid storage scenarios-ல உதவும் (context-க்காக, இது இன்னைக்கு live_build-ல பயன்படுத்தல)"
+        },
+        {
+          "tool": "Cost Explorer, filtered by storage service",
+          "use": "EFS, EBS, S3 costs-ஐ தனித்தனியா track பண்ணி, priya-dev-ஓட mistake மாதிரி unnecessary premium storage usage-ஐ கண்டுபிடிக்க உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம EFS எப்படி multiple instances-க்கு shared access தரும்னு, அதோட 3x cost premium ஏன் irjustifyக்கப்படணும்னு, Glacier Vault Lock எப்படி true WORM compliance தரும்னு கத்துக்கிட்டோம். இதுகூட CS5 Storage முடிஞ்சிடுச்சு - S3 basics-ல இருந்து ஆரம்பிச்சு, storage classes, security, EBS, EFS, Vault Lock வரைக்கும் full storage foundation கட்டிட்டோம். CFO-ஓட FQ-189 ticket-ஓட phase complete. அடுத்த session-ல நாம CS6 Monitoring-க்கு போவோம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C5.4 — Summary",
+      "points": [
+        "✓ EFS provides shared, simultaneous access to the same filesystem across multiple EC2 instances",
+        "✓ EFS costs roughly 3x more per GB than EBS — a premium that only pays off with genuine multi-instance access needs",
+        "✓ Glacier Vault Lock enforces true WORM compliance — locked policies cannot be overridden by anyone, including root, until retention expires",
+        "✓ The 24-hour Vault Lock 'in progress' window exists specifically to catch mistakes before a lock becomes permanent",
+        "✓ Choosing EFS for 'future flexibility' with no concrete multi-instance need turns a premium feature into pure unnecessary cost"
+      ],
+      "coming_next": "Session CS6: Monitoring — starting with C6.1, CloudWatch Metrics and Logs"
+    }
+  }
+}

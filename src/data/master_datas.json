@@ -1,0 +1,8 @@
+[
+  {
+    "lesson_id": "1.1",
+    "expected_intent": "what is the cloud exactly",
+    "verified_response": "The cloud is just a marketing term. Physically, it means your data is stored on someone else's computer inside a massive, highly secure building called a data center.",
+    "whiteboard_summary": "- Cloud = Data Center\n- Someone else's computer"
+  }
+]

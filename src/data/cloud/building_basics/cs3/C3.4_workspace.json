@@ -1,0 +1,242 @@
+{
+  "lesson_id": "C3.4",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 13,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nWe've been leaning entirely on security groups this whole time — narrowing rules, referencing SG IDs instead of CIDRs, all good instincts. But security groups can't do everything, and I want you to find out exactly where they stop being enough before we move on.\n\nStart with the bastion host we set up. Check its security group carefully — actually check it, don't assume it's fine just because it's supposed to be the 'controlled entry point.'\n\nI'll also tell you about something that happened here before you joined: a low-grade attack last quarter that security groups genuinely couldn't have stopped efficiently. You'll see why once you understand the tool that actually handled it.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nBastion SSH access is properly scoped now, not open to the world anymore. And the NACL block against that IP range is in place correctly — ordered properly this time, and I confirmed legitimate customer traffic wasn't collateral damage.\n\nYou hit both of the classic NACL traps in the same lesson — the ephemeral port miss and the rule-ordering miss — and caught both. That's genuinely most of what goes wrong with NACLs in the real world, right there.\n\nNext: VPC Peering. We've had that mystery route sitting in the main route table since C3.1, and notification-worker is still quietly trying to reach something at 10.50.13.4 every week. Time to actually understand what a peering connection is, and then go find out what used to be on the other end of this one.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.4-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.4",
+      "scenario": "Following Priya's instruction, you check the bastion host's security group (sg-bastion-0044) rather than assuming it's fine. Inbound rules: Port 22, Source: 0.0.0.0/0.",
+      "question": "The bastion host is SUPPOSED to be the one deliberately public, internet-facing resource in this VPC. Does that mean 0.0.0.0/0 on port 22 is actually fine here?",
+      "options": [
+        "A) Yes — since the bastion is meant to be reached from the internet, any source range is appropriate for it",
+        "B) No — 'meant to be internet-facing' means it needs a route to the internet and a public subnet, not that its SSH port should accept connection attempts from every IP on earth. It should be scoped to FoodQuick's known admin IP ranges or a VPN, same discipline as any other resource",
+        "C) Yes, and this is actually the recommended AWS default for all bastion hosts",
+        "D) It doesn't matter, since bastion hosts are automatically protected by AWS regardless of security group settings"
+      ],
+      "correct_index": 1,
+      "explanation": "'Public in subnet must be' — says, 'anything for IP access must give' — meaning not. Bastion's job — controlled entry point, that 'uncontrolled entry point' aaga must not. Port for 22 0.0.0.0/0 —, entire internet brute-force try we can do. Admin team's known IP range or VPN CIDR only source must be.",
+      "ren_correct": "Correct — 'public' and 'open to everyone' two different topic, for bastion also this apply will happen.",
+      "ren_wrong": "A bit off track. Bastion public in subnet must be — says, that anything for IP SSH access must give — meaning not."
+    },
+    {
+      "id": "C3.4-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.4",
+      "question": "You allow inbound traffic on port 443 through a security group. A client connects, and the server sends a response back. Do you need a separate outbound rule allowing that response traffic to leave?",
+      "options": [
+        "A) Yes — inbound and outbound rules are always independent, security groups don't track connection state",
+        "B) No — security groups are STATEFUL. If inbound traffic is allowed in, the corresponding return traffic is automatically allowed out, regardless of outbound rules",
+        "C) No, but only for HTTPS specifically — other protocols require explicit outbound rules even with security groups",
+        "D) It depends on which AWS region the security group is in"
+      ],
+      "correct_index": 1,
+      "explanation": "Security Group STATEFUL — this key property. Inbound connection allow did, that oda RETURN traffic automatic allow will happen, veri outbound rule needed not. This NACL's exact opposite behavior — that in next paakkaporom.",
+      "ren_correct": "Correct — SG stateful, return traffic automatic. This NACL's different fundamentally.",
+      "ren_wrong": "SG stateful — you missed — inbound allow did, return traffic automatic velai does, separate outbound rule needed not."
+    },
+    {
+      "id": "C3.4-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.4",
+      "question": "What's the difference in SCOPE between a security group and a NACL (Network ACL)?",
+      "options": [
+        "A) A security group applies at the SUBNET level (protecting everything in it); a NACL applies at the individual INSTANCE level",
+        "B) A security group applies at the INSTANCE level (attached to specific ENIs); a NACL applies at the SUBNET level, affecting every resource in that subnet automatically, whether they have their own security group or not",
+        "C) Both apply at exactly the same scope — the instance level — they're just two different UIs for the same feature",
+        "D) Security groups and NACLs both apply at the VPC level, protecting the entire VPC uniformly"
+      ],
+      "correct_index": 1,
+      "explanation": "Security Group instance-level (specific a for ENI/instance attach we will do). NACL subnet-level — that in subnet that is there EVERY for resource automatically apply will happen, individual anything attach to do vendaam. This real difference — NACL rule change, that whole subnet affect will happen.",
+      "ren_correct": "Correct — SG per-instance, NACL per-subnet. Scope's difference clearly is clear.",
+      "ren_wrong": "Scope reverse thoughthikitiya. SG instance-level, NACL subnet-level — this real difference."
+    },
+    {
+      "id": "C3.4-T4",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.4",
+      "question": "A security group can only contain ALLOW rules — there's no way to write an explicit DENY rule in one. Given that, if you needed to explicitly BLOCK traffic from one specific, known-malicious IP range while still allowing everything else, what would you actually need to use?",
+      "options": [
+        "A) A security group, using a special 'deny' rule type reserved for this exact purpose",
+        "B) A NACL — since NACLs support explicit DENY rules in addition to ALLOW, unlike security groups which are allow-only by design",
+        "C) Nothing in AWS can explicitly block a specific IP range — it's not possible at the network level",
+        "D) You'd need to contact AWS Support to add the IP to a global blocklist"
+      ],
+      "correct_index": 1,
+      "explanation": "in SG DENY rule — anything not — allow-only design. Specific known-bad IP range explicitly block must do — , NACL option — that ALLOW um DENY um both support does. This exact reason yen NACL sometimes SG-ai vida better fit specific for scenarios.",
+      "ren_correct": "Correct — SG allow-only, NACL allow+deny both does. This NACL's unique power.",
+      "ren_wrong": "in SG deny rule — anything not — that allow-only. Explicit block must do — NACL use must do."
+    },
+    {
+      "id": "C3.4-T5",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.4",
+      "scenario": "You pull the complete current security posture around the bastion host and the account's NACL setup to map the problem.",
+      "broken_config": "sg-bastion-0044 (attached to the bastion host in subnet-aa11):\nInbound rules:\n└── Port 22, Source: 0.0.0.0/0\n\nDefault NACL (nacl-08b3f2a1c — associated with subnet-aa11, subnet-bb22, subnet-cc33, and both private subnets since no custom NACL has ever been created):\nInbound rules:\n├── Rule 100: ALLOW all traffic, all ports, 0.0.0.0/0\n└── Rule *: DENY all (implicit default, never reached)\nOutbound rules:\n├── Rule 100: ALLOW all traffic, all ports, 0.0.0.0/0\n└── Rule *: DENY all (implicit default, never reached)",
+      "what_to_find": [
+        "The bastion's SSH port is open to the entire internet (0.0.0.0/0) — the exact mistake flagged for this lesson",
+        "Every subnet in the VPC — public AND private — is still using the AWS default NACL, which simply allows everything in both directions. This means the NACL layer is currently providing zero actual protection anywhere; it's a rubber stamp, not a filter",
+        "This matters specifically because there's no way, right now, to explicitly block a known-bad IP range at the network layer — security groups can't deny, and the NACL currently allows everything through unconditionally"
+      ],
+      "correct_fix": "Narrow sg-bastion-0044's inbound rule to FoodQuick's known admin/VPN CIDR range instead of 0.0.0.0/0. Leave the default NACL's broad ALLOW rules as-is for now (a working default is not itself broken) — but note the account currently has no NACL-based blocking capability in place, which becomes relevant for the next task.",
+      "explanation": "This two different severity level problem — (1) SG mistake, urgent, we in T1 already identify you all did. (2) NACL 'problem' not really, that default state — but that 'no protection layer exists yet' — artha, that next for task context gives."
+    },
+    {
+      "id": "C3.4-T6",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.4",
+      "question": "Arrange the correct order of steps to narrow the bastion host's SSH access safely, without locking out the admin team who currently rely on it.",
+      "items": [
+        "Confirm the actual CIDR range FoodQuick's admin team/VPN currently uses to connect",
+        "Add the new, narrower inbound rule (source: confirmed admin CIDR) alongside the existing 0.0.0.0/0 rule",
+        "Verify an admin can still SSH into the bastion successfully using only the narrow rule",
+        "Remove the old 0.0.0.0/0 rule only after the narrow rule is confirmed working",
+        "Document the change in the change log"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "This already we we saw 'add before remove' pattern's repeat — production access change for doing earlier correct range confirm must do, then add after doing verify must do, then old broad rule remove must do.",
+      "ren_correct": "Nice — this already familiar that is there 'add before remove' pattern, safely apply did you do.",
+      "ren_wrong": "Order again paaru — old rule remove first earlier new rule velai does — verify must do, or admin team lock-out aayidalam."
+    },
+    {
+      "id": "C3.4-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.4",
+      "scenario": "Priya explains the incident from last quarter: 'Before you joined, we had a burst of junk requests hitting the ALB from a narrow IP range — 198.51.100.0/24, roughly 250 addresses. It wasn't big enough to need AWS Shield Advanced, but it was enough to eat up connection slots and slow things down for real customers. We needed to explicitly block that entire range, fast.'",
+      "question": "Why couldn't this have been handled with a security group rule alone?",
+      "options": [
+        "A) It could have been — a security group DENY rule for 198.51.100.0/24 would have worked fine",
+        "B) Security groups can only ALLOW traffic, never explicitly deny a specific range — the only way to block 198.51.100.0/24 while still allowing everyone else is a NACL DENY rule",
+        "C) Security groups can block IP ranges, but only ranges smaller than /28",
+        "D) It couldn't have been blocked at all without contacting AWS Support directly"
+      ],
+      "correct_index": 1,
+      "explanation": "This in T4 we saw concept's real application — SG allow-only, explicit deny to do cannot. 198.51.100.0/24 range block must do — , NACL DENY rule option. This exact scenario NACL genuinely SG-ai vida better fit aagudhu.",
+      "ren_correct": "Correct — this real in scenario NACL's unique strength apply doing.",
+      "ren_wrong": "SG allow-only — marandhutiya — explicit block must do — NACL real option."
+    },
+    {
+      "id": "C3.4-T8",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.4",
+      "scenario": "You create a custom NACL for the public subnets to add the block. You add: Rule 100 — ALLOW all traffic, 0.0.0.0/0 (kept from the default, so normal traffic isn't disrupted while you work). Rule 200 — DENY all traffic, 198.51.100.0/24 (the malicious range).",
+      "question": "Given how NACLs evaluate rules, will this DENY rule actually block traffic from 198.51.100.0/24?",
+      "options": [
+        "A) Yes — NACLs check every rule and apply the most specific one that matches, regardless of rule number",
+        "B) No — NACLs evaluate rules in ascending numeric order and stop at the FIRST match. Rule 100 (ALLOW all, 0.0.0.0/0) matches traffic from 198.51.100.0/24 too, and since it's evaluated first, the DENY at rule 200 is never even reached",
+        "C) Yes, because DENY rules always take priority over ALLOW rules regardless of numbering",
+        "D) No, because NACLs can only have one rule per port number"
+      ],
+      "correct_index": 1,
+      "explanation": "This classic NACL gotcha — rule number ASCENDING in order evaluate will happen, FIRST in match stop will happen. Rule 100 (allow all) already 198.51.100.0/24-ai match does, so rule 200 (deny) never reach aagathu. Fix: DENY rule-ai rule for 100 KUraaivabut in number (e.g. rule 90) podanum, then that ALLOW for rule earlier evaluate will happen.",
+      "ren_correct": "Correct — rule ordering matter does, this real NACL trap.",
+      "ren_wrong": "NACL rule evaluation-ai a bit think again — ascending in order first in match stop will happen. DENY rule-ai ALLOW for rule earlier number must give."
+    },
+    {
+      "id": "C3.4-T9",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.4",
+      "scenario": "You fix the rule ordering (DENY at rule 90, ALLOW all at rule 100) and confirm 198.51.100.0/24 is now blocked. But shortly after, ananya-analyst reports she can no longer load the FoodQuick dashboard from her home network at all — a completely unrelated, legitimate IP.",
+      "error_shown": "Browser: \"This site can't be reached — ERR_CONNECTION_TIMED_OUT\". Server-side ALB access logs show her request WAS received and a 200 response was generated and sent.",
+      "diagnosis": "While setting up the custom NACL, the outbound rules were also rebuilt — but only an outbound ALLOW for ports 80/443 was added, not for the ephemeral port range (1024-65535) that return traffic actually uses. NACLs are STATELESS — allowing a request in on port 443 does NOT automatically allow the response back out on the client's ephemeral port, unlike a security group. The server generated the response, but the NACL silently dropped it going back out, so the client saw a timeout that looks exactly like the request never arrived at all.",
+      "fix": "Add an outbound NACL rule allowing traffic to 0.0.0.0/0 on the ephemeral port range 1024-65535 (this is standard client-side return traffic for TCP connections), in addition to the existing 80/443 outbound rules. Re-test — ananya-analyst's connection should now complete successfully.",
+      "explanation": "This NACL's stateless nature's real cost — SG like 'automatic return traffic' — anything not. Inbound rule only correct after doing, outbound ephemeral range marandhutta, exact this like 'server received it fine, but client sees timeout' symptom will come — debug to do very confusing, but root cause simple."
+    },
+    {
+      "id": "C3.4-T10",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.4",
+      "scenario": "After both fixes, you run a final audit before reporting back.",
+      "broken_config": "Custom NACL (nacl-0f7a2e9c1b — now associated with subnet-aa11, subnet-bb22, subnet-cc33):\n\nInbound rules:\n├── Rule 90: DENY all traffic, 198.51.100.0/24\n├── Rule 100: ALLOW all traffic, 0.0.0.0/0\n└── Rule *: DENY all (implicit default)\n\nOutbound rules:\n├── Rule 90: ALLOW all traffic, ports 1024-65535, 0.0.0.0/0 (ephemeral return traffic)\n├── Rule 100: ALLOW all traffic, ports 80/443, 0.0.0.0/0\n└── Rule *: DENY all (implicit default)\n\nsg-bastion-0044:\nInbound rules:\n└── Port 22, Source: 203.0.113.0/24 (FoodQuick's confirmed admin/VPN range)\n\nTest results:\n├── Connection attempt from 198.51.100.50: BLOCKED ✓\n├── Connection attempt from ananya-analyst's home IP: SUCCESS, page loads fully ✓\n└── SSH attempt to bastion from a random public IP: BLOCKED ✓, from admin VPN range: SUCCESS ✓",
+      "what_to_find": [
+        "The DENY rule (90) correctly sits BEFORE the ALLOW all rule (100) — rule ordering is now correct, the malicious range is genuinely blocked",
+        "Outbound ephemeral ports (1024-65535) are now explicitly allowed — legitimate return traffic works correctly, confirmed by ananya-analyst's successful connection",
+        "The bastion's SSH access is properly scoped to the admin CIDR only, confirmed by both a blocked random attempt and a successful admin attempt",
+        "All three test results confirm the fix works end-to-end — malicious traffic blocked, legitimate traffic unaffected, bastion properly scoped"
+      ],
+      "correct_fix": "No further changes needed. This is a 'confirm it's actually correct now' verification — all three test cases pass. Document the final NACL rule set and test results for the change record.",
+      "explanation": "This 'recognize this is already correct' type verify task — we two real bugs (rule ordering, ephemeral ports) already fix you all did, ippo end-to-end test after doing confirm doing job, still any problem search must do — not."
+    },
+    {
+      "id": "C3.4-T11",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.4",
+      "scenario": "Priya asks for a standing policy: going forward, should the team manage day-to-day access rules (per-service, per-team access) using NACLs, security groups, or a mix of both?",
+      "options": [
+        "A) Manage everything through NACLs going forward — since they're more powerful (support DENY), they should fully replace security groups",
+        "B) Use security groups as the primary, day-to-day access control (stateful, instance-level, easy to reason about with SG-to-SG references) — reserve NACLs for rare, subnet-wide emergency blocks (like the 198.51.100.0/24 incident), not routine per-service rules",
+        "C) Manage everything through security groups only — remove the custom NACL entirely, since it caused two bugs this lesson",
+        "D) Split every rule equally between both systems for redundancy, so if one fails the other catches it"
+      ],
+      "correct_index": 1,
+      "explanation": "NACL powerful irundhaalum, stateless irukradhu-ala, granular per-service for rules manage to do complex-ah, error-prone will be (we today two bugs paathanunga). SG stateful-ah, easy to reason, day-to-day for access ideal. NACL-ai completely remove doing wrong — that specifically 'block a known-bad range subnet-wide' for scenario neededybut tool, that in role only vachukkanum.",
+      "ren_correct": "Correct — SG for day-to-day, NACL rare subnet-wide emergency for block. Two also right tool, right for job.",
+      "ren_wrong": "A bit extreme you thought. NACL bugs varrthat adhai completely remove first reason not — that specific in role only use must do, granular day-to-day for rules not."
+    },
+    {
+      "id": "C3.4-T12",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C3.4",
+      "scenario": "Ravi asks whether FoodQuick should also subscribe to AWS Shield Advanced (roughly $3,000/month, about ₹2.5 lakh/month) for DDoS protection, given last quarter's incident.",
+      "question": "Given the 198.51.100.0/24 incident was handled successfully with a free NACL rule, is Shield Advanced worth it right now?",
+      "solution": "The NACL-based block was free and fully effective for a small, identifiable IP range — that's the right tool for a known, narrow-source incident like this one. Shield Advanced (₹2.5 lakh/month) is designed for large-scale, distributed volumetric attacks (spanning thousands of IPs, potentially hundreds of Gbps) that a manual NACL rule genuinely cannot keep up with — it wasn't needed here, and paying for it based on one small, already-resolved incident would be premature. Revisit if FoodQuick's traffic profile or attack surface grows significantly (e.g. after major PR/marketing exposure), not before.",
+      "explanation": "This real business judgment — free tool already solve do for problem, expensive tool add doing waste. Shield Advanced real value that genuinely large-scale for attack only, that this scenario not."
+    },
+    {
+      "id": "C3.4-T13",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.4",
+      "scenario": "Time to report back to Priya on this piece of FQ-156.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Fixed the bastion and set up NACL blocking. Everything works now.\"",
+        "B) \"Narrowed bastion SSH access to FoodQuick's admin CIDR (203.0.113.0/24). Set up a custom NACL blocking 198.51.100.0/24 — hit two real issues along the way: the DENY rule initially had a higher rule number than the catch-all ALLOW, so it never triggered until reordered; and the outbound ephemeral port range wasn't allowed initially, which silently broke legitimate return traffic for at least one user before being fixed. Both confirmed resolved with end-to-end testing — malicious IP blocked, legitimate traffic unaffected, bastion properly scoped.\"",
+        "C) \"Blocked the bad IP range with a NACL. Didn't touch the bastion since it wasn't explicitly flagged as broken.\"",
+        "D) \"Everything's secure now, no further action needed on networking.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — specific — what fix we did, that in process what real issues varundhomo, that explicitly mention must do. 'Everything works now' overclaim, 'didn't touch bastion' — Priya explicit kettadhai miss doing.",
+      "ren_correct": "This correct report — specific, honest about the two real bugs hit along the way, evidence-based.",
+      "ren_wrong": "This report either overclaim does or Priya explicit kettadhai (bastion check do) miss does."
+    }
+  ],
+  "act_number": 5,
+  "act_title": "Where Security Groups Stop — NACLs",
+  "builds_layer": "Perimeter Filter Layer"
+}

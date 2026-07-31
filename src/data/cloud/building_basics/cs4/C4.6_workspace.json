@@ -1,0 +1,228 @@
+{
+  "lesson_id": "C4.6",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nLast piece of compute: we've been paying On-Demand for everything, and I don't think that's right for all of it. Some of this fleet is stable and predictable, some is bursty, and if we ever run real batch or ML workloads, some of it should be interruptible-and-cheap instead of always-on-and-expensive. Let's actually match pricing model to workload.\n\nAnd — it's time. We understand this account much better now than we did six weeks ago. Let's finally figure out what i-0a9b8c7d6e5f4a3b2 actually is.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nSo that's what it was. A migration script, run once successfully, left running because the person who ran it left two weeks later and nobody else knew it existed. Same shape as Vikram back in FQ-142, just compute instead of access. I don't think that's a coincidence — I think it's literally what 'nobody owned this full-time for two years' actually looked like, twice.\n\nReserved pricing is in place where it makes sense, Spot is set up for the ML batch work, and that instance is finally gone — roughly ₹10.4 lakh spent on nothing, over 18 months, closed out for good.\n\nThat's compute done. Storage's next, and the CFO's office is asking questions directly this time — that alone should tell you something about where this is going.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.6-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.6",
+      "scenario": "You pull FoodQuick's current EC2 billing breakdown: every single instance across the fleet — order-service, reporting-db-01, notification-worker, the bastion, and the still-unresolved mystery instance — is running as On-Demand.",
+      "question": "Before deciding what to change, what's the most useful first question to ask about each workload?",
+      "options": [
+        "A) Which instances are the biggest, since bigger instances always benefit most from any pricing change",
+        "B) How STABLE and PREDICTABLE is this workload's runtime pattern — does it run continuously long-term, does it vary, or is it a short, interruptible, one-off task? Pricing model choice depends entirely on this, not on instance size",
+        "C) Which instances were launched most recently, since only newer instances are eligible for pricing changes",
+        "D) Nothing needs to be asked — On-Demand is always the correct default for every workload"
+      ],
+      "correct_index": 1,
+      "explanation": "Pricing model choice size-a base doing not — workload's actual runtime PATTERN base must do. Stable, long-term, always-on for workload different pricing fit will happen, short/interruptible for workload different fit will happen. This first, correct question.",
+      "ren_correct": "Correct — pattern first, size doesn't drive this decision.",
+      "ren_wrong": "A bit think again — instance size pricing model decision-a drive what was done. Workload's actual runtime pattern real question."
+    },
+    {
+      "id": "C4.6-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.6",
+      "question": "At a high level, what are the three main EC2 pricing models, and what's each one's basic trade-off?",
+      "options": [
+        "A) On-Demand, Reserved, and Spot are just three different names AWS uses for the exact same pricing, chosen randomly per account",
+        "B) On-Demand: pay per hour/second with zero commitment, most flexible but most expensive. Reserved: commit to 1 or 3 years for a significant discount (roughly 40-60% off On-Demand), best for stable long-term workloads. Spot: use spare AWS capacity at a steep discount (70-90% off), but AWS can reclaim it with short notice — best for interruption-tolerant workloads",
+        "C) Reserved Instances can be cancelled at any time with no penalty, making the 1/3-year commitment purely optional",
+        "D) Spot instances are always more expensive than On-Demand, but guarantee they'll never be interrupted"
+      ],
+      "correct_index": 1,
+      "explanation": "Moonu different different trade-off — On-Demand flexible but expensive, Reserved for commitment instead of real discount (40-60%), Spot steepest discount (70-90%) but interruption risk is there. Ovvoruthukum different different fit-but workload is there.",
+      "ren_correct": "Correct — flexibility vs discount vs interruption-risk, moonume vera vera trade-off.",
+      "ren_wrong": "A bit think again — moonume different trade-offs. Reserved commitment real-a is there, Spot cheapest but interruptible."
+    },
+    {
+      "id": "C4.6-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.6",
+      "question": "A workload has been running steadily for over a year with no planned changes, and is expected to keep running the same way for the foreseeable future. What's the main risk of NOT moving it from On-Demand to Reserved pricing?",
+      "options": [
+        "A) There's no real risk — On-Demand and Reserved cost exactly the same for stable, long-running workloads",
+        "B) Continuing to pay On-Demand rates for a genuinely stable, long-running workload means paying significantly more (often 40-60% more) than necessary, month after month, for a commitment risk that's actually very low given the workload's proven stability",
+        "C) On-Demand pricing automatically converts to Reserved pricing after 12 months with no action needed",
+        "D) Reserved Instances are riskier than On-Demand for stable workloads, since they lock in a potentially outdated instance type"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, ongoing cost — genuinely stable for workload On-Demand rates continue after doing irundha, unnecessary-a 40-60% extra pay while doing irukom every month, commitment risk very kammi even if. This real, avoidable waste.",
+      "ren_correct": "Correct — stable for workload On-Demand continue doing real, ongoing, avoidable cost.",
+      "ren_wrong": "A bit think again — On-Demand and Reserved same cost not. Stable for workload Reserved significant savings gives, real risk kammi-a even if."
+    },
+    {
+      "id": "C4.6-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.6",
+      "scenario": "You map out each workload's actual runtime pattern before recommending pricing model changes.",
+      "broken_config": "Fleet runtime pattern review:\n├── reporting-db-01 (m5.large): running 24/7, always-on, stable size, no plans to change\n├── notification-worker (m5.large): running 24/7, always-on, stable\n├── order-service ASG: min=3, desired=4, max=12 — BASELINE 3 instances essentially always running, remaining count varies with load\n├── bastion host (t3.micro): running 24/7 but extremely low, sporadic actual usage (admin access only)\n└── (planned) new ML recommendation-model training job: runs overnight, batch-style, checkpoints progress periodically, can tolerate being restarted if interrupted\n\nCurrent pricing: ALL of the above are On-Demand",
+      "what_to_find": [
+        "reporting-db-01 and notification-worker are ideal Reserved Instance candidates — stable, always-on, no planned changes, meaning the 1-year commitment carries little real risk",
+        "order-service's ASG baseline (the min=3 floor that's essentially always running) is also a good Reserved candidate, but the VARIABLE portion above that floor should stay On-Demand or Spot since Reserved doesn't make sense for capacity that comes and goes",
+        "The bastion, despite running 24/7, has such low and sporadic actual usage that a pricing model change matters far less here than simply right-sizing or reconsidering if it needs to run continuously at all",
+        "The planned ML training job is a strong Spot candidate — genuinely interruption-tolerant (checkpointing already planned) and short-duration, exactly Spot's ideal use case"
+      ],
+      "correct_fix": "Purchase 1-year Reserved Instances for reporting-db-01, notification-worker, and order-service's 3-instance baseline. Keep the ASG's variable capacity above the baseline On-Demand (or evaluate Spot for it later). Use Spot for the new ML training job with checkpointing already built in. Leave the bastion on On-Demand given its low usage doesn't justify a commitment either way.",
+      "explanation": "This real, nuanced fleet review — ella workload also same pricing model fit what was done. Stable, for always-on Reserved, variable for capacity On-Demand, interruption-tolerant for batch Spot. This real skill — a blanket rule not."
+    },
+    {
+      "id": "C4.6-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.6",
+      "question": "Arrange the correct order to safely transition reporting-db-01 to a 1-year Reserved Instance.",
+      "items": [
+        "Confirm the instance type and region are stable and unlikely to change over the commitment period",
+        "Purchase a Reserved Instance matching the exact instance type, region, and platform already in use",
+        "Verify the Reserved Instance is correctly applied to the running instance's billing (matching attributes automatically apply the discount)",
+        "Monitor the next billing cycle to confirm the expected discount actually appears"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "First confirm stability (this for commitment earlier is important), then purchase must do matching attributes, then in billing correctly apply aachu — verify must do, LAST-a next in cycle real discount kaanum — confirm must do.",
+      "ren_correct": "Nice sequencing — stability check first, purchase, verify application, confirm real savings.",
+      "ren_wrong": "Order again paaru — stability confirm without doing commitment doing risky, that first step-a must be."
+    },
+    {
+      "id": "C4.6-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.6",
+      "scenario": "karthik-dev asks: 'If we Reserve order-service's baseline 3 instances, and the ASG later terminates one of them and launches a replacement during a scale-in/scale-out cycle, do we lose the Reserved discount?'",
+      "question": "How should you answer?",
+      "options": [
+        "A) Yes — Reserved Instance discounts are tied to one specific, permanent instance ID and are lost the moment that exact instance is terminated",
+        "B) No — a Reserved Instance's discount applies automatically to ANY running instance matching its attributes (instance type, region, platform), not to one specific instance ID. As long as at least 3 matching instances are running at any time, the discount applies to 3 of them, regardless of which specific instances they are",
+        "C) No, but only if the replacement instance is manually re-registered with AWS Support",
+        "D) Reserved Instances can only be used with instances that never get replaced under any circumstances, making them incompatible with ASGs entirely"
+      ],
+      "correct_index": 1,
+      "explanation": "This real, important detail — Reserved Instance discount attribute-based-a apply will happen (instance type + region + platform match did edho a matching running for instance), specific instance for ID not. ASG replacement do, new instance same attributes-a irundha, discount automatic-a apply will happen, manual re-registration needed not.",
+      "ren_correct": "Correct — attribute-based application, specific instance for ID tied not. ASG's compatible.",
+      "ren_wrong": "A bit think again — Reserved Instance specific for ID tied not, attributes match to do anything running for instance apply will happen."
+    },
+    {
+      "id": "C4.6-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.6",
+      "scenario": "For the new overnight ML recommendation-model training job, ananya-analyst asks: 'What happens to the training progress if AWS actually does reclaim the Spot instance mid-run?'",
+      "question": "How should this actually be handled, given Spot instances can be interrupted?",
+      "options": [
+        "A) Nothing can be done — if a Spot instance is interrupted, all training progress is always lost completely and permanently",
+        "B) The training job should periodically checkpoint its progress (save state to durable storage like S3 or EBS at regular intervals), so if interrupted, a new Spot instance can resume from the last checkpoint instead of starting over from scratch — this is exactly the pattern that makes Spot viable for this kind of workload",
+        "C) Spot instances should never be used for ML training under any circumstances, regardless of checkpointing",
+        "D) Interruptions only happen if the instance has been running for over 24 hours, so short training runs are automatically safe without checkpointing"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact Spot's real use case pattern — checkpointing periodically did, interruption vandha, last in checkpoint irundhu resume we can do, in scratch irundhu start doing vendaam. This Spot-a genuinely interruption-tolerant for workloads viable-a doing.",
+      "ren_correct": "Correct — checkpointing real answer, Spot-a viable doing this.",
+      "ren_wrong": "A bit think again — checkpointing did progress completely lose aagathu. This Spot's real, practical use pattern."
+    },
+    {
+      "id": "C4.6-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.6",
+      "scenario": "Finally investigating i-0a9b8c7d6e5f4a3b2. Since its purpose and safety are still unknown, you don't connect to it directly — instead, you take an EBS snapshot of its root volume, create a new volume from that snapshot, and mount it read-only on a separate, known-safe instance to inspect its contents (the same snapshot technique from the AMI/snapshot work earlier).",
+      "error_shown": "$ ls -la /mnt/investigation/home/rohan.d/\ntotal 24\n-rwxr-xr-x 1 rohan.d rohan.d 2841 migrate_orders_schema.sh\n-rw-r--r-- 1 rohan.d rohan.d 512 README.txt\n-rw-r--r-- 1 rohan.d rohan.d 8204 migration_completion.log\n$ cat README.txt\nOne-time migration script to move production orders table to the new\npartitioned schema ahead of the Series A scale-up. Run once, verify\nresults, then TERMINATE this instance — do not leave it running.\n- rohan.d\n$ tail -5 migration_completion.log\n[18 months ago] Migration completed successfully. 2.4M rows migrated,\nverified against source. Schema cutover confirmed working in\nproduction. Cleanup: pending.",
+      "diagnosis": "The instance was a one-time database migration helper, created by rohan.d (a contractor/engineer no longer with the company) roughly 18 months ago, to migrate the orders table to a new schema ahead of FoodQuick's Series A. The migration completed successfully and was verified — rohan.d's own README explicitly says to terminate the instance afterward. But rohan.d left the company approximately two weeks later, and with no dedicated infrastructure owner at the time (per the same 'nobody owned this full-time for two years' pattern behind everything else in this ticket), the termination step was simply never done. It sat running, doing nothing, for 18 months.",
+      "fix": "Since the investigation confirms exactly what the instance was for, that its job completed successfully long ago, and that its own creator explicitly documented it should be terminated — take one final snapshot for the record (in case anything is ever questioned later), then terminate the instance for good.",
+      "explanation": "This exact mystery payoff — safely investigate after doing (touch without doing, snapshot mount after doing), full history therinjidichu. This CS2's Vikram story's same pattern — access not, compute — but same root cause: incomplete offboarding, nobody owned infra full-time. This accident not, this literally FoodQuick's whole mega-story."
+    },
+    {
+      "id": "C4.6-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.6",
+      "scenario": "Before closing this out, you do a final audit of the resolution.",
+      "broken_config": "Resolution audit:\n├── Final snapshot of i-0a9b8c7d6e5f4a3b2's root volume taken and retained\n├── Instance i-0a9b8c7d6e5f4a3b2: TERMINATED\n├── Ongoing cost eliminated: ~₹58,000/month (m5.4xlarge On-Demand)\n├── Total historical cost of the oversight: ~₹10.4 lakh over ~18 months\n└── New process item added: quarterly review of all running instances against a real, current owner/purpose list — not just tags, which can go stale, but an actual human confirmation",
+      "what_to_find": [
+        "The termination was based on complete understanding (confirmed purpose, confirmed successful completion, creator's own documented intent) — not a guess",
+        "A final snapshot was retained even though the instance is confirmed safe to remove — a reasonable, low-cost extra precaution given how long this investigation took to resolve",
+        "The real structural fix isn't just terminating one instance — it's the new quarterly ownership review process, which is what prevents the NEXT instance like this from silently running for 18 months undetected",
+        "The ₹10.4 lakh figure represents a real, avoidable cost — worth stating plainly in the final report as the true cost of the process gap, not just the technical finding"
+      ],
+      "correct_fix": "No further changes needed — this is a complete, properly-documented resolution with a structural fix in place, not just an isolated cleanup.",
+      "explanation": "This 'recognize this is already correct' verify task — we complete-a, safely investigate after doing resolve we have done, AND for future same problem recur aagama to be process fix we have done."
+    },
+    {
+      "id": "C4.6-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.6",
+      "cases": {
+        "case_1": "The payment-processing API, which must run continuously with predictable, guaranteed capacity — customers cannot be told 'try again in a few minutes' during payment processing",
+        "case_2": "A nightly batch job that re-generates product recommendation models, which is compute-heavy but can restart from a checkpoint if interrupted",
+        "case_3": "A brand-new experimental feature the team isn't sure will be kept past the next month",
+        "case_4": "order-service's ASG baseline capacity (the portion that's essentially always running regardless of load)"
+      },
+      "correct_answers": {
+        "case_1": "Reserved (1 or 3-year) — guaranteed capacity and predictability matter most here; Spot's interruption risk is unacceptable for payment processing",
+        "case_2": "Spot with checkpointing — interruption-tolerant, cost savings matter more than guaranteed uptime for a batch job that can resume",
+        "case_3": "On-Demand — committing to a 1-year Reserved Instance for something that might not exist next month is exactly the wrong trade-off; flexibility matters more here than discount",
+        "case_4": "Reserved — the baseline is essentially always running by definition, making it a strong candidate for the commitment discount, same reasoning as reporting-db-01/notification-worker"
+      },
+      "scenario": "Ravi asks you to match the right pricing model to four different workloads FoodQuick is dealing with right now.",
+      "explanation": "Naangu vera vera situation — guaranteed-uptime-critical (Reserved), interruption-tolerant-batch (Spot), uncertain-future (On-Demand, flexibility first), always-on-baseline (Reserved). This real judgment, not memorizing one rule for everything.",
+      "ren_correct": "Correct — each case-kum characteristics-a base after doing right pricing model match did you do.",
+      "ren_wrong": "A bit think again — each case also different different priority (uptime, cost, flexibility), for each one different different pricing model fit will happen."
+    },
+    {
+      "id": "C4.6-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.6",
+      "scenario": "Ravi wants the actual numbers for reporting-db-01's Reserved Instance decision, to include in the final FQ-171 summary. reporting-db-01 (m5.large) costs roughly ₹5,600/month On-Demand, running 24/7. A 1-year Reserved Instance for the same type offers approximately 45% savings compared to On-Demand.",
+      "question": "What's the real annual savings from switching reporting-db-01 to a 1-year Reserved Instance, and is the commitment justified?",
+      "solution": "On-Demand annual cost: ₹5,600 × 12 = ₹67,200/year. At 45% savings, the Reserved annual cost is roughly ₹36,960/year — a savings of about ₹30,240/year for this single instance. Given reporting-db-01 has been running continuously with no planned changes for over a year already (confirmed in T3's fleet review), the 1-year commitment carries minimal real risk, making this straightforward savings rather than a risky bet.",
+      "explanation": "This spec's exact required calculation — 12-month On-Demand cost vs Reserved cost, real ₹ savings number. Stability already confirmed we have done (T3), so commitment risk kammi."
+    },
+    {
+      "id": "C4.6-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.6",
+      "scenario": "Time for the final report closing out FQ-171 entirely — this is the last piece of the whole compute rebuild.",
+      "question": "Which report should you send to Ravi?",
+      "options": [
+        "A) \"Pricing is optimized now. Also found and removed an old unused instance.\"",
+        "B) \"Reserved Instances applied to reporting-db-01, notification-worker, and order-service's ASG baseline (~₹30,240/year savings on reporting-db-01 alone, similar or greater for the others) — variable ASG capacity kept On-Demand appropriately. Spot with checkpointing set up for the new ML training batch job. Fully resolved the mystery instance: a one-time DB migration helper from rohan.d, 18 months ago, successfully completed but never terminated after he left the company — same root pattern as Vikram in FQ-142, just compute instead of access. Terminated (with a final snapshot retained), eliminating ~₹58,000/month in ongoing waste and closing out ~₹10.4 lakh in historical cost. Added a quarterly ownership review process so this doesn't happen silently again. This closes out FQ-171 — from user-data secrets and stop/terminate gotchas, through load balancing and scaling gaps, to this.\"",
+        "C) \"Everything about compute is optimized and no further issues will ever occur.\"",
+        "D) \"The mystery instance turned out to be nothing important, deleted it.\""
+      ],
+      "correct_index": 1,
+      "explanation": "This whole ticket close do report — specific numbers, full mystery resolution WITH the thematic connection back to FQ-142 (this genuinely relevant, same root pattern), AND the structural fix. 'Nothing important' — wrong — real, specific history was there, that properly report must do, dismiss do not do.",
+      "ren_correct": "This correct report — specific numbers, full honest resolution, and correctly connects the pattern back to the mega-story, without overclaiming permanence.",
+      "ren_wrong": "This report either real findings dismiss does ('nothing important') or impossible overclaim does ('no further issues will ever occur')."
+    }
+  ],
+  "act_number": 7,
+  "act_title": "Pricing Models That Match Reality",
+  "builds_layer": "Compute Cost Layer"
+}

@@ -1,0 +1,328 @@
+{
+  "lesson_id": "C7.1",
+  "lesson_title": "Design 3-Tier Architecture",
+  "section_id": "CS7",
+  "section_name": "Portfolio Project",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C6.4 — Config and Trusted Advisor",
+  "student_will_learn": [
+    "Explain the presentation, application, and data tier model for a web architecture",
+    "Design a security group per tier, following least-privilege principles from CS2",
+    "Produce a cost estimate for an architecture before building any of it",
+    "Synthesize networking, compute, storage, and monitoring decisions into one coherent design",
+    "Justify architecture decisions by referencing the specific FoodQuick mistakes that shaped them"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "FQ-218, Ravi-கிட்ட இருந்து ஒரு புது ticket - ஆனா இது வேற மாதிரி ஒண்ணு. Ravi எழுதி இருக்காங்க: 'நினைவிருக்கா FQ-142? அது தான் ஆரம்பம் - Vikram-ஓட access key mystery. அப்போ இருந்து, ஒவ்வொரு session-மும், FoodQuick-ஓட ஒரு layer-ஐ properly fix பண்ணோம் - networking, compute, storage, monitoring. இப்போ, இதையெல்லாம் சேர்த்து, FoodQuick-ஓட முழு architecture-ஐயும், Day 1-ல இருந்தே சரியா design பண்ணி இருந்தோம்-னா எப்படி இருந்திருக்கும்-னு design பண்ணு.' இதுதான் CS7 - Building Basics-ஓட கடைசி session, portfolio capstone project.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS7 · Lesson C7.1",
+        "Design 3-Tier Architecture",
+        "Ticket FQ-218 — Ravi (callback to FQ-142)"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "The Three-Tier Model — Presentation, Application, Data",
+      "ava_speaks": "3-tier architecture, ஒரு web application-ஐ மூணு logical layers-ஆ பிரிக்கும். Presentation Tier: user-ஓட browser-கூட நேரடியா interact பண்ற layer - Load Balancer, static content (CDN, S3+CloudFront). Application Tier: business logic run ஆகற layer - EC2 app servers, Auto Scaling Groups. Data Tier: persistent data store பண்ற layer - RDS databases, ElastiCache. ஒவ்வொரு tier-மும், அடுத்த tier-கூட மட்டும் தான் communicate பண்ணும் - Presentation நேரடியா Data-ஐ தொடாது, Application Tier தான் middle-man.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "3-Tier Architecture — Each Tier Talks Only to Its Neighbor"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Tier",
+            "Components",
+            "Subnet Placement (from C3.2a)"
+          ],
+          "rows": [
+            [
+              "Presentation",
+              "ALB, CloudFront",
+              "Public subnet"
+            ],
+            [
+              "Application",
+              "EC2 app servers, ASG",
+              "Private subnet"
+            ],
+            [
+              "Data",
+              "RDS, ElastiCache",
+              "Private subnet (isolated from app subnet's inbound internet path)"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "This tier separation isn't just organizational — it directly maps to the public/private subnet design from C3.2a and the security-group-per-tier pattern we'll build in this lesson."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "3-tier architecture-ல, Presentation Tier நேரடியா Data Tier-ஐ access பண்ணலாமா?",
+          "options": [
+            "A) ஆமா, faster performance-க்கு direct access நல்லது",
+            "B) இல்ல, Application Tier தான் middle layer - Presentation, Data-ஐ நேரடியா தொடாது",
+            "C) இது application-ஐ பொறுத்தது, general rule கிடையாது",
+            "D) Data Tier-க்கு Presentation Tier-ல இருந்து மட்டும் தான் access சாத்தியம்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Application Tier தான் business logic மற்றும் data access-ஐ mediate பண்ணும் - Presentation Tier, Data-ஐ நேரடியா தொடாது, இது security boundary-ஐ clean-ஆ வெச்சிருக்கும்.",
+          "ava_wrong": "இல்ல, direct access ஒரு anti-pattern - Presentation Tier, Data Tier-ஐ நேரடியா தொட கூடாது. Application Tier தான் middle layer, business logic-ஐயும் data access-ஐயும் handle பண்ணும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "இந்த 3-tier model, C3.2a-ல நாம கத்துக்கிட்ட public/private subnet design-கூட எப்படி relate ஆகும்?",
+          "options": [
+            "A) இதுக்கும் அதுக்கும் எந்த relation-மும் இல்ல",
+            "B) Presentation Tier public subnet-ல, Application மற்றும் Data Tiers private subnet-ல இருக்கும்",
+            "C) மூணு tiers-மும் public subnet-ல தான் இருக்கும்",
+            "D) மூணு tiers-மும் private subnet-ல தான் இருக்கும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! இது C3.2a-ல நாம கத்துக்கிட்ட exact pattern-தான் - internet-ஐ face பண்ண வேண்டியது public subnet-ல, மீதி எல்லாம் private subnet-ல.",
+          "ava_wrong": "இல்ல, C3.2a-ல நாம கத்துக்கிட்டது நினைவு வெச்சுக்கோ - internet-ஐ face பண்ண வேண்டிய Presentation Tier மட்டும் public subnet-ல, Application மற்றும் Data Tiers private subnet-ல இருக்கணும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Designing First vs Fixing Later — The Cost Difference",
+      "ava_speaks": "இந்த முழு Building Basics journey-ஓட lesson இதுதான் - FoodQuick-ஓட ஒவ்வொரு layer-மும், rushed decisions-ஆ ஆரம்பிச்சு, months அல்லது years கழிச்சு தான் properly fix பண்ணப்பட்டது. VPC ஒரு afternoon-ல set பண்ணப்பட்டது (CS3). EC2 sizing Day-1 guesses (CS4). S3 growth, cost owner இல்லாம (CS5). Monitoring, Twitter-ல இருந்து தெரிஞ்சுக்கிறது (CS6). ஒவ்வொரு retrofit-மும், design பண்ணும்போதே சரியா பண்ணி இருந்தா தேவைப்படாத ஒரு cost-ஆ இருந்துச்சு - downtime, security incidents, wasted spend, engineer hours. இன்னைக்கு நாம design பண்றது, அந்த entire pattern-ஐ, Day 1-லேயே தவிர்க்கறதுதான்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "FoodQuick's Retrofit Cost, Session by Session"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Session",
+            "What Was Rushed",
+            "What It Cost to Fix Later"
+          ],
+          "rows": [
+            [
+              "CS2",
+              "IAM offboarding gap (Vikram)",
+              "Security investigation, SCP guardrail retrofit"
+            ],
+            [
+              "CS3",
+              "VPC built in an afternoon",
+              "Full network redesign, subnet migration"
+            ],
+            [
+              "CS4",
+              "EC2 sized on Day 1 guesses",
+              "Downtime during resize, repeated over-provisioning"
+            ],
+            [
+              "CS5",
+              "S3 growth with no cost owner",
+              "Months of accumulated unnecessary storage spend"
+            ],
+            [
+              "CS6",
+              "No proactive monitoring",
+              "Customer-reported outages, reputational cost"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Designing Security Groups Per Tier",
+      "ava_speaks": "karthik-dev இப்போ, மூணு tiers-க்கும், correct, least-privilege security groups design பண்றான் - C3.4-ல கத்துக்கிட்ட Security Groups lesson-ஐ apply பண்ணி.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல, presentation tier-க்கு 'foodquick-alb-sg' create பண்றோம் - inbound 443 from 0.0.0.0/0 (internet-facing), ஏன்னா இது தான் users நேரடியா hit பண்ற entry point.",
+            "console_action": {
+              "type": "fill",
+              "path": "Security Groups → Create → foodquick-alb-sg",
+              "field": "Inbound rule",
+              "value": "HTTPS (443) from 0.0.0.0/0",
+              "highlight": "Inbound rule for the ALB security group",
+              "result": "The ALB is reachable from the internet, exactly as a presentation tier should be"
+            }
+          },
+          {
+            "ava_narration": "இப்போ application tier-க்கு 'foodquick-app-sg' create பண்றோம் - inbound, application port-ல, source-ஆ foodquick-alb-sg மட்டும். இந்த tier நேரடியா internet-ல இருந்து reachable-ஆ இருக்க கூடாது.",
+            "console_action": {
+              "type": "fill",
+              "path": "Security Groups → Create → foodquick-app-sg",
+              "field": "Inbound rule",
+              "value": "Custom TCP (8080) from foodquick-alb-sg",
+              "highlight": "Inbound rule referencing the ALB security group as source",
+              "result": "App servers only accept traffic that has already passed through the ALB — no direct internet path"
+            }
+          },
+          {
+            "ava_narration": "இறுதியா data tier-க்கு 'foodquick-db-sg' create பண்றோம் - inbound, database port (5432) மட்டும், source-ஆ foodquick-app-sg மட்டும். இது C5.2-ல கத்துக்கிட்ட mistake-ஐ ஒரு போதும் repeat ஆகாதுனு உறுதி பண்ணும்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Security Groups → Create → foodquick-db-sg",
+              "field": "Inbound rule",
+              "value": "PostgreSQL (5432) from foodquick-app-sg",
+              "highlight": "Inbound rule referencing the app security group as source",
+              "result": "Only application servers can reach the database — not the ALB, not the internet, not any unrelated instance"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "Three security groups form a clean, least-privilege chain: internet -> ALB -> app servers -> database, where each tier only accepts traffic from the tier immediately before it.",
+          "what_to_notice": "இந்த design, C5.2-ல நாம பார்த்த 'production DB left in default security group' mistake-ஐ, structurally ஒரு போதும் நடக்காது படி ஆக்குது - database-ஐ யாருடன்-மற்றும் யாருக்கும் access இல்ல, app tier தவிர."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Complete 3-Tier Architecture Diagram",
+      "ava_speaks": "இந்த diagram பாரு - CS3-ல இருந்து CS6 வரைக்கும் நாம கத்துக்கிட்ட எல்லாமே, ஒரே picture-ல வந்து சேருது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Internet",
+            "   |",
+            "Route 53 (C3.6) -> ALB in Public Subnet (C4.4), spans 2 AZs (C3.2b)",
+            "   | foodquick-alb-sg: 443 from 0.0.0.0/0",
+            "   |",
+            "ASG of App Servers in Private Subnet (C4.5), m5.large (C4.1)",
+            "   | foodquick-app-sg: 8080 from foodquick-alb-sg",
+            "   |",
+            "RDS Multi-AZ Database in Private Subnet (C3.2b)",
+            "   | foodquick-db-sg: 5432 from foodquick-app-sg only",
+            "",
+            "Cross-cutting: CloudWatch dashboards + alarms (C6.1-6.2), CloudTrail (C6.3), Config Rules (C6.4)"
+          ]
+        },
+        "ava_narration": "ஒவ்வொரு arrow-மும், ஒவ்வொரு lesson-ல நாம கத்துக்கிட்ட ஒரு specific decision-ஐ represent பண்ணுது - இது வெறும் theory இல்ல, இது FoodQuick-ஓட real journey."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Produce a Cost Estimate Before Building Anything",
+      "instruction": "FoodQuick-ஓட முழு 3-tier architecture-க்கும், build பண்றதுக்கு முன்னாடியே ஒரு rough monthly cost estimate தயார் பண்ணு.",
+      "scenario": "Ravi, architecture design approve பண்றதுக்கு முன்னாடி, ஒரு cost estimate கேட்டிருக்காங்க - CFO-ஓட office (C5-ல நாம பேசினது) இந்த habit-ஐ FoodQuick-ல establish பண்ணிருக்காங்க, ஒவ்வொரு புது architecture-க்கும்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "AWS Pricing Calculator (conceptual worksheet)",
+        "current_configuration": "Architecture components are decided (from the live_build), but no cost estimate exists yet"
+      },
+      "requirements": [
+        "Estimate ALB cost (roughly per-hour + per-LCU pricing)",
+        "Estimate app server cost, using the pricing model decided in C4.6 for a predictable, 24/7 workload (Reserved, not Spot, given the earlier lesson's payment-API mistake)",
+        "Estimate RDS Multi-AZ cost (roughly double single-AZ, per C3.2b)",
+        "Note which components (CloudWatch, Config, Trusted Advisor from CS6) add ongoing cost vs which are free at baseline usage"
+      ],
+      "hints": [
+        "C4.6-ல கத்துக்கிட்டது நினைவு வெச்சுக்கோ - production, predictable, 24/7 workload-க்கு Reserved தான் correct pricing model, Spot அல்ல",
+        "RDS Multi-AZ, C3.2b-ல கத்துக்கிட்டது படி, ஒரு standby replica maintain பண்ணும் - இது cost-ஐ roughly double பண்ணும், ஆனா redundancy-க்காக அது justify ஆகும்",
+        "AWS Pricing Calculator (real tool) use பண்ணி, actual numbers approximate பண்ணலாம் - இந்த exercise-ல exact numbers-ஐ விட, correct categories-ஐ கணக்கில் எடுத்திருக்கறதுதான் முக்கியம்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A rough monthly cost estimate covering ALB, Reserved app servers, RDS Multi-AZ, and a note on which monitoring components add cost, presented before any actual resource is built",
+        "ava_correct": "Correct! இப்போ Ravi-கிட்ட, ஒரு informed cost conversation பண்ண முடியும் - build பண்ணின பிறகு bill shock-ஆ இல்லாம.",
+        "ava_wrong": "ஏதோ ஒரு component மிச்சம் இருக்கு போல - ALB, compute, database, monitoring நான்கு categories-மும் estimate-ல இருக்கானு check பண்ணு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Architecture Diagram That Skipped the Data Tier's Isolation",
+      "ava_speaks": "ananya-analyst, ஒரு quick draft architecture diagram தயார் பண்றப்போ, deadline pressure-ல, database security group-ல, app tier-ஐ மட்டும் இல்லாம, முழு VPC CIDR range-ஐயும் source-ஆ வெச்சிட்டாங்க - 'convenience-க்காக, later restrict பண்ணலாம்'nு நினைச்சு.",
+      "setup": "ananya-analyst, working quickly to get a draft architecture approved before a deadline, sets the database security group's inbound rule source to the entire VPC CIDR block (10.0.0.0/16) instead of specifically foodquick-app-sg, planning to tighten it later.",
+      "what_happened": "The draft gets approved and built as-is because 'later' never explicitly happens — months pass, and a security review discovers that ANY resource in the VPC, including future unrelated services, sandbox instances, or anything else launched into that CIDR range, can reach the production database directly.",
+      "broken_config": "Security group: foodquick-db-sg\nInbound rule: PostgreSQL (5432) from 10.0.0.0/16 (the entire VPC CIDR)\nIntended source: foodquick-app-sg only\n\nThis is structurally the same category of mistake as C5.2's default-security-group finding — broader access than necessary, 'temporarily,' never revisited",
+      "error_shown": "Security review finding: foodquick-db-sg allows database access from 10.0.0.0/16 — including a newly launched analytics sandbox instance that has no business relationship with the production database, but can now reach it on port 5432.",
+      "the_real_problem": "இது இந்த முழு course-ல நாம repeatedly பார்த்த pattern - 'convenience-க்காக broader access, later restrict பண்ணலாம்'nு plan பண்றது, almost எப்போவும் 'later' நடக்காது. Design பண்றப்போவே correct, scoped access (security group reference, CIDR range இல்ல) பண்ணி இருந்தா, இந்த entire risk window-ஏ இருந்திருக்காது.",
+      "fix": {
+        "corrected_config": "Update foodquick-db-sg inbound rule source from 10.0.0.0/16 to foodquick-app-sg specifically, matching the intended, least-privilege design from the live_build.",
+        "result": "Only application tier servers can reach the database — the sandbox instance and any other future VPC resource no longer have a path to it."
+      },
+      "lesson": "இந்த முழு Building Basics journey-ல நாம repeatedly கத்துக்கிட்ட ஒரே lesson - 'convenience-க்காக, later restrict பண்ணலாம்' ஒரு plan இல்ல, அது ஒரு risk. Design பண்றப்போவே correct, scoped access பண்றதுதான் ஒரே reliable approach."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Synthesizing the Full Journey",
+      "ava_speaks": "இப்போ 3 quick scenarios - இந்த முழு course-ஐயும் synthesize பண்ணி யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "The 3-tier architecture is designed with the app tier in a private subnet with no direct internet route. During testing, an engineer needs SSH access to debug an app server. What's the correct access pattern, drawing on C4.2a?",
+          "answer": "Session Manager, not a direct SSH path requiring an open port 22 to the internet — this was exactly the pattern from C4.2a, where an IAM role attached at launch provides shell access without ever needing the private subnet to have any inbound internet exposure."
+        },
+        {
+          "question": "The architecture includes CloudWatch alarms on the ALB and ASG. Drawing on C6.2, should every alarm page the on-call team individually the moment it fires?",
+          "answer": "No — per C6.2, individual noisy alarms should generally feed into composite alarms where appropriate, and use consecutive-datapoint thresholds to avoid paging on momentary blips. Not every single-metric breach should independently interrupt someone at 3am."
+        },
+        {
+          "question": "The database uses RDS Multi-AZ. If the team also wants protection against an entire AWS account compromise wiping out all backups, what CS5 concept becomes relevant?",
+          "answer": "Glacier Vault Lock (C5.4) — for compliance-critical or disaster-recovery-critical backups, a WORM-locked vault ensures backups can't be deleted even by a compromised account, providing protection Multi-AZ alone doesn't cover since Multi-AZ protects against AZ failure, not account-level compromise or accidental mass deletion."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Real Architecture Reviews Happen Before a Single Resource Is Built",
+      "ava_speaks": "Real companies-ல, Priya Nair (C3-ல நாம சந்தித்த Cloud Architect) மாதிரி architects, exactly இந்த process follow பண்றாங்க - design, review, cost-estimate, அப்புறம் தான் build.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Draw the full architecture diagram (all tiers, security groups, data flow) before creating a single AWS resource",
+          "detail": "இது ananya-analyst-ஓட mistake மாதிரி, deadline pressure-ல scoped-access design-ஐ skip பண்றதை தடுக்கும்"
+        },
+        {
+          "step": 2,
+          "action": "Circulate the design for a peer review specifically checking security group scoping, subnet placement, and redundancy against known failure patterns",
+          "detail": "இது இந்த course-ல நாம கத்துக்கிட்ட ஒவ்வொரு mistake-ஐயும், ஒரு checklist-ஆ apply பண்ண உதவும்"
+        },
+        {
+          "step": 3,
+          "action": "Present a cost estimate alongside the design for stakeholder sign-off before building anything",
+          "detail": "இது C7.1-ஓட student_try exercise-ஓட real-world version - cost surprises இல்லாம proceed பண்ண"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Pricing Calculator",
+          "use": "Architecture components-ஐ input பண்ணி, build பண்றதுக்கு முன்னாடியே realistic cost estimates பெற உதவும்"
+        },
+        {
+          "tool": "draw.io / Lucidchart (or AWS's own architecture diagramming tools)",
+          "use": "Full architecture-ஐ visually document பண்ணி, review-க்கு முன்னாடி team-கூட share பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம 3-tier architecture model, security group per tier, cost estimation, எல்லாம் கத்துக்கிட்டோம் - ஆனா மிக முக்கியமா, இதுவரைக்கும் CS2 முதல் CS6 வரைக்கும் நாம கத்துக்கிட்ட எல்லாமே, ஒரே coherent design-ஆ சேர்ந்துச்சு. Ravi-ஓட FQ-218 ticket, FQ-142-ஐ callback பண்ணி இருக்காங்க - அந்த ஆரம்ப mystery தான், இந்த முழு transformation-க்கும் starting point. அடுத்த lesson-ல நாம இந்த design-ஐ, real network layer-ஆ build பண்ணப் போறோம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C7.1 — Summary",
+      "points": [
+        "✓ A 3-tier architecture separates presentation, application, and data — each tier talks only to its neighbor",
+        "✓ Security groups per tier, referencing each other (not broad CIDR ranges), enforce least privilege structurally",
+        "✓ Cost estimation before building prevents surprises and enables informed stakeholder decisions",
+        "✓ This design synthesizes decisions from every prior CS2-CS6 lesson into one coherent architecture",
+        "✓ 'Convenience now, restrict later' remains the single most repeated mistake pattern across this entire course — design it correctly from the start"
+      ],
+      "coming_next": "Lesson C7.2: Build Network Layer"
+    }
+  }
+}

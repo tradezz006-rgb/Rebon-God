@@ -1,0 +1,223 @@
+{
+  "lesson_id": "C4.2a",
+  "ticket": "FQ-171",
+  "sender": "Ravi Krishnan (Head of Engineering)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-171 — Ravi Krishnan (Head of Engineering)\n\nLet's get one of these instances launched properly, not just theorized about. karthik-dev needs a one-off instance to run a data migration script — pull some records, transform them, write the output somewhere durable. Simple enough on paper, but I want it done right: correct storage choices, correct way to connect, and correctly cleaned up afterward. That last part is where most people get it wrong.\n\n— Ravi",
+  "arc_outro": "Ravi Krishnan — FQ-171 update:\n\nGlad you caught karthik-dev's launch plan before he ran with it — instance-store-only for anything with output he cared about would've been a bad surprise. And the DeleteOnTermination lesson after he actually terminated it — losing the root volume's config changes but keeping the separately-attached output volume — that's exactly the kind of default setting people don't know exists until it costs them something.\n\nNext: let's go deeper on actually managing a running instance day to day — not just launching one and walking away.\n\n— Ravi",
+  "tasks": [
+    {
+      "id": "C4.2a-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C4.2a",
+      "scenario": "karthik-dev is about to launch a one-off EC2 instance to run a data migration script: read records from an old system, transform them, and write the output somewhere durable for later use.",
+      "question": "Before even opening the launch wizard, what's the most important thing to think through first?",
+      "options": [
+        "A) Which AWS region has the cheapest On-Demand pricing right now",
+        "B) What actually needs to survive after the instance is done — the output data clearly needs to persist, but does anything else (temporary working files, the instance itself) need to survive too? This should drive the storage and lifecycle choices made during launch, not be figured out afterward",
+        "C) Nothing needs to be planned — the launch wizard's defaults are always appropriate regardless of the use case",
+        "D) Which instance type has the most vCPUs available"
+      ],
+      "correct_index": 1,
+      "explanation": "Launch first, 'what survive aganum, what temporary' — clearly theriyanum. This storage choices-ai (instance store vs EBS) AND lifecycle choices-ai (stop vs terminate later) drive does. Afterward find out doing, already data lost but very late will happen.",
+      "ren_correct": "Correct — what survive aganum — already earlier decide doing, launch wizard open first.",
+      "ren_wrong": "A bit think again — launch wizard's defaults ella use case-kum fit aagaathu. What persist aganum — already earlier think."
+    },
+    {
+      "id": "C4.2a-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.2a",
+      "question": "What are the core decisions the EC2 launch wizard requires before an instance can actually be created?",
+      "options": [
+        "A) Only the instance type — everything else uses fixed AWS defaults with no choices",
+        "B) At minimum: an AMI (the base OS/software image), an instance type, a key pair (for SSH access) or IAM role setup for Session Manager, a VPC/subnet placement, a security group, and storage configuration (volume type/size)",
+        "C) Only the AMI and the region — instance type and storage are configured after launch, never during",
+        "D) A credit card must be entered separately for every individual instance launch"
+      ],
+      "correct_index": 1,
+      "explanation": "Launch in wizard is importantana decisions — AMI, instance type, key pair/IAM role, subnet placement, security group, storage. Ithall launch time-leye decide must do, afterward change can be done but a bit steps neededpadum.",
+      "ren_correct": "Correct — this ella core decisions-ai also cover does launch in time.",
+      "ren_wrong": "A bit incomplete thoughthikitiya. Launch in wizard real decisions is there — AMI, instance type, key pair, subnet, SG, storage, everything."
+    },
+    {
+      "id": "C4.2a-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C4.2a",
+      "question": "At a high level, what's the fundamental difference between STOPPING an EC2 instance and TERMINATING it?",
+      "options": [
+        "A) They're functionally identical — both are permanent and cannot be undone",
+        "B) Stopping is reversible — the instance can be started again later, and its EBS-backed storage persists (though instance store data is still lost). Terminating is permanent — the instance itself is destroyed and cannot be restarted, and depending on volume settings, some or all of its storage may be deleted too",
+        "C) Stopping deletes all data immediately, while terminating preserves everything indefinitely",
+        "D) The only difference is billing — stopped instances are billed at a discounted rate, otherwise they behave identically to running instances"
+      ],
+      "correct_index": 1,
+      "explanation": "Stop — reversible — start we can do, EBS data persist does (instance store only lost will happen). Terminate — PERMANENT — instance destroy will happen, restart to do mudiyaaathu, AND storage's fate volume settings-ai base done maarum (idhai in next deep let us lookam).",
+      "ren_correct": "Correct — stop reversible, terminate permanent. This fundamental difference.",
+      "ren_wrong": "Stop um terminate also same not. Stop reversible, terminate permanent — idhai miss do not do."
+    },
+    {
+      "id": "C4.2a-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.2a",
+      "scenario": "Before karthik-dev proceeds, you review his planned launch configuration.",
+      "broken_config": "Planned launch config for the migration script instance:\n├── AMI: a community AMI advertised as \"fast-boot, instance-store optimized\"\n├── Instance type: m5.large\n├── Root volume: instance store (comes with the chosen AMI, no EBS root volume)\n├── Additional storage: none planned — output was going to be written directly to the root volume\n└── Plan: launch, run script (~2 hours), review output on the instance, terminate when done",
+      "what_to_find": [
+        "The chosen AMI uses instance store for its ROOT volume — this means ALL data on the instance, including any output written to the root filesystem, is ephemeral and tied to the specific underlying host",
+        "No additional persistent storage is planned at all — the migration output (the entire point of running this script) would be written to ephemeral storage with no durable copy anywhere",
+        "The plan to 'review output on the instance, then terminate' is especially risky combined with instance-store root storage — if anything goes wrong between finishing the script and finishing the review, or if the instance needs a restart, the output could be lost before anyone even gets to use it"
+      ],
+      "correct_fix": "Either choose an EBS-backed AMI instead (so the root volume persists through stop/restart, though still lost on termination unless configured otherwise), or — better for this use case — attach a separate EBS volume specifically for the output, and write the script's output there rather than to the root volume at all.",
+      "explanation": "This proactive catch — problem happen munnad, plan-ai review done catch doing. 'Everything instance in store write do, then paakklaam' plan itself risky — output-ai separate, durable in storage write doing correct approach."
+    },
+    {
+      "id": "C4.2a-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C4.2a",
+      "question": "Arrange the corrected launch plan in the right order.",
+      "items": [
+        "Choose an EBS-backed AMI (not instance-store-backed) for the root volume",
+        "Attach a separate, additional EBS volume specifically for the migration script's output",
+        "Launch the instance, connect to it, and run the migration script, writing output to the dedicated EBS volume",
+        "Copy or verify the output has been safely moved off the instance entirely (e.g. to S3) before considering the job done",
+        "Only after the output is confirmed safe elsewhere, terminate the instance"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "explanation": "AMI/storage decisions first (launch time-leye decide must do), then script run must do, then output-ai safely verify must do, LAST only terminate must do. Output safely to be — confirm without doing terminate doing risky.",
+      "ren_correct": "Nice sequencing — output safely to be confirm do terminate doing, this real discipline.",
+      "ren_wrong": "Order again paaru — output safely verify without doing terminate must not, that last step-aaka must be."
+    },
+    {
+      "id": "C4.2a-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2a",
+      "scenario": "karthik-dev asks: 'If I use an EBS-backed AMI for the root volume instead of instance-store, do I still need that separate additional EBS volume for output, or is the root volume enough?'",
+      "question": "How should you answer?",
+      "options": [
+        "A) The root volume alone is sufficient — a separate volume is never necessary once you're using an EBS-backed AMI",
+        "B) A separate volume is still the safer choice, even with an EBS-backed root — because by default, a root volume is set to be DELETED automatically on termination, while separately-attached (non-root) volumes default to being KEPT on termination unless explicitly configured otherwise. Output that matters is safer on a volume that survives termination by default",
+        "C) It doesn't matter either way — termination behavior is identical for root and non-root volumes",
+        "D) EBS-backed root volumes can never be terminated along with the instance, regardless of settings"
+      ],
+      "correct_index": 1,
+      "explanation": "This exact real distinction — root volume DEFAULT DeleteOnTermination=true (terminate did automatic delete will happen), but separately-attached volumes DEFAULT DeleteOnTermination=false (terminate even if done KEEP will happen, explicit delete without doing went). Output-ai in root only vachukittu irundha, terminate did klkku automatic pochu.",
+      "ren_correct": "Correct — root um attached volumes also different different default DeleteOnTermination behavior is there.",
+      "ren_wrong": "A bit off track. Root volume DEFAULT terminate did delete will happen, attached volumes DEFAULT keep will happen. This real, important difference."
+    },
+    {
+      "id": "C4.2a-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2a",
+      "scenario": "karthik-dev asks whether to set up a key pair for SSH access, or use AWS Systems Manager Session Manager instead, just to connect and monitor the script while it runs.",
+      "question": "At a high level, why might Session Manager be the better choice here, even for a quick one-off task?",
+      "options": [
+        "A) Session Manager is always faster to type commands in than SSH, which is its only real advantage",
+        "B) Session Manager doesn't require opening port 22 in the security group or managing an SSH key pair at all — access is controlled entirely through IAM permissions, reducing the attack surface and removing a key-management responsibility, even for a short-lived instance",
+        "C) SSH is being deprecated by AWS and will stop working entirely soon",
+        "D) There's no real difference — this choice only matters for long-running production instances, not one-off scripts"
+      ],
+      "correct_index": 1,
+      "explanation": "Session Manager's real advantage — port 22 open do is not needed, key pair manage must do is not needed, IAM permissions only sufficient. One-off for task also this matter does — how much temporary even if, unnecessary open port a risk. (Session Manager's deeper mechanics — next in lesson let us lookam.)",
+      "ren_correct": "Correct — Session Manager's real value attack surface reduce doing, how much temporary task aanalum matter does.",
+      "ren_wrong": "A bit think again — this 'for temporary matter aagath' not. Unnecessary open port + key management, how much short-lived even then avoid doing nallathu."
+    },
+    {
+      "id": "C4.2a-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C4.2a",
+      "scenario": "The migration script completes successfully. karthik-dev copies the output volume's data to S3, confirms it looks correct, and then terminates the instance — thinking this is the clean way to close everything out. A day later, he realizes he'd also manually edited a config file directly on the root volume during setup, meaning to reference it later.",
+      "error_shown": "$ aws ec2 describe-instances --instance-ids i-0c4d8e2f1a9b3c7d6\n\"Reservations\": []\n(instance no longer exists; root volume also no longer appears under Elastic Block Store > Volumes)",
+      "diagnosis": "The instance's root volume had DeleteOnTermination set to its default value (true). Terminating the instance therefore automatically deleted the root volume along with it — including the manually-edited config file that lived only there, with no other copy anywhere. The separate, attached EBS volume where the actual script output was written was NOT deleted, because non-root attached volumes default to DeleteOnTermination=false — that data was already safely copied to S3 anyway.",
+      "fix": "Going forward: anything on a root volume that needs to survive termination must either be copied elsewhere BEFORE terminating, or the root volume's DeleteOnTermination flag must be explicitly set to false at launch (or via a console/CLI setting change before terminating) if the volume itself needs to persist as a snapshot or standalone volume afterward.",
+      "explanation": "This exact real-world gotcha — 'terminate doing clean way' — ninaikkardhu, but root volume default DELETE will happen. Important anything root in volume only if it was (backup without), terminate did permanent pochu. This in T6 we saw concept's real consequence."
+    },
+    {
+      "id": "C4.2a-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C4.2a",
+      "scenario": "To prevent this from happening again, you document the correct pre-termination checklist and verify it against what actually happened.",
+      "broken_config": "Post-incident review — what survived vs what was lost:\n├── Root volume (instance store... no wait, EBS-backed with default DeleteOnTermination=true): DELETED on termination — the manually-edited config file is unrecoverable\n├── Additional output volume (DeleteOnTermination=false by default, not explicitly changed): SURVIVED termination, still exists as a standalone volume — though its data was already safely in S3 anyway\n└── New checklist item being added: \"Before terminating any instance, confirm (1) anything on the root volume that matters has been copied elsewhere, and (2) any additional volumes' DeleteOnTermination settings match intent — don't assume defaults are what you want\"",
+      "what_to_find": [
+        "The root volume's loss was entirely explained by its default DeleteOnTermination=true setting — this wasn't a bug or unusual AWS behavior, it was the expected default nobody had reason to override",
+        "The additional output volume survived by default too — but relying on an unreviewed default (even a favorable one) isn't the same as a deliberate decision",
+        "The new checklist item is the real structural fix — it turns 'hope the defaults work out' into an explicit, repeatable check before every termination"
+      ],
+      "correct_fix": "No further recovery is possible for the lost config file — document what was lost and move forward with the new checklist in place for all future terminations.",
+      "explanation": "This 'lesson learned, structural fix documented' verify task — we anything recover to do mudiyaaathu (already gone), but for future same mistake repeat aagaamal to be checklist create is already done. This CS2/CS3's structural fix pattern's continuation."
+    },
+    {
+      "id": "C4.2a-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C4.2a",
+      "scenario": "Ravi asks for a general guideline: for different kinds of EC2 workloads, when should the team default to STOPPING an instance between uses versus TERMINATING it?",
+      "options": [
+        "A) Always terminate — stopped instances are pointless since they still exist in some form",
+        "B) Stop instances that are reused repeatedly with meaningful local state or slow startup configuration (e.g. a dev/test box used daily, or an instance with a lengthy manual setup); terminate instances that are truly one-off or fully reproducible from a script/AMI/Infrastructure-as-Code, where nothing valuable would be lost by starting fresh next time",
+        "C) Always stop, never terminate — terminating is inherently more dangerous and should be avoided entirely",
+        "D) The choice should be based purely on cost — always pick whichever is cheaper regardless of workload characteristics"
+      ],
+      "correct_index": 1,
+      "explanation": "This real judgment — reusable, hard-to-recreate state that is there for instances (dev boxes, manually-configured setups) STOP better, fast restart + state preserve does. Fully reproducible, one-off for instances (in script irundhu recreate to do muiyaum) TERMINATE fine, nothing valuable lost. Blanket rule (always stop/always terminate) real judgment not.",
+      "ren_correct": "Correct — workload characteristics-ai base done decide do, blanket rule without.",
+      "ren_wrong": "A bit extreme you thought. 'Always X' rule real judgment not — reusable state vs fully-reproducible, for two different different answer needed."
+    },
+    {
+      "id": "C4.2a-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C4.2a",
+      "scenario": "Ravi asks about the cost implications of leaving an instance STOPPED (rather than terminated) for extended periods, since a few engineers have been doing this 'just in case' after finishing one-off tasks. An m5.large's EBS root volume (80GB gp3) costs roughly ₹640/month regardless of whether the instance is running or stopped; compute charges (~₹5,600/month if running continuously) stop entirely while an instance is stopped.",
+      "question": "What's the real cost of the 'stop it just in case' habit, if instances are left stopped indefinitely instead of being properly terminated (with output already saved elsewhere)?",
+      "solution": "Stopping eliminates the ~₹5,600/month compute cost, but the ~₹640/month EBS storage cost continues indefinitely for as long as the instance stays stopped — for a genuinely one-off task where the output is already safely copied elsewhere, this is pure ongoing waste with no benefit. Across a team of engineers each leaving a few instances stopped 'just in case,' this can add up to a meaningful, entirely avoidable monthly cost. The right call for truly one-off, reproducible work is to terminate once output is verified safe — not stop indefinitely.",
+      "explanation": "This real cost habit — 'just in case' stop doing free not, EBS storage cost continue will happen. Output already safely irundha, indefinite stop doing waste only, with no real benefit."
+    },
+    {
+      "id": "C4.2a-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C4.2a",
+      "scenario": "Time to report back to Ravi on this piece of FQ-171.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Instance launched, script ran, instance terminated. All good.\"",
+        "B) \"Caught an issue before launch: karthik-dev's original plan used an instance-store-only AMI with no durable storage for the output — corrected to an EBS-backed AMI plus a dedicated attached volume. Script ran successfully, output verified in S3 before termination. Hit one real gotcha after terminating: the root volume's manually-edited config file was lost to the default DeleteOnTermination=true setting — unrecoverable, but added a pre-termination checklist item so this doesn't repeat. Also documented general stop-vs-terminate guidance and flagged the cost of indefinitely-stopped 'just in case' instances.\"",
+        "C) \"Ran into a data loss issue but it's resolved now, no need to change any process.\"",
+        "D) \"Everything about EC2 lifecycle is now fully understood and no further mistakes are possible.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — — proactive catch (T4) AND the real gotcha hit later (T8) AND the structural fix (T9 checklist), all clearly mention must do. 'No need to change any process' — wrong — real gap irundhuchu, adhai fix is already done. 'Fully understood, no further mistakes possible' overclaim — in engineering anything 'fully solved forever' — solla mudiyaaathu.",
+      "ren_correct": "This correct report — proactive catch, real gotcha, AND the structural fix, all honestly represented.",
+      "ren_wrong": "This report either real gap-ai dismiss does or impossible overclaim (\"no further mistakes possible\") does."
+    }
+  ],
+  "act_number": 2,
+  "act_title": "Launch With Persistence in Mind",
+  "builds_layer": "Launch Discipline Layer"
+}

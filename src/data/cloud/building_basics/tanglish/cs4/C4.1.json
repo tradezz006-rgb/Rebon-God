@@ -1,0 +1,325 @@
+{
+  "lesson_id": "C4.1",
+  "lesson_title": "EC2 Instance Types",
+  "section_id": "CS4",
+  "section_name": "Compute",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C3.6 — Route 53 DNS",
+  "student_will_learn": [
+    "Explain the difference between burstable, general purpose, compute-optimized, and memory-optimized instance families",
+    "Explain how CPU credits work for burstable (t-series) instances",
+    "Identify what happens when a t-series instance exhausts its CPU credits",
+    "Match a workload's characteristics to the right instance family",
+    "Debug a production performance issue caused by an undersized burstable instance"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Networking முடிஞ்சிடுச்சு, இப்போ ஒரு புது ticket - FQ-171, Ravi-கிட்ட இருந்து. Ravi சொல்றாங்க, 'FoodQuick-ஓட EC2 instances எல்லாம், Day 1-ல ஒரு guess மாதிரி size பண்ணப்பட்டது - யாரும் திரும்பி பார்க்கவே இல்ல. இப்போ traffic வளர்ந்திருக்கு, சில servers மட்டமா perform பண்றாங்க'. இதுதான் இன்னைக்கு நாம ஆரம்பிக்கப் போற CS4 Compute session - EC2 instance types எப்படி தேர்ந்தெடுக்கறதுனு பார்ப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS4 · Lesson C4.1",
+        "EC2 Instance Types",
+        "Ticket FQ-171 — Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Instance Families — Different Hardware for Different Jobs",
+      "ava_speaks": "EC2 instance types, family letters-ஆ group பண்ணப்பட்டிருக்கும் - t3 (burstable), m5 (general purpose), c5 (compute-optimized), r5 (memory-optimized). t3 instances ஒரு baseline CPU level வெச்சிருக்கும், ஆனா 'CPU credits' சேர்த்து, குறுகிய நேரத்துக்கு baseline-ஐ விட அதிகமா burst பண்ணலாம் - இது unpredictable, spiky traffic-க்கு நல்லது, ஆனா sustained high load-க்கு அல்ல. m5 balanced CPU-memory ratio வெச்சிருக்கும் - most general applications-க்கு நல்லது. c5 அதிக CPU, குறைவான memory - compute-heavy workloads (video encoding, batch processing) க்கு. r5 அதிக memory, in-memory caching, large databases-க்கு.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "The Four Main Instance Families"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Family",
+            "Best For"
+          ],
+          "rows": [
+            [
+              "t3 (burstable)",
+              "Spiky, unpredictable, low-average-CPU workloads — dev/test, small websites"
+            ],
+            [
+              "m5 (general purpose)",
+              "Balanced CPU and memory — most typical application servers"
+            ],
+            [
+              "c5 (compute-optimized)",
+              "CPU-heavy sustained workloads — video encoding, batch processing"
+            ],
+            [
+              "r5 (memory-optimized)",
+              "Memory-heavy workloads — in-memory caches, large databases"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "A t-series instance is not simply 'cheaper' — it's a different performance model built on credits, not sustained capacity."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு production database, sustained-ஆ high CPU load-ல run ஆகும். எந்த instance family பொருந்தும்?",
+          "options": [
+            "A) t3, ஏன்னா அது cheapest",
+            "B) m5 அல்லது r5, workload characteristics-ஐ பொறுத்து",
+            "C) எந்த family-ஆ இருந்தாலும் ஒரே மாதிரி performance",
+            "D) c5 மட்டும், மற்றது எல்லாம் database-க்கு பொருந்தாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Sustained load-க்கு t3 பொருந்தாது - அது credits exhaust ஆயிடும். m5 அல்லது r5 (memory-heavy database-னா) தான் correct choice, workload-ஐ பொறுத்து.",
+          "ava_wrong": "இல்ல, t3 sustained high CPU load-க்கு பொருந்தாது - அது burst credits use பண்ணி, exhaust ஆனப்புறம் throttle ஆயிடும். Sustained load-க்கு m5 அல்லது r5 தான் நல்லது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "t3 instance-ஓட 'burstable' behavior-ஐ என்ன control பண்ணுது?",
+          "options": [
+            "A) Instance-ஓட storage size",
+            "B) CPU credits - baseline-ஐ விட அதிகமா use பண்ணும்போது consume ஆகும்",
+            "C) Instance-ல install பண்ணி இருக்கற OS",
+            "D) VPC-ஓட CIDR block size"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! CPU credits தான் இந்த burst behavior-ஐ control பண்ணுது - baseline-க்கு மேல CPU use பண்ணும்போது credits consume ஆகும், அது run out ஆனா performance throttle ஆயிடும்.",
+          "ava_wrong": "இல்ல, storage-ஓட relation இல்ல - t3-ஓட burst behavior CPU credits-ஐ சார்ந்தது. Baseline CPU-ஐ விட அதிகமா use பண்ணும்போது credits consume ஆகும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "The t3.micro Database That Throttled Under Load",
+      "ava_speaks": "FoodQuick-ஓட launch day, budget tight-ஆ இருந்ததால, production database-ஐ t3.micro instance-ல run பண்ணிட்டாங்க - அது cheapest option. ஆரம்பத்துல ஒண்ணுமே problem இல்ல, traffic குறைவா இருந்ததால. ஆனா orders increase ஆக ஆக, database CPU credits fast-ஆ exhaust ஆக ஆரம்பிச்சுது, ஒவ்வொரு lunch-time peak-லயும் response times 5x slow ஆகுச்சு. Zomato, Swiggy மாதிரி early-stage food delivery startups-ஓட engineering post-mortems-லயும், இதே pattern common-ஆ பேசப்படும் - 'launch day cost-cutting decisions, scale ஆனப்புறம் structural bottleneck ஆகும்'.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Undersized Instance — A Common Growth Pain"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Growth Stage",
+            "Impact"
+          ],
+          "rows": [
+            [
+              "Launch (low traffic)",
+              "t3.micro handles the load fine, CPU credits rarely exhausted"
+            ],
+            [
+              "3-6 months later (traffic growing)",
+              "CPU credits exhaust during peak hours, database throttles"
+            ],
+            [
+              "Symptom",
+              "Response times spike 5x during lunch-hour order peaks, customer complaints increase"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Comparing Instance Types for FoodQuick's Database",
+      "ava_speaks": "karthik-dev இப்போ FoodQuick-ஓட production database-க்கு correct instance type தேர்ந்தெடுக்க, EC2 Console-ல CPU credit usage-ஐ பாக்கிறான், அப்புறம் right-size பண்ண ஆரம்பிக்கிறான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "முதல்ல EC2 Console-ல, existing database instance-ஓட CloudWatch metrics-க்கு போய், 'CPUCreditBalance' metric-ஐ பாக்கிறோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Instances → foodquick-orders-db-instance → Monitoring tab → CPUCreditBalance",
+              "highlight": "CPUCreditBalance graph",
+              "result": "The graph shows credit balance repeatedly dropping to near-zero during lunch-hour peaks"
+            }
+          },
+          {
+            "ava_narration": "இது confirm பண்ணுது - database t3-series-ல run ஆகுது, credits repeatedly exhaust ஆகுது. இப்போ Instance Types-க்கு போய், m5.large-ஐ compare பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "EC2 Console → Instance Types → Compare t3.micro vs m5.large",
+              "highlight": "vCPU and memory columns for both instance types",
+              "result": "m5.large shows consistent, non-burstable vCPU allocation, no credit system involved"
+            }
+          },
+          {
+            "ava_narration": "'Instance state' -> 'Stop' பண்ணி, அப்புறம் 'Actions' -> 'Instance settings' -> 'Change instance type' select பண்றோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Actions → Instance settings → Change instance type",
+              "highlight": "Change instance type option",
+              "result": "The instance type selection dialog opens"
+            }
+          },
+          {
+            "ava_narration": "New instance type-ஆ m5.large select பண்ணி, apply பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Change instance type dialog",
+              "field": "Instance type",
+              "value": "m5.large",
+              "highlight": "Instance type dropdown",
+              "result": "The instance is now configured to launch as m5.large the next time it starts"
+            }
+          },
+          {
+            "ava_narration": "Instance-ஐ மறுபடி start பண்றோம் - இப்போ sustained load-லயும் credit exhaustion problem இருக்காது.",
+            "console_action": {
+              "type": "click",
+              "path": "Instance state → Start",
+              "highlight": "Start instance button",
+              "result": "The database instance boots as m5.large with consistent, non-throttled CPU capacity"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "FoodQuick's production database now runs on m5.large, which has consistent CPU capacity with no credit system, eliminating the lunch-hour throttling problem.",
+          "what_to_notice": "Instance type மாத்தறதுக்கு instance-ஐ stop பண்ணனும் - இது ஒரு brief downtime கொடுக்கும், அதனால இதை low-traffic window-ல தான் பண்ணனும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "How CPU Credits Deplete and Recover",
+      "ava_speaks": "இந்த diagram பாரு - t3 instance-ல CPU usage baseline-ஐ தாண்டினா என்ன ஆகும்னு காட்டுது.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "t3.micro baseline: 10% CPU (accrues credits when usage is below this)",
+            "",
+            "Low traffic (CPU usage 5%):",
+            "  Credits accumulate — instance builds up a buffer",
+            "",
+            "Lunch-hour peak (CPU usage 60%):",
+            "  Credits spend rapidly to cover the gap above baseline",
+            "  If credits run out mid-peak: CPU is hard-capped at baseline (10%)",
+            "  Result: requests queue up, response times spike"
+          ]
+        },
+        "ava_narration": "Credits run out ஆனப்புறம், instance forcibly baseline CPU-க்கு கீழ throttle ஆகிடும் - இதுதான் FoodQuick-ஓட lunch-time slowdowns-ஓட real cause."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Match Workloads to Instance Families",
+      "instruction": "FoodQuick-ஓட 4 workloads-ஐ, சரியான instance family-கூட match பண்ணு.",
+      "scenario": "Ravi 4 different workloads list பண்ணி இருக்காங்க: a dev/test environment used only occasionally, an in-memory Redis cache holding session data for millions of users, a video-encoding batch job that converts user-uploaded content, and the main production API server handling steady, predictable traffic.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "EC2 Console → Instance Types comparison view",
+        "current_configuration": "None of the 4 workloads have an instance family assigned yet"
+      },
+      "requirements": [
+        "Assign the dev/test environment to a t3-series (burstable) instance",
+        "Assign the Redis cache to an r5-series (memory-optimized) instance",
+        "Assign the video-encoding batch job to a c5-series (compute-optimized) instance",
+        "Assign the production API server to an m5-series (general purpose) instance"
+      ],
+      "hints": [
+        "Occasionally-used environments, spiky-ஆ low-average CPU இருக்கற workloads-க்கு t3 நல்லது - அது idle time-ல credits சேர்த்துக்கும்",
+        "'In-memory' word வந்தா, அது memory-heavy workload-nு சொல்லும் அர்த்தம் - r5 தேடு",
+        "'Encoding' அல்லது 'processing' மாதிரி words் CPU-heavy sustained workload-ஐ குறிக்கும் - c5 தேடு"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "dev/test -> t3, Redis cache -> r5, video encoding -> c5, production API -> m5",
+        "ava_correct": "Correct! ஒவ்வொரு workload-ஓட characteristics-ஐ பொறுத்து, correct family தேர்ந்தெடுத்திருக்க.",
+        "ava_wrong": "ஒரு match தப்பா இருக்கு போல - ஒவ்வொரு workload-மும் CPU-heavy-ஆ, memory-heavy-ஆ, அல்லது spiky-ஆ இருக்குனு திரும்ப யோசி."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Production Database That Kept Timing Out at Lunch",
+      "ava_speaks": "priya-dev, FoodQuick-ஓட production database launch பண்றப்போ, cost save பண்ண t3.micro தேர்ந்தெடுத்தா - 'basic database, big instance தேவை இல்ல'nு நினைச்சா. Company scale ஆக ஆக, ஒரு pattern repeat ஆக ஆரம்பிச்சுது.",
+      "setup": "priya-dev launches FoodQuick's production PostgreSQL RDS instance on a db.t3.micro to minimize cost during the early low-traffic period, reasoning that the database load is light.",
+      "what_happened": "As FoodQuick's order volume grows, every lunch-hour and dinner-hour peak causes a repeatable slowdown — API response times jump from 200ms to over 2 seconds, and customers start reporting the app 'freezing' during checkout at busy times.",
+      "broken_config": "RDS instance: foodquick-orders-db\nInstance class: db.t3.micro\nBaseline CPU: 10%\nCPUCreditBalance metric: repeatedly drops to 0 during 12-2 PM and 7-9 PM windows",
+      "error_shown": "CloudWatch alarm: foodquick-orders-db CPUCreditBalance reached 0. CPUUtilization pinned at baseline (10%) for 45 minutes during peak order volume. Application logs show a spike in query timeout errors during this window.",
+      "the_real_problem": "t3.micro burstable performance model-ல run ஆகுது - அது sustained high-load database workload-க்கு design பண்ணப்படல. Traffic predictable-ஆ, repeatedly peak hours-ல அதிகமா இருக்கும்போது, credits ஒவ்வொரு நாளும் exhaust ஆகும், database forcibly baseline CPU-க்கு throttle ஆகும் - இது ஒரு one-time issue இல்ல, தினமும் repeat ஆகும் structural problem.",
+      "fix": {
+        "corrected_config": "Modify the RDS instance class from db.t3.micro to db.m5.large (or db.r5.large if memory pressure is also a factor), which has consistent, non-credit-based CPU capacity matching the sustained peak-hour load.",
+        "result": "Peak-hour query response times return to the expected 200ms range, with no more credit-related throttling during predictable daily traffic peaks."
+      },
+      "lesson": "t3 instances 'cheap'nu தேர்ந்தெடுக்கறது, workload predictably, repeatedly peak load-ஐ face பண்ணும்னா தப்பான தேர்வு - burstable performance predictable sustained load-க்கு design பண்ணப்படல."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Instance Family Calls",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A CI/CD build server runs intensive compilation jobs for 20 minutes, several times a day, and sits idle the rest of the time. Is t3 or c5 the better fit?",
+          "answer": "t3 is actually reasonable here — the idle time between builds lets CPU credits accumulate, and the burst capacity can cover the compilation spike. If the spikes were much longer or more frequent, exhausting credits repeatedly, c5's sustained compute capacity would be worth the extra cost."
+        },
+        {
+          "question": "An engineer notices a t3.medium instance's CPUCreditBalance is consistently near its maximum and never drops much. Is this instance correctly sized?",
+          "answer": "It's likely oversized for the workload — if credits are barely being spent, the instance has far more burst capacity than it needs, meaning a smaller t3 size (or the same size running more workloads) could probably handle it at lower cost."
+        },
+        {
+          "question": "A team migrates a memory-hungry caching layer from r5.large to c5.large to save a bit on cost, since c5 is cheaper per hour. Is this a safe trade?",
+          "answer": "Not necessarily — c5 instances have less memory per vCPU than r5. If the cache's working set doesn't fit in c5's available memory, it will start evicting data more aggressively or swapping, which can hurt performance far more than the cost savings are worth. The instance family should match the workload's actual bottleneck resource, not just the hourly price."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Right-Size Instances on an Ongoing Basis",
+      "ava_speaks": "Real companies-ல, instance sizing ஒரு one-time decision இல்ல - traffic patterns change ஆகும்போது, periodic-ஆ review பண்ண வேண்டிய ஒரு ongoing process.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Monitor CPUCreditBalance and CPUUtilization trends over weeks, not just a single day",
+          "detail": "ஒரு single spike-ஐ வெச்சு decision எடுக்கக் கூடாது - repeatable, predictable patterns தான் real signal"
+        },
+        {
+          "step": 2,
+          "action": "Use AWS Compute Optimizer to get automated right-sizing recommendations based on actual usage history",
+          "detail": "Manual-ஆ ஒவ்வொரு instance-ஐயும் review பண்றதுக்கு பதிலா, data-driven recommendations கிடைக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Schedule instance type changes during low-traffic windows, since changing instance type requires a stop/start cycle",
+          "detail": "இது brief downtime கொடுக்கும், அதனால FoodQuick மாதிரி இரவு தாமதமா low order volume இருக்கும் நேரத்துல தான் இதை பண்ணனும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Compute Optimizer",
+          "use": "Actual CPU, memory, network usage history-ஐ analyze பண்ணி, over-provisioned அல்லது under-provisioned instances-ஐ automatic-ஆ flag பண்ணும்"
+        },
+        {
+          "tool": "CloudWatch CPUCreditBalance and CPUCreditUsage metrics",
+          "use": "t-series instances credits எப்போ, எவ்ளோ consume ஆகுதுனு track பண்ண, throttling problems ஆவதுக்கு முன்னாடியே கண்டுபிடிக்க உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம EC2 instance families - t3, m5, c5, r5 - எப்படி வித்தியாசப்படும்னு, CPU credits எப்படி வேலை செய்யும்னு கத்துக்கிட்டோம். மிக முக்கியமா, t3 instances predictable, sustained load-க்கு தப்பான தேர்வுனு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம EC2 launch பண்றது எப்படினு, stop vs terminate-ஓட difference-ஐயும் பார்ப்போம்.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C4.1 — Summary",
+      "points": [
+        "✓ t3 (burstable), m5 (general purpose), c5 (compute-optimized), and r5 (memory-optimized) serve different workload shapes",
+        "✓ t-series instances build CPU credits below baseline usage and spend them above baseline",
+        "✓ When CPU credits run out, a t-series instance is throttled hard-capped at its baseline CPU",
+        "✓ Instance family choice should match the workload's actual bottleneck resource — CPU, memory, or burst pattern",
+        "✓ A repeatable, predictable performance slowdown during peak hours is a strong signal of an undersized burstable instance"
+      ],
+      "coming_next": "Lesson C4.2a: Launching EC2"
+    }
+  }
+}

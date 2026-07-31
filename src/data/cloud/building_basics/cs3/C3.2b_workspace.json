@@ -1,0 +1,225 @@
+{
+  "lesson_id": "C3.2b",
+  "ticket": "FQ-156",
+  "sender": "Priya Nair (Cloud Architect)",
+  "total_tasks": 12,
+  "arc_intro": "FQ-156 — Priya Nair (Cloud Architect)\n\nGood work on the subnets. Now let's talk about something FoodQuick has never actually tested: what happens when an entire Availability Zone goes down.\n\nfoodquick-orders-db is still Multi-AZ OFF — we noted that back in C3.1 and never came back to it. And the order-service Auto Scaling Group technically spans two AZs, but I want you to check the actual min/desired numbers before assuming that means anything. A lot of teams THINK they're covered because a resource is 'in 2 AZs' without checking whether it can actually survive losing one of them.\n\nAssume ap-south-1b disappears for an hour. Walk me through what actually happens today.\n\n— Priya",
+  "arc_outro": "Priya Nair — FQ-156 update:\n\nfoodquick-orders-db is Multi-AZ now — standby in a second AZ, automatic failover, same endpoint, no app changes needed if the primary ever goes down. And the ASG is actually sized to survive losing an AZ now, not just technically 'spanning' one.\n\nThe capacity error you hit during the AZ-failure test was a good one to see for real — AWS not always having capacity exactly when and where you need it is a real, ongoing operational fact, not a one-time bug. Spreading across a third AZ and adding a second instance type was the right call.\n\nNext: NAT Gateways, Internet Gateways, and the route tables that actually wire all of this together. Right now half of what we've built only works because everything's still sharing that one flat route table from the default VPC. We're about to change that for real.\n\n— Priya",
+  "tasks": [
+    {
+      "id": "C3.2b-T1",
+      "type": "scenario_task",
+      "difficulty": "easy",
+      "environment": "incident_card",
+      "source_lesson": "C3.2b",
+      "scenario": "Priya's question: 'Assume ap-south-1b disappears for an hour. Walk me through what actually happens today.' You check the current state: foodquick-orders-db is a single RDS instance in subnet-aa11 (ap-south-1a) with Multi-AZ OFF. order-service's ASG shows min: 1, desired: 1, max: 3, spanning subnet-aa11 (1a) and subnet-bb22 (1b).",
+      "question": "Given these exact numbers, what actually happens if ap-south-1b goes down for an hour?",
+      "options": [
+        "A) Nothing breaks — the ASG spans 2 AZs, so it automatically has redundancy no matter what",
+        "B) The database is fine either way since it's in 1a, not 1b — but whether order-service survives depends entirely on which AZ its single running instance happens to be in at that moment, since desired is only 1",
+        "C) Both the database and order-service are completely safe, since RDS and ASGs are always automatically Multi-AZ by default",
+        "D) Everything goes down regardless of which AZ fails, since FoodQuick only has one VPC"
+      ],
+      "correct_index": 1,
+      "explanation": "'Spans 2 AZs' — says redundancy guarantee not — desired count 1 — , that ONE instance how much in AZ is there — depends. That in 1b irundha, 1b down but udane order-service completely down. 'Technically multi-AZ' um 'actually resilient' um two different topic — this today we test panrom.",
+      "ren_correct": "Correct — 'spans 2 AZs' oda meaning miss without doing, actual numbers paathiya. This real audit.",
+      "ren_wrong": "A bit wrong. ASG 2 in AZs even if, desired count 1 — , that single instance no matter how many AZs exist — depends — automatic redundancy is not guaranteed."
+    },
+    {
+      "id": "C3.2b-T2",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.2b",
+      "question": "Why does AWS strongly recommend spreading production resources across at least 2 Availability Zones, even though it costs more than running everything in one?",
+      "options": [
+        "A) It's purely a billing requirement — AWS charges less per instance when spread across AZs",
+        "B) A single AZ is a physically separate facility (power, cooling, network) from other AZs in the same region — if that one facility has an outage, everything inside it goes down together, regardless of how well-architected the application itself is",
+        "C) Spreading across AZs is only relevant for compliance certifications, not actual reliability",
+        "D) AZs within a region share the same physical infrastructure, so spreading across them doesn't meaningfully reduce risk"
+      ],
+      "correct_index": 1,
+      "explanation": "AZ — a independent physical facility — separate power, separate cooling, separate network path. a AZ goes fully down, inside that that is there EVERYTHINGG a sethaave down will happen, your app evalao nalla design if we had donealum. Multiple in AZ spread doing that single-facility risk actually reduce does, cost vida real physical isolation's topic.",
+      "ren_correct": "Correct — this billing trick not, real physical isolation.",
+      "ren_wrong": "AZ's whole point you missed — that physically separate facility, not a cost gimmick."
+    },
+    {
+      "id": "C3.2b-T3",
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C3.2b",
+      "question": "When RDS Multi-AZ is enabled and the primary instance's AZ fails, what actually happens from the application's point of view?",
+      "options": [
+        "A) The application must be manually reconfigured with a new database endpoint pointing to the standby",
+        "B) AWS automatically promotes the standby replica in the other AZ to primary, and the application keeps using the SAME DNS endpoint — AWS handles redirecting it, typically within 60-120 seconds",
+        "C) All data since the last manual backup is lost, and the database must be restored from a snapshot",
+        "D) Multi-AZ only protects against data loss, not availability — the application still goes down until someone manually intervenes"
+      ],
+      "correct_index": 1,
+      "explanation": "Multi-AZ RDS's whole design goal: automatic must be, application in code nothing needs to be changed. Same endpoint (DNS name) keeps working, AWS internally that DNS for standby point will do. Typically 60-120 in seconds failover complete will happen — data loss not (synchronous replication), manual intervention needed not.",
+      "ren_correct": "Correct — Multi-AZ power is this: automatic AND transparent to the app.",
+      "ren_wrong": "Multi-AZ failover manual not, happens automatically, same endpoint continue does. This its entire value."
+    },
+    {
+      "id": "C3.2b-T4",
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.2b",
+      "scenario": "You pull the full current resilience posture to map exactly what would break in an AZ failure.",
+      "broken_config": "foodquick-orders-db (RDS PostgreSQL):\n├── Multi-AZ: DISABLED\n├── Instance: db.m5.large in subnet-aa11 (ap-south-1a)\n└── Standby: NONE\n\norder-service Auto Scaling Group:\n├── min: 1\n├── desired: 1\n├── max: 3\n├── Subnets: subnet-aa11 (ap-south-1a), subnet-bb22 (ap-south-1b)\n└── Current running: 1 instance (currently placed in ap-south-1a)\n\nALB target group (order-service-tg):\n├── Registered targets: 1 (the single ASG instance above)\n└── Health check: /health, healthy",
+      "what_to_find": [
+        "RDS Multi-AZ is disabled — if ap-south-1a (where the DB lives) fails, there is no standby anywhere to fail over to. Full database outage until manual intervention.",
+        "The ASG's desired count is only 1, even though it spans 2 AZs — there is exactly one running instance, and it happens to be in ap-south-1a right now. If that specific AZ fails, order-service has zero running instances, regardless of the ASG technically 'spanning' 2 AZs.",
+        "The ALB target group only has 1 registered target — with only 1 instance existing, there was never really a second target to fail over to in the first place.",
+        "Both the database AND the compute layer currently depend entirely on ap-south-1a staying healthy — the 'spans 2 AZs' configuration provides no actual protection at today's desired count of 1."
+      ],
+      "correct_fix": "Enable RDS Multi-AZ (adds a synchronously-replicated standby in a different AZ, e.g. ap-south-1b). Raise the ASG's min and desired counts to at least 2, ensuring AWS actually places running instances across both AZs, not just permitting it. Confirm the ALB target group reflects at least 2 healthy targets across 2 AZs before considering this resolved.",
+      "explanation": "This in C3.2a we saw 'subnet group needs 2 AZs' fact's different topic — that a config prerequisite only, this ACTUAL resilience: min/desired counts real 2+ instances running must be, or that '2 AZs' setting's meaning not."
+    },
+    {
+      "id": "C3.2b-T5",
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C3.2b",
+      "question": "Arrange the correct order to fix both the RDS and ASG resilience gaps without causing a self-inflicted outage during the change.",
+      "items": [
+        "Enable RDS Multi-AZ during a low-traffic window (this triggers a brief reboot on the primary as the standby is provisioned)",
+        "Confirm the RDS failover completed successfully and the standby is healthy in its own AZ",
+        "Raise the ASG's min and desired count from 1 to at least 2",
+        "Verify the ALB target group now shows at least 2 healthy targets spread across 2 different AZs",
+        "Schedule and communicate the maintenance window to the team before touching production"
+      ],
+      "correct_order": [
+        4,
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "Production change —, communication first — for team theriyaama maintenance window edukka must not. Then Multi-AZ enable must do (this brief reboot will come, so low-traffic window needed), then that successful is verify must do. Then ASG counts raise must do, last ALB target group real 2 in AZs healthy to be — confirm must do.",
+      "ren_correct": "Nice sequencing — communication first, risky change next, verify at every step.",
+      "ren_wrong": "Order again paaru — for team communicate without doing production change doing risky. Verify steps also skip do not do."
+    },
+    {
+      "id": "C3.2b-T6",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2b",
+      "scenario": "You're about to enable Multi-AZ on foodquick-orders-db. karthik-dev asks: 'Does this mean we now have 2 separate databases we need to keep in sync ourselves, like a read replica setup?'",
+      "question": "How should you correct this misunderstanding?",
+      "options": [
+        "A) Yes — the team will need to write custom replication logic to keep both copies in sync",
+        "B) No — Multi-AZ is not the same as a read replica. AWS manages a synchronous standby copy automatically; the team never queries it directly, never manages replication, and only interacts with the single primary endpoint. It exists purely for automatic failover, not for read scaling.",
+        "C) Yes, but only during the first 24 hours after enabling it — after that, AWS merges the two copies back into one",
+        "D) No — Multi-AZ and read replicas are actually the exact same feature, just with different names in the console"
+      ],
+      "correct_index": 1,
+      "explanation": "This common confusion — Multi-AZ standby um Read Replica um two completely different purpose. Multi-AZ for standby app never directly query what was done, that purely failover target — AWS fully manage does, synchronous replication, zero effort for team. Read replica (different topic, different lesson) — app explicitly that query to do can, read for scaling use we will do.",
+      "ren_correct": "Correct — Multi-AZ standby is invisible-to-the-app failover insurance, not a second thing you manage.",
+      "ren_wrong": "Multi-AZ standby also read replica also confuse do not — standby we directly touch must not, that purely automatic only for failover."
+    },
+    {
+      "id": "C3.2b-T7",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2b",
+      "scenario": "You raise the ASG's desired count from 1 to 2. Priya asks a follow-up: 'If I set min=2 and desired=2 spanning 2 AZs, is that now actually safe against losing one AZ?'",
+      "question": "Is min=2/desired=2 across exactly 2 AZs genuinely safe against one AZ failing?",
+      "options": [
+        "A) Yes — with 2 AZs and desired=2, AWS guarantees exactly one instance per AZ, so losing one AZ always leaves exactly one instance running",
+        "B) Not fully — AWS's placement isn't strictly guaranteed to be perfectly 1-per-AZ, and even if it were, losing an AZ still means order-service drops to whatever's running in the surviving AZ alone, with zero spare capacity for that period. A safer target is enough total capacity that losing one AZ still leaves comfortable headroom, not just \"technically still running\"",
+        "C) Yes, and it's also fully protected against traffic spikes during the outage, since ASG auto-scales instantly to any load",
+        "D) No — 2 AZs can never be safe, only 3+ AZs count as \"real\" redundancy under any circumstances"
+      ],
+      "correct_index": 1,
+      "explanation": "'Technically survives' and 'comfortably survives' are two different level. min=2/desired=2 across 2 AZs — , worst in case one AZ goes down, exactly 1 instance only run to do vaippu will be — zero buffer, and traffic spike if it comes that 1 instance overwhelm we can do. Real answer: enough TOTAL capacity spread wide enough, so losing one AZ still leaves genuine headroom, not just bare survival.",
+      "ren_correct": "Correct — 'survives' and 'survives comfortably with headroom' are different bars. This real production thinking.",
+      "ren_wrong": "A bit simplistic you thought. Bare minimum 'still running' oda meaning not 'actually handling load comfortably'."
+    },
+    {
+      "id": "C3.2b-T8",
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C3.2b",
+      "scenario": "To validate the fix, you simulate an AZ failure by terminating the instance in ap-south-1b and watching the ASG try to replace capacity. It attempts to launch a replacement instance of the same type (m5.large) back into ap-south-1b.",
+      "error_shown": "An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation: We currently do not have sufficient m5.large capacity in the Availability Zone you requested (ap-south-1b). Our system will be working on provisioning additional capacity.",
+      "diagnosis": "Even with a correctly-configured Multi-AZ setup, AWS itself does not guarantee unlimited capacity of a specific instance type in every AZ at every moment — during real regional stress events (which is exactly when AZ failures tend to happen), a popular instance type can genuinely run short in one AZ. Relying on only 2 AZs and a single instance type means a real AZ failure can coincide with exactly this kind of capacity crunch, defeating the resilience design.",
+      "fix": "Configure the ASG to span a third AZ (ap-south-1c is already available in this VPC) so there's another AZ to absorb capacity, and use a mixed instance types configuration (e.g. allow m5.large OR m5a.large OR m5n.large) so the ASG can launch whichever type has available capacity instead of being locked to one exact type.",
+      "explanation": "This real, non-obvious operational lesson — Multi-AZ design you all did — thinking irundha, but specific instance type + specific AZ for combination capacity is not guaranteed. Real resilience —, AZ count only not, instance type flexibility also sernthu vendum."
+    },
+    {
+      "id": "C3.2b-T9",
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "monaco_editor",
+      "source_lesson": "C3.2b",
+      "scenario": "After applying every fix, you re-run the AZ-failure simulation end to end and audit the result.",
+      "broken_config": "Post-fix resilience audit:\n\nfoodquick-orders-db:\n├── Multi-AZ: ENABLED\n├── Primary: ap-south-1a, Standby: ap-south-1b\n└── Simulated failover time: 74 seconds, same endpoint used throughout ✓\n\norder-service ASG:\n├── min: 3, desired: 4, max: 6\n├── Subnets: subnet-aa11 (1a), subnet-bb22 (1b), subnet-ff66 (1c) — 3 AZs\n├── Instance types: m5.large, m5a.large, m5n.large (mixed)\n└── During simulated 1b failure: 3 of 4 instances remained running across 1a and 1c — no capacity errors this time\n\nALB target group:\n└── 3 healthy targets throughout the simulated failure — zero dropped requests observed",
+      "what_to_find": [
+        "RDS failover completed automatically within 74 seconds using the same endpoint — no application changes were needed, confirming the fix holds",
+        "The ASG now spans 3 AZs with mixed instance types — during the simulated failure, capacity was available and no InsufficientInstanceCapacity error recurred",
+        "desired=4 with min=3 means even losing one AZ's worth of instances still left the ASG above its own minimum — genuine headroom, not bare survival",
+        "Zero dropped requests at the ALB during the entire simulated failure — this is the actual outcome that matters to customers, not just 'the config looks resilient on paper'"
+      ],
+      "correct_fix": "No further changes needed — this configuration held up under an actual simulated AZ failure with genuine headroom. Document the test results (failover time, capacity behavior, zero dropped requests) as evidence for the postmortem/change record.",
+      "explanation": "This 'recognize this is already correct' type task — sometimes verify step's result 'all nalla is there' — confirm doing, still any problem thedi kandupidikanum — not. Real proof this: paper's config not, ACTUAL simulated in failure zero dropped requests."
+    },
+    {
+      "id": "C3.2b-T10",
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C3.2b",
+      "scenario": "Priya asks you to recommend FoodQuick's standing redundancy policy going forward: how many AZs should production-critical services always span, as a rule, not just for this one fix?",
+      "options": [
+        "A) Exactly 2 AZs everywhere, always — 2 is technically 'multi-AZ' so there's no need to ever go further",
+        "B) 3 AZs for anything customer-facing and revenue-critical (order-service, the DB), giving both AZ-failure protection AND capacity flexibility during regional stress events, while accepting 2 AZs is acceptable for lower-priority internal tools where a slower recovery is tolerable",
+        "C) All available AZs in the region for every single resource, regardless of cost or actual criticality",
+        "D) 1 AZ is fine for everything as long as backups exist, since backups can always be restored quickly enough"
+      ],
+      "correct_index": 1,
+      "explanation": "in T8 paathom — 2 AZs only —, capacity crunch's risk still is there. All-AZs-everywhere — unnecessary cost, criticality different different that is there for resources same investment needed not. Real policy: for criticality match but redundancy — for customer-facing/revenue-critical 3 AZs, low-priority internal for tools 2 podhum.",
+      "ren_correct": "Correct — redundancy investment criticality's match aaganum, blanket rule without.",
+      "ren_wrong": "A bit think again — blanket 'same everywhere' rule — either under-protect does critical services-ah, or over-spend does for low-priority."
+    },
+    {
+      "id": "C3.2b-T11",
+      "type": "cost_analysis",
+      "difficulty": "medium",
+      "environment": "cost_explorer",
+      "source_lesson": "C3.2b",
+      "scenario": "Ravi asks for the business case in numbers before approving the Multi-AZ change: what does it actually cost, versus what's the risk if FoodQuick skips it? FoodQuick's db.m5.large RDS instance costs roughly ₹28,000/month single-AZ; enabling Multi-AZ roughly doubles that instance cost to about ₹56,000/month. Separately, FoodQuick's lunch-hour peak processes around 3,200 orders/hour at an average order value of ₹280.",
+      "question": "How should this be framed for Ravi, in real numbers?",
+      "solution": "The Multi-AZ premium costs an extra ~₹28,000/month (~₹3.36 lakh/year). A single lost peak lunch hour of order-service downtime represents roughly 3,200 × ₹280 ≈ ₹8.96 lakh in that one hour alone — not counting customer trust or App Store review damage. The ₹28,000/month insurance cost is recovered by avoiding a small fraction of a single bad hour; skipping it to save money is a false economy the moment an AZ failure actually happens during peak hours.",
+      "explanation": "This real business framing — cost of the fix vs cost of NOT fixing it, both real ₹ numbers's compare doing. ₹28,000/month insurance — , a peak hour downtime's ₹8.96 lakh risk's earlier microscopic is there."
+    },
+    {
+      "id": "C3.2b-T12",
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C3.2b",
+      "scenario": "Time to report back to Priya Nair on this piece of FQ-156.",
+      "question": "Which report should you send?",
+      "options": [
+        "A) \"Enabled Multi-AZ and increased the ASG size. FoodQuick is now 100% failure-proof.\"",
+        "B) \"Enabled RDS Multi-AZ (74-second automatic failover, same endpoint, tested). Increased the ASG to span 3 AZs with min=3/desired=4 and mixed instance types, after a simulated AZ failure surfaced an InsufficientInstanceCapacity error with only 2 AZs and one instance type. Re-tested end to end — zero dropped requests during a full simulated AZ outage. Recommending 3-AZ redundancy as the standing policy for customer-facing services going forward.\"",
+        "C) \"Turned on Multi-AZ. Should be fine now, didn't test further.\"",
+        "D) \"Increased the ASG size across 2 AZs. Didn't touch the database since it wasn't asked for.\""
+      ],
+      "correct_index": 1,
+      "explanation": "Correct report — specific-ah, tested-ah, and we in path kandupudicha real complication (capacity error) also transparently mention must do — 'fixed and tested' for sayingm 'fixed, assumed working' for sayingm periya difference is there. '100% failure-proof' — says overclaim — in engineering absolute promise never must do.",
+      "ren_correct": "This correct report — specific, tested, honest about what actually happened including the complication.",
+      "ren_wrong": "This report either overclaim does ('100% failure-proof') or under-tested/incomplete is there. Real report evidence's must be."
+    }
+  ],
+  "act_number": 3,
+  "act_title": "Internet Paths — IGW and NAT",
+  "builds_layer": "Egress Path Layer"
+}

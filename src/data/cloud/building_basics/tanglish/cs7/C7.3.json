@@ -1,0 +1,340 @@
+{
+  "lesson_id": "C7.3",
+  "lesson_title": "Deploy Application Layer",
+  "section_id": "CS7",
+  "section_name": "Portfolio Project",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "prerequisites": "C7.2 — Build Network Layer",
+  "student_will_learn": [
+    "Launch EC2 instances into the correct subnets built in the previous lesson",
+    "Deploy an ALB spanning both public subnets with a correctly configured target group",
+    "Integrate an Auto Scaling Group so the application layer self-heals and scales",
+    "Verify the complete stack end-to-end with a successful 200 response",
+    "Apply the complete CS4 compute curriculum as one continuous deployment, not isolated exercises"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Network layer ready-ஆ இருக்கு, verified-ஆவும் இருக்கு. இப்போ Ravi-ஓட FQ-218 ticket-ல அடுத்த step - application layer-ஐ, இந்த network foundation-ஓட மேல deploy பண்றது. இது CS4-ல நாம கத்துக்கிட்ட எல்லாத்தையும் - instance types, launch templates, load balancing, auto scaling - ஒரே continuous deployment-ஆ கொண்டு வரப் போறோம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS7 · Lesson C7.3",
+        "Deploy Application Layer",
+        "Ticket FQ-218 — continuing with Ravi"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "The Deployment Order — Golden AMI, Target Group, ALB, ASG",
+      "ava_speaks": "Application layer deploy பண்றதும், ஒரு specific order follow பண்ணும் - இதுவும் CS4-ல கத்துக்கிட்ட dependencies-ஐ reflect பண்ணும். முதல்ல, Launch Template (golden AMI + instance type + security group, C4.3-ல கத்துக்கிட்டது). அப்புறம் Target Group (C4.4). அப்புறம் ALB, இந்த target group-ஐ point பண்ணி, public subnets-ல span பண்ணி. இறுதியா, ASG, இந்த launch template-ஐயும் target group-ஐயும் ரெண்டையும் ஒன்னா link பண்ணி, correct min/max/desired-கூட.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Application Layer Build Order"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Step",
+            "Depends On (from CS4)"
+          ],
+          "rows": [
+            [
+              "1. Launch Template",
+              "Golden AMI (C4.3), instance type decision (C4.1)"
+            ],
+            [
+              "2. Target Group",
+              "The VPC (C3.1), health check path matching the app (C4.4)"
+            ],
+            [
+              "3. ALB",
+              "Both public subnets (C7.2), the target group"
+            ],
+            [
+              "4. Auto Scaling Group",
+              "The launch template, the target group, both private subnets (C4.5)"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "The ASG is deployed last because it references everything built before it — the launch template, the subnets, and the target group all need to exist first."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ASG-ஐ, launch template create பண்றதுக்கு முன்னாடியே create பண்ண முடியுமா?",
+          "options": [
+            "A) ஆமா, order matter பண்ணாது",
+            "B) இல்ல, ASG-க்கு ஒரு launch template reference பண்ண வேணும் - அது இன்னும் exist பண்ணல்னா ASG create ஆகாது",
+            "C) ஆமா, ASG automatic-ஆ ஒரு default launch template create பண்ணிடும்",
+            "D) ASG-க்கு launch template தேவையே இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! C4.5-ல கத்துக்கிட்டது நினைவிருக்கா - ASG create பண்றப்போ, எந்த launch template use பண்ணணும்னு select பண்ணனும், அது முதல்ல exist பண்ணனும்.",
+          "ava_wrong": "இல்ல, ASG launch template-ஐ சார்ந்திருக்கும் - C4.5-ல கத்துக்கிட்டது படி, ASG create பண்றப்போ, launch template select பண்ணனும், அது இன்னும் create ஆகல்னா proceed பண்ண முடியாது."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Target group health check path, application-ஓட actual endpoint-கூட match ஆகாம இருந்தா, என்ன ஆகும் (C4.4 நினைவிருக்கா)?",
+          "options": [
+            "A) ஒண்ணுமே ஆகாது, ALB assume பண்ணிடும்",
+            "B) Healthy instances-மும் unhealthy-nு mark ஆகி, traffic கிடைக்காது",
+            "C) Health check automatic-ஆ correct path-ஐ கண்டுபிடிச்சிடும்",
+            "D) Instance terminate ஆயிடும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! C4.4-ல கத்துக்கிட்ட mistake இதே - health check path mismatch, perfectly healthy servers-ஐயும் unhealthy-nு mark பண்ணி, முழு outage-ஆ மாறிடும்.",
+          "ava_wrong": "இல்ல, C4.4-ல நாம exactly இந்த mistake பார்த்தோம் - path mismatch ஆனா, ALB automatic-ஆ correct-ஆ guess பண்ணாது, healthy instances-ஐயும் unhealthy-nு mark பண்ணி, traffic அனுப்பாது."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Deploying With Everything Already Learned, Not Repeating Old Mistakes",
+      "ava_speaks": "இந்த deployment special-ஆ இருக்கறது ஏன்னா, ஒவ்வொரு decision-மும், ஒரு previously-learned mistake-ஐ deliberately avoid பண்றது. Instance type m5 (C4.1-ல t3.micro database mistake நினைவு வெச்சு). Health check path exact-ஆ verify பண்ணப்பட்டது (C4.4 mistake). ASG min=2 (C3.2b-ஓட multi-AZ mistake நினைவு வெச்சு). Maximum capacity, realistic headroom-கூட (C4.5-ஓட campaign outage நினைவு வெச்சு). இது தான் real engineering maturity - ஒவ்வொரு தடவையும் புது mistakes பண்றதுக்கு பதிலா, learned lessons-ஐ systematically apply பண்றது.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Every Decision Traces Back to a Learned Lesson"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Decision Made Today",
+            "Mistake It Deliberately Avoids"
+          ],
+          "rows": [
+            [
+              "m5.large for the database, not t3.micro",
+              "C4.1's CPU-credit-exhaustion database mistake"
+            ],
+            [
+              "Health check path verified against actual app code",
+              "C4.4's health-check-mismatch outage"
+            ],
+            [
+              "ASG minimum = 2, spanning both AZs",
+              "C3.2b's single-AZ / min=1 outage"
+            ],
+            [
+              "Maximum capacity set with real headroom, not a stale guess",
+              "C4.5's campaign-day 503 errors"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Deploying the Complete Application Layer",
+      "ava_speaks": "karthik-dev இப்போ, launch template-ல இருந்து ASG வரைக்கும், முழு application layer-ஐயும் deploy பண்றான்.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "EC2",
+        "steps": [
+          {
+            "ava_narration": "Launch template 'foodquick-app-template' create பண்றோம் - golden AMI, m5.large instance type, foodquick-app-sg security group (C7.1-ல design பண்ணினது).",
+            "console_action": {
+              "type": "fill",
+              "path": "EC2 Console → Launch Templates → Create",
+              "field": "AMI, Instance type, Security group",
+              "value": "foodquick-app-ami-v1.0, m5.large, foodquick-app-sg",
+              "highlight": "Launch template configuration",
+              "result": "The launch template is ready, referencing all the correct components from prior lessons"
+            }
+          },
+          {
+            "ava_narration": "Target group 'foodquick-app-tg' create பண்றோம், health check path '/health' - application code-ல actually இருக்கற endpoint, C4.4-ஓட mistake-ஐ தவிர்க்க double-check பண்ணி.",
+            "console_action": {
+              "type": "fill",
+              "path": "Target Groups → Create",
+              "field": "Health check path",
+              "value": "/health",
+              "highlight": "Health check path field, verified against application source code",
+              "result": "The target group is configured to correctly assess instance health"
+            }
+          },
+          {
+            "ava_narration": "ALB 'foodquick-alb' create பண்றோம், ரெண்டு public subnets-லயும் span பண்ணி (C7.2-ல build பண்ணது), foodquick-alb-sg attach பண்ணி, foodquick-app-tg-க்கு forward பண்ணி.",
+            "console_action": {
+              "type": "fill",
+              "path": "Load Balancers → Create Application Load Balancer",
+              "field": "Subnets, Security group, Default target group",
+              "value": "public-1a + public-1b, foodquick-alb-sg, foodquick-app-tg",
+              "highlight": "ALB configuration form",
+              "result": "The ALB is live, spanning both AZs, ready to forward traffic to the target group"
+            }
+          },
+          {
+            "ava_narration": "ASG 'foodquick-app-asg' create பண்றோம் - launch template, ரெண்டு private subnets, target group attach பண்ணி, min 2, desired 2, max 8, target tracking 60% CPU (C4.5-ல கத்துக்கிட்டது படி).",
+            "console_action": {
+              "type": "fill",
+              "path": "Auto Scaling Groups → Create",
+              "field": "Launch template, Subnets, Target group, Min/Desired/Max, Scaling policy",
+              "value": "foodquick-app-template, private-1a + private-1b, foodquick-app-tg, 2/2/8, target tracking 60% CPU",
+              "highlight": "ASG configuration, referencing every prior component",
+              "result": "The ASG launches 2 instances across both AZs, automatically registering them with the target group"
+            }
+          },
+          {
+            "ava_narration": "இப்போ end-to-end verify பண்றோம் - ALB DNS name-ஐ browser-ல open பண்ணி, application response 200 OK-ஆ வருதானு பாக்கிறோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Browser → https://foodquick-alb-xxxxx.ap-south-1.elb.amazonaws.com",
+              "highlight": "HTTP 200 OK response with the application's homepage",
+              "result": "The full stack — internet, ALB, target group, ASG-launched instances — works end-to-end"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "A complete, working application layer is deployed: 2 app server instances across 2 AZs, registered with a target group, served by an ALB, with a verified 200 OK response confirming the entire request path works.",
+          "what_to_notice": "ஒவ்வொரு component-மும், முந்தைய lessons-ல கத்துக்கிட்ட ஒரு specific decision-ஐ reflect பண்ணுது - இது தற்செயலா நடந்த deployment இல்ல, deliberately design பண்ணப்பட்டது."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Complete Request Path, End to End",
+      "ava_speaks": "இந்த diagram பாரு - ஒரு single user request, முழு stack-ஐயும் எப்படி கடந்து போகுதுனு காட்டுது.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "User's browser",
+            "   | HTTPS request to foodquick-alb DNS name",
+            "Internet Gateway (C7.2)",
+            "   |",
+            "ALB, spanning public-1a + public-1b (C7.2, C4.4)",
+            "   | foodquick-alb-sg allows 443 from 0.0.0.0/0",
+            "   |",
+            "Target Group foodquick-app-tg, health check /health verified (C4.4)",
+            "   | forwards to a healthy instance",
+            "   |",
+            "ASG-launched EC2 instance (m5.large, from golden AMI, C4.3) in private-1a or 1b",
+            "   | foodquick-app-sg allows traffic only from foodquick-alb-sg (C7.1)",
+            "   |",
+            "Application responds 200 OK -> travels back the same path to the user"
+          ]
+        },
+        "ava_narration": "இந்த path-ல ஒவ்வொரு hop-மும், நாம ஒரு specific lesson-ல கத்துக்கிட்ட ஒரு decision-ஐ represent பண்ணுது - இது தான் CS2 to CS7 முழு journey-ஓட synthesis."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Verify the Full Stack End-to-End",
+      "instruction": "Deploy ஆன application layer-ஐ, systematic-ஆ end-to-end verify பண்ணு - ஒரு single 200 response மட்டும் போதாது.",
+      "scenario": "Ravi, deployment-ஐ 'complete'nு mark பண்றதுக்கு முன்னாடி, ஒரு thorough verification checklist கேட்டிருக்காங்க - இதுவும் CFO-ஓட office establish பண்ணின habit தான்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "CloudWatch Console → foodquick-app-health dashboard (from C6.1)",
+        "current_configuration": "ALB and ASG are deployed and showing 2 healthy targets"
+      },
+      "requirements": [
+        "Confirm both AZs have at least one healthy target registered (verifying the multi-AZ redundancy from C3.2b actually works)",
+        "Manually terminate one instance and confirm the ASG replaces it automatically, restoring desired capacity",
+        "Confirm the terminated instance's replacement passes health checks and rejoins the target group without manual intervention",
+        "Check the CloudWatch dashboard (built in C6.1) shows the new request traffic and confirms no error rate spike during the instance replacement"
+      ],
+      "hints": [
+        "Target group-ல, ஒவ்வொரு target-ஓட AZ column பாத்தா, ரெண்டு AZs-லயும் healthy targets இருக்கானு confirm பண்ணலாம்",
+        "Terminate பண்ணின பிறகு, ASG-ஓட 'Activity' tab-ல, replacement instance launch ஆகுறதை real-time-ல பார்க்கலாம்",
+        "Dashboard-ல RequestCount graph-ல, replacement நடக்கும்போது ஒரு dip இருக்கா-ன்னு பாரு - இருந்தா, capacity headroom insufficient-ஆ இருக்கலாம்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "Both AZs show healthy targets, manual termination triggers automatic ASG replacement, the replacement passes health checks and joins the target group, and the dashboard shows no meaningful error spike during the process",
+        "ava_correct": "Correct! இது தான் 'complete' deployment-ஓட real meaning - ஒரே ஒரு successful response இல்ல, resilience actually verified ஆகணும்.",
+        "ava_wrong": "ஒரு verification step-ஐ ஒரு தடவை check பண்ணு - termination-க்கு அப்புறம் replacement சரியா நடந்துச்சானு, dashboard-ல impact தெரியுதானு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The 200 Response That Hid a Single Point of Failure",
+      "ava_speaks": "ananya-analyst, deployment முடிஞ்சதும், ALB DNS-ஐ browser-ல open பண்ணி 200 OK பார்த்ததுமே, 'deployment successful'nு mark பண்ணி close பண்ணிட்டாங்க - ஆனா அவங்க ASG-ஓட desired capacity-ஐ check பண்ணவே இல்ல.",
+      "setup": "ananya-analyst deploys the application layer, sees a successful 200 OK response from the ALB, and marks the deployment complete without checking whether the ASG's desired capacity actually matches the intended design (2 instances across 2 AZs).",
+      "what_happened": "It turns out a typo in the ASG configuration set desired capacity to 1 instead of 2. The single running instance happened to be healthy when ananya-analyst tested, giving a perfectly valid 200 response — but the deployment has no real redundancy at all, reproducing the exact single-AZ risk from C3.2b, just with different root cause (a config typo instead of a min-capacity oversight).",
+      "broken_config": "Auto Scaling Group: foodquick-app-asg\nMinimum: 2 (correct)\nDesired: 1 (typo — should be 2)\nMaximum: 8 (correct)\n\nA single instance in one AZ is currently serving all traffic, with no redundancy despite the ASG spanning both AZ subnets",
+      "error_shown": "No error at deployment time — the 200 OK response looked completely normal. The gap is only discovered a week later when that single AZ has a brief network blip and the entire application goes down, despite the 'multi-AZ' ASG configuration.",
+      "the_real_problem": "Ondwan successful response, deployment correctness-ஐ guarantee பண்ணாது - அது வெறும் 'இப்போதைக்கு, இந்த ஒரு moment-ல, ஒரு server வேலை செய்யுது'nு தான் சொல்லும். Real verification, C7.3-ஓட student_try exercise-ல நாம பண்ணது மாதிரி - multi-AZ redundancy உண்மையிலேயே இருக்கானு, actual failure simulate பண்ணி, systematic-ஆ verify பண்ணணும்.",
+      "fix": {
+        "corrected_config": "Correct the ASG's desired capacity from 1 to 2, matching the intended design. Establish a standard post-deployment verification checklist (like the one in this lesson's student_try) that goes beyond a single successful response.",
+        "result": "True multi-AZ redundancy is restored, and future deployments follow a checklist that would have caught this typo immediately instead of a week later during an actual outage."
+      },
+      "lesson": "ஒரு single successful response, முழு deployment correct-ஆ இருக்குனு prove பண்ணாது - இது இந்த முழு course-ல நாம repeatedly பார்த்த pattern - 'இப்போதைக்கு வேலை செய்யுது' vs 'உண்மையிலேயே resilient-ஆ design பண்ணப்பட்டிருக்கு', ரெண்டும் வேற வேற விஷயம்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Deployment Verification Depth",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A deployment shows all green checkmarks in the AWS console (ASG healthy, target group healthy, ALB active). Is console-level green sufficient verification, or does something from this lesson's student_try add value beyond that?",
+          "answer": "Console green checkmarks confirm current state, but the student_try's active verification (terminating an instance and watching the ASG replace it) tests BEHAVIOR under failure, not just current state. ananya-analyst's mistake shows exactly why this matters — the console can look completely healthy while desired capacity is silently wrong."
+        },
+        {
+          "question": "Should end-to-end verification be a one-time step after initial deployment, or should it repeat after every subsequent change to the stack?",
+          "answer": "It should repeat after significant changes — a launch template update, a scaling policy change, a security group modification. Verification that was true at initial deployment doesn't automatically stay true after later changes; each meaningful change reintroduces the possibility of a regression."
+        },
+        {
+          "question": "The application layer test in this lesson used a manual instance termination to verify self-healing. Is there a more scalable, repeatable way to do this kind of verification regularly, rather than manually terminating instances?",
+          "answer": "Chaos engineering tools (like AWS Fault Injection Simulator, mentioned back in C3.2b) can automate this kind of failure injection on a schedule, providing ongoing confidence rather than a one-time manual check that's easy to forget to repeat."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Build Deployment Verification Into the Process Itself",
+      "ava_speaks": "Real companies-ல, Ravi மாதிரி team leads, 'deployment successful' declaration-ஐ, ஒரு single response-ஐ மட்டும் வெச்சு எடுக்க மாட்டாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Maintain a standard post-deployment verification checklist covering redundancy, health check accuracy, and scaling behavior — not just a single successful request",
+          "detail": "இது ananya-analyst-ஓட mistake மாதிரி, silent config typos-ஐ deployment-time-லேயே கண்டுபிடிக்க உதவும்"
+        },
+        {
+          "step": 2,
+          "action": "Automate as much of the verification checklist as possible into the deployment pipeline itself, so it runs consistently rather than depending on someone remembering to do it manually",
+          "detail": "இது human memory-ஐ ஒரு single point of failure-ஆ இருக்க விடாம தடுக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Schedule periodic (not just post-deployment) resilience testing, like the manual termination test, on a recurring basis",
+          "detail": "இது ongoing confidence தரும், deployment-time-ல மட்டும் verified-ஆ இருந்து, பிறகு silently drift ஆகாமல் இருக்க"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Fault Injection Simulator",
+          "use": "Instance termination, AZ failure மாதிரி scenarios-ஐ automated-ஆ, scheduled-ஆ simulate பண்ணி, ongoing resilience confidence தரும்"
+        },
+        {
+          "tool": "CI/CD pipeline post-deployment verification stage",
+          "use": "Deployment complete-nு mark பண்றதுக்கு முன்னாடி, automated health/redundancy checks run பண்ணி, manual verification-ஐ மட்டும் நம்பாம இருக்க உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம முழு application layer-ஐயும் - launch template, target group, ALB, ASG - deploy பண்ணோம், end-to-end verify பண்ணோம். மிக முக்கியமா, ஒரே ஒரு successful response, முழு deployment correct-ஆ இருக்குனு prove பண்ணாதுனு உறுதியா கத்துக்கிட்ட - real verification, actual failure simulate பண்ணி, behavior-ஐ check பண்றதுதான். அடுத்த lesson-ல நாம monitoring set பண்ணி, முழு project-ஐயும் document பண்ணி, இந்த journey-ஐ complete பண்ணப் போறோம் - CS7-ஓட, Building Basics-ஓடவும் கடைசி lesson.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C7.3 — Summary",
+      "points": [
+        "✓ Application layer deployment order: launch template, target group, ALB, then ASG last (since it references everything before it)",
+        "✓ Every deployment decision here deliberately avoids a specific mistake learned earlier in the course",
+        "✓ A single successful 200 response confirms current state, not deployment correctness",
+        "✓ Real verification requires testing behavior under failure — like terminating an instance and confirming self-healing",
+        "✓ This deployment applied the complete CS4 compute curriculum as one continuous, verified build"
+      ],
+      "coming_next": "Lesson C7.4: Monitor and Document"
+    }
+  }
+}

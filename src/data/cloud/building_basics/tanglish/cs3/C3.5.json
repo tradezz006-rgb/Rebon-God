@@ -1,0 +1,334 @@
+{
+  "lesson_id": "C3.5",
+  "lesson_title": "VPC Peering and Transit Gateway",
+  "section_id": "CS3",
+  "section_name": "Networking",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C3.4 — Security Groups vs NACLs",
+  "student_will_learn": [
+    "Explain what VPC Peering is and how it connects two VPCs directly",
+    "Explain why VPC Peering is not transitive — peering A-B and B-C does not connect A to C",
+    "Explain when a Transit Gateway is a better fit than multiple peering connections",
+    "Complete both halves of a peering setup — the connection AND the route table updates",
+    "Debug a peering connection that's active but still doesn't pass traffic"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "FoodQuick-ஓட analytics team-க்கு நாம தனி VPC create பண்ணி இருந்தோம் - foodquick-analytics-vpc. இப்போ Priya Nair-ஓட அடுத்த request - அந்த analytics VPC, production VPC-ல இருந்து data படிக்கணும். ரெண்டு தனி VPCs-ஐ எப்படி connect பண்றதுனு இன்னைக்கு பார்ப்போம் - இதுக்கு VPC Peering, அப்புறம் அது scale ஆகும்போது என்ன பண்றதுன்னு பார்ப்போம்.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS3 · Lesson C3.5",
+        "VPC Peering and Transit Gateway",
+        "Ticket FQ-156 — continuing with Priya Nair, Cloud Architect"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "VPC Peering — A Direct, Private Connection Between Two VPCs",
+      "ava_speaks": "VPC Peering ரெண்டு VPCs-ஐ directly connect பண்ணும் - அது internet வழியா போகாது, AWS-ஓட internal network வழியா போகும். ஆனா ஒரு critical limitation இருக்கு - peering transitive இல்ல. அதாவது, VPC A, VPC B-கூட peer பண்ணி இருந்தா, VPC B, VPC C-கூட peer பண்ணி இருந்தா, அதனால VPC A, VPC C-கூட automatic-ஆ connect ஆகாது. ஒவ்வொரு pair-க்கும் தனியா ஒரு peering connection வேணும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Peering Is Point-to-Point, Never Transitive"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "VPC Peering: a direct, private network connection between exactly two VPCs, routed entirely within AWS's network, never over the public internet."
+        },
+        {
+          "type": "write_important_note",
+          "text": "A peers with B, and B peers with C, does NOT mean A can reach C. If A needs to reach C, a separate A-C peering connection must be created explicitly."
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "What exists",
+            "What it does NOT mean"
+          ],
+          "rows": [
+            [
+              "VPC-A <-peered-> VPC-B",
+              "VPC-A can reach VPC-B"
+            ],
+            [
+              "VPC-B <-peered-> VPC-C",
+              "VPC-B can reach VPC-C"
+            ],
+            [
+              "Both connections above exist",
+              "VPC-A can reach VPC-C — this is FALSE, no transitive routing"
+            ]
+          ]
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "VPC-A, VPC-B-கூட peer பண்ணி இருக்கு. VPC-B, VPC-C-கூடவும் peer பண்ணி இருக்கு. VPC-A, VPC-C-ஐ reach பண்ண முடியுமா?",
+          "options": [
+            "A) ஆமா, peering transitive-ஆ இருக்கும்",
+            "B) இல்ல, VPC-A மற்றும் VPC-C-க்கு இடையே தனியா ஒரு peering connection வேணும்",
+            "C) ஆமா, ஆனா ரெண்டு VPCs-மும் ஒரே region-ல இருந்தா மட்டும்",
+            "D) இல்ல, peering-ஐ 3 VPCs-க்கு மேல use பண்ணவே முடியாது"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Peering transitive இல்ல - ஒவ்வொரு pair-க்கும் தனியா connection வேணும். இது ஒரு critical limitation, scale ஆகும்போது problem ஆகும்.",
+          "ava_wrong": "இல்ல, peering transitive இல்ல - இதுதான் இதோட மிக முக்கியமான limitation. VPC-A-க்கும் VPC-C-க்கும் தனியா ஒரு peering connection create பண்ணனும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "VPC Peering-ல traffic எந்த வழியா போகும்?",
+          "options": [
+            "A) Public internet வழியா",
+            "B) AWS-ஓட internal network வழியா, internet-ஐ தொடாம",
+            "C) ஒரு third-party VPN provider வழியா",
+            "D) NAT Gateway வழியா"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Peering traffic AWS internal network-ல தான் போகும் - இது faster-ஆவும், more secure-ஆவும் இருக்கும், public internet-ஐ ஒரு போதும் தொடாது.",
+          "ava_wrong": "இல்ல, peering traffic public internet வழியா போகாது - அது முழுசா AWS-ஓட own internal network-க்குள்ளதான் நடக்கும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "When Peering Stops Scaling",
+      "ava_speaks": "ஒரு company-க்கு 3-4 VPCs இருக்கும்போது, peering easy-ஆ manage பண்ணலாம். ஆனா 10, 15, 20 VPCs வந்துடுச்சுனா, ஒவ்வொரு pair-க்கும் தனி peering connection வேணும்னா, அது quadratic-ஆ வளரும் - 10 VPCs-க்கு 45 possible connections, 20 VPCs-க்கு 190! Freshworks மாதிரி multi-product companies, ஒவ்வொரு product-க்கும் தனி VPC வெச்சு scale ஆகும்போது, exactly இந்த problem face பண்ணி, Transit Gateway-க்கு migrate பண்ணிருக்காங்க - இது ஒரு central hub, ஒவ்வொரு VPC-மும் ஒரே ஒரு connection மட்டும் அதுகூட வெச்சிருக்கும்.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Peering Connections Grow Quadratically"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Number of VPCs",
+            "Max Peering Connections Needed (full mesh)"
+          ],
+          "rows": [
+            [
+              "3 VPCs",
+              "3 connections"
+            ],
+            [
+              "10 VPCs",
+              "45 connections"
+            ],
+            [
+              "20 VPCs",
+              "190 connections"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Peering foodquick-prod-vpc and foodquick-analytics-vpc",
+      "ava_speaks": "karthik-dev இப்போ ரெண்டு VPCs-ஐ peer பண்றான் - foodquick-prod-vpc, foodquick-analytics-vpc. கவனிச்சுப் பாரு, ரெண்டு steps இருக்கு - peering connection create பண்றது, அப்புறம் ரெண்டு VPCs-ஓட route tables-மும் update பண்றது.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "VPC",
+        "steps": [
+          {
+            "ava_narration": "VPC Console-ல Peering Connections-க்கு போய், 'Create peering connection' click பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "VPC Console → Peering Connections → Create peering connection",
+              "highlight": "Create peering connection button",
+              "result": "The peering connection form opens"
+            }
+          },
+          {
+            "ava_narration": "Requester VPC-ல foodquick-prod-vpc, Accepter VPC-ல foodquick-analytics-vpc select பண்றோம். ரெண்டுமே ஒரே account-ல இருக்கறதால, ID-ஐ manual-ஆ தேட வேண்டாம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Create peering connection form",
+              "field": "Requester VPC, Accepter VPC",
+              "value": "foodquick-prod-vpc, foodquick-analytics-vpc",
+              "highlight": "VPC selection dropdowns",
+              "result": "The peering connection request is created, pending acceptance"
+            }
+          },
+          {
+            "ava_narration": "Peering Connections list-ல, இந்த connection-ஐ select பண்ணி, 'Accept request' click பண்றோம்.",
+            "console_action": {
+              "type": "click",
+              "path": "Peering Connections → Actions → Accept request",
+              "highlight": "Accept request button",
+              "result": "The peering connection status changes to 'Active'"
+            }
+          },
+          {
+            "ava_narration": "இப்போ முக்கியமான step - foodquick-prod-vpc-ஓட route table-ல, foodquick-analytics-vpc-ஓட CIDR (10.1.0.0/16)-க்கு ஒரு route add பண்றோம், target-ஆ இந்த peering connection-ஐ point பண்ணி.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-prod-rt → Routes → Add route",
+              "field": "Destination, Target",
+              "value": "10.1.0.0/16, pcx-foodquick-prod-analytics",
+              "highlight": "Add route button and target dropdown showing the peering connection",
+              "result": "Traffic from foodquick-prod-vpc destined for 10.1.0.0/16 now routes through the peering connection"
+            }
+          },
+          {
+            "ava_narration": "அதே மாதிரி foodquick-analytics-vpc-ஓட route table-ல, foodquick-prod-vpc-ஓட CIDR (10.0.0.0/16)-க்கு ஒரு return route add பண்றோம்.",
+            "console_action": {
+              "type": "fill",
+              "path": "Route Tables → foodquick-analytics-rt → Routes → Add route",
+              "field": "Destination, Target",
+              "value": "10.0.0.0/16, pcx-foodquick-prod-analytics",
+              "highlight": "Add route button and target dropdown showing the peering connection",
+              "result": "Traffic from foodquick-analytics-vpc destined for 10.0.0.0/16 now routes back through the same peering connection"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "foodquick-prod-vpc and foodquick-analytics-vpc can now exchange traffic directly, with route table entries on BOTH sides pointing to the peering connection.",
+          "what_to_notice": "Peering connection 'Active' ஆனாலும், route table update பண்ணாம விட்டா, traffic வேலை செய்யாது - ரெண்டு VPCs-ஓட route tables-மும் update ஆகணும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Peering vs Transit Gateway at Scale",
+      "ava_speaks": "இந்த diagram பாரு - ரெண்டு approaches-ஓட visual difference.",
+      "output_preview": {
+        "type": "infrastructure_diagram",
+        "diagram": {
+          "ascii": [
+            "Peering (full mesh) — 4 VPCs need 6 connections:",
+            "  VPC-A --- VPC-B",
+            "    |  \\   /  |",
+            "    |   \\ /   |",
+            "    |   / \\   |",
+            "    |  /   \\  |",
+            "  VPC-C --- VPC-D",
+            "",
+            "Transit Gateway (hub-and-spoke) — 4 VPCs need 4 connections:",
+            "         VPC-A",
+            "           |",
+            "  VPC-B -- TGW -- VPC-D",
+            "           |",
+            "         VPC-C"
+          ]
+        },
+        "ava_narration": "Transit Gateway use பண்ணா, ஒவ்வொரு VPC-மும் ஒரே ஒரு connection மட்டும் TGW-கூட வெச்சிருந்தா போதும் - இது manage பண்ண ரொம்ப easy, scale ஆகும்போது especially."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Complete a Peering Connection Correctly",
+      "instruction": "FoodQuick-ஓட ஒரு புது Sandbox VPC (10.2.0.0/16), production VPC-கூட peer பண்ணப்பட்டிருக்கு, ஆனா traffic இன்னும் வேலை செய்யல. Route tables-ஐ சரி பண்ணு.",
+      "scenario": "ஒரு engineer, foodquick-prod-vpc மற்றும் foodquick-sandbox-vpc இடையே ஒரு peering connection create பண்ணி, accept-மும் பண்ணிட்டான். ஆனா engineer ஒரே ஒரு VPC-ஓட route table-ல மட்டும் route add பண்ணி, மற்ற side-ஐ மறந்துட்டான்.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "VPC Console → Route Tables",
+        "current_configuration": "The peering connection (pcx-foodquick-prod-sandbox) is Active. foodquick-prod-rt already has a route to 10.2.0.0/16 via the peering connection. foodquick-sandbox-rt has NO route back to 10.0.0.0/16."
+      },
+      "requirements": [
+        "Identify which route table is missing the return route",
+        "Add a route in foodquick-sandbox-rt with destination 10.0.0.0/16",
+        "Point that route's target to the existing peering connection (pcx-foodquick-prod-sandbox)",
+        "Confirm both route tables now have matching, complementary routes"
+      ],
+      "hints": [
+        "Peering connection status 'Active' இருக்கறது, route tables correct-ஆ இருக்கு-ன்னு அர்த்தம் இல்ல - ரெண்டும் தனி தனி விஷயங்கள்",
+        "foodquick-prod-rt-ல ஏற்கனவே ஒரு route இருக்கு, அதை model-ஆ வெச்சு, sandbox side-ல அதே பேட்டர்ன்-ஐ reverse-ஆ add பண்ணு",
+        "Target dropdown-ல peering connection ID (pcx-foodquick-prod-sandbox) தேடு, Internet Gateway அல்லது NAT Gateway அல்ல"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "foodquick-sandbox-rt now has a route with destination 10.0.0.0/16 pointing to pcx-foodquick-prod-sandbox, matching the existing route on the other side",
+        "ava_correct": "Correct! இப்போ ரெண்டு directions-மும் route பண்ணப்பட்டிருக்கு - traffic ரெண்டு பக்கமும் போக முடியும்.",
+        "ava_wrong": "ஒரு side மட்டும் route add பண்ணா போதாது - peering ரெண்டு directions-க்கும் வேலை செய்யணும்னா, ரெண்டு route tables-மும் update ஆகணும்."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "Peering Active, But Nothing Reaches the Other Side",
+      "ava_speaks": "priya-dev ஒரு peering connection create பண்ணி, accept-மும் பண்ணிட்டா, 'இப்போ வேலை செய்யும்'nு நினைச்சா. ஆனா analytics VPC-ல இருந்து production database-ஐ query பண்ண try பண்றப்போ, connection timeout வருது.",
+      "setup": "priya-dev creates and accepts a peering connection between foodquick-prod-vpc and foodquick-analytics-vpc, expecting traffic to flow immediately once the connection status shows 'Active'.",
+      "what_happened": "An analytics query from foodquick-analytics-vpc to the production database in foodquick-prod-vpc times out completely, even though the AWS console clearly shows the peering connection as Active.",
+      "broken_config": "Peering Connection: pcx-foodquick-prod-analytics — Status: Active\n\nfoodquick-prod-rt route table: no route referencing the peering connection\nfoodquick-analytics-rt route table: no route referencing the peering connection\n\n(The connection exists, but neither VPC's route table was ever updated to actually use it.)",
+      "error_shown": "psql: error: connection to server timed out — attempted from an EC2 instance in foodquick-analytics-vpc to foodquick-orders-db in foodquick-prod-vpc",
+      "the_real_problem": "Peering connection create பண்றது, ரெண்டு networks-ஐ physically 'connect பண்ணக்கூடிய capability'-ஐ மட்டும் உருவாக்குது - அது traffic-ஐ automatic-ஆ route பண்ணாது. Route table-ல explicit-ஆ entry இல்லனா, VPC-க்கு அந்த destination-ஐ எப்படி reach பண்றதுனு தெரியாது, அதனால traffic drop ஆகும்.",
+      "fix": {
+        "corrected_config": "Add to foodquick-prod-rt:\n{ \"destination\": \"10.1.0.0/16\", \"target\": \"pcx-foodquick-prod-analytics\" }\n\nAdd to foodquick-analytics-rt:\n{ \"destination\": \"10.0.0.0/16\", \"target\": \"pcx-foodquick-prod-analytics\" }",
+        "result": "Both VPCs now know how to route traffic to each other through the peering connection, and the analytics query succeeds."
+      },
+      "lesson": "Peering connection 'Active' status, traffic வேலை செய்யும்னு guarantee பண்ணாது - route tables-ல ரெண்டு பக்கமும் explicit-ஆ entry இருக்கணும், இல்லனா 'connected' ஆ இருந்தாலும் எதுவும் போகாது."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Peering vs Transit Gateway",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "FoodQuick currently has 3 VPCs (prod, analytics, sandbox) and no plans to add more anytime soon. Is VPC Peering a reasonable choice, or should they set up a Transit Gateway now?",
+          "answer": "VPC Peering is reasonable here — 3 VPCs need at most 3 peering connections, which is easy to manage. Transit Gateway adds operational complexity and cost that isn't justified until the VPC count grows enough that the full-mesh peering approach becomes hard to manage."
+        },
+        {
+          "question": "FoodQuick is planning to add a VPC per region as they expand internationally, eventually expecting 8-10 VPCs that all need to talk to each other. Which approach scales better?",
+          "answer": "Transit Gateway. At 8-10 VPCs, full-mesh peering would need 28-45 connections, each with its own route table management on both sides. A Transit Gateway needs only one connection per VPC to the hub, and route management is centralized."
+        },
+        {
+          "question": "A team peers VPC-A with VPC-B specifically so a monitoring tool in VPC-A can reach VPC-B. Later, they add VPC-C and peer it with VPC-B too, assuming the monitoring tool in VPC-A can now also reach VPC-C through VPC-B. Will this work?",
+          "answer": "No — this is the non-transitive trap. VPC-A's peering with VPC-B does not extend to VPC-C. A separate VPC-A to VPC-C peering connection (with its own route table entries) would be required for that traffic to work."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Architects Decide Between Peering and Transit Gateway",
+      "ava_speaks": "Priya Nair மாதிரி Cloud Architects, VPC count வளரும்போது, எப்போ Transit Gateway-க்கு switch பண்ணணும்னு ஒரு clear decision point வெச்சிருப்பாங்க.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Start with VPC Peering for a small, stable number of VPCs (roughly under 5)",
+          "detail": "இது simple-ஆவும், cheaper-ஆவும் இருக்கும் - Transit Gateway-ஓட operational overhead தேவை இல்லாத scale-ல"
+        },
+        {
+          "step": 2,
+          "action": "Track the growth trajectory of VPC count as the company expands (new regions, new products, new environments)",
+          "detail": "Full-mesh peering connections quadratic-ஆ வளரும் என்பதால், இந்த trend-ஐ முன்னாடியே கவனிக்கறது முக்கியம்"
+        },
+        {
+          "step": 3,
+          "action": "Migrate to Transit Gateway before the peering mesh becomes unmanageable, not after it already is",
+          "detail": "Migration itself ஒரு project - existing route tables எல்லாத்தையும் carefully update பண்ணணும், அதனால proactive-ஆ plan பண்றது நல்லது"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Transit Gateway Network Manager",
+          "use": "Multiple VPCs, on-premises connections எல்லாம் ஒரு central console-ல visualize பண்ணி, route management-ஐ simplify பண்ணும்"
+        },
+        {
+          "tool": "VPC Reachability Analyzer",
+          "use": "Peering connections active-ஆ இருந்தாலும், route tables correct-ஆ configure பண்ணி இருக்கானு verify பண்ண உதவும் - இதே lesson-ஓட mistake scenario-ஐ proactive-ஆ கண்டுபிடிக்க இது use ஆகும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம VPC Peering எப்படி வேலை செய்யும், அது ஏன் transitive இல்ல, எப்போ Transit Gateway ஒரு better fit-nு கத்துக்கிட்டோம். மிக முக்கியமா, peering 'Active' status மட்டும் போதாது, ரெண்டு VPCs-ஓட route tables-மும் update ஆகணும்னு உறுதியா கத்துக்கிட்ட. அடுத்த lesson-ல நாம Route 53 DNS பார்ப்போம் - CS3-ஓட கடைசி lesson.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C3.5 — Summary",
+      "points": [
+        "✓ VPC Peering creates a direct, private connection between exactly two VPCs, entirely within AWS's network",
+        "✓ Peering is not transitive — A-B and B-C peering never automatically connects A to C",
+        "✓ Transit Gateway acts as a hub, reducing the connection count from quadratic (full mesh) to linear (one per VPC)",
+        "✓ A peering connection needs BOTH VPCs' route tables updated to actually pass traffic",
+        "✓ An 'Active' peering connection status does not mean traffic will flow — that's a common and confusing mistake"
+      ],
+      "coming_next": "Lesson C3.6: Route 53 DNS"
+    }
+  }
+}

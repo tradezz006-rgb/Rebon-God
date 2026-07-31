@@ -1,0 +1,418 @@
+{
+  "lesson_id": "C1.1",
+  "id": "C1.1",
+  "lesson_title": "What is Cloud Computing",
+  "section_id": "CS1",
+  "section_name": "Cloud Foundations",
+  "pace": "fresher",
+  "mode": "student",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 18,
+  "prerequisites": "None",
+  "student_will_learn": [
+    "Physical servers vs Cloud servers",
+    "Cloud is not magic — real servers in real buildings",
+    "Pay-as-you-go financial model (OpEx) vs buying hardware upfront (CapEx)",
+    "Elasticity — scale servers up and down on demand",
+    "AWS default region for India (ap-south-1)"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "Hello! Rebon-க்கு வரவேற்கிறேன். நான் Ren. Day one-ல யாராவது எனக்கு சொல்லியிருந்தா நல்லாயிருக்கும்னு நான் நினைக்கிற ஒரே விஷயம் — Cloud is not magic. வானத்துல மிதக்குற எந்த data-வும் இல்ல. நாம Cloud-னு சொல்றது, AWS வெச்சிருக்கிற physical buildings and computers தான். Lesson 1.1. Let's go.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Fresher Pace · Session 1 · Lesson 1.1",
+        "What is Cloud Computing?",
+        "Physical Hardware vs Renting Power"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "The Old Way vs The Cloud",
+      "ava_speaks": "முன்னாடி ஒரு app launch பண்ணனும்னா, நீங்க physically ஒரு server-ஐ ₹8 லட்சம் குடுத்து வாங்கணும். அதை office-ல வெச்சு, யாரும் use பண்ணாத nights and weekends-க்கும் நீங்க power bill கட்டணும். அந்த upfront buy-க்கு பேரு CapEx — Capital Expense.\n\nCloud computing-ல நீங்க server வாங்க தேவையில்லை. AWS, Google மாதிரி companies பெரிய data centers-ல (like in Mumbai) லட்சக்கணக்கான servers வெச்சிருக்காங்க. நீங்க internet மூலமா அவங்க server-ஐ rent பண்றீங்க. 60 seconds-ல server launch ஆகும், 1 hour use பண்ணிட்டு terminate பண்ணிடலாம். நீங்க use பண்ண exact seconds-க்கு மட்டும் தான் pay பண்ணுவீங்க. இதுக்கு பேரு 'Pay-as-you-go' — finance-ல இதை OpEx (Operational Expense)னு சொல்றாங்க. Need-க்கு ஏற்ப servers stretch பண்றதுக்கு பேரு Elasticity.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Infrastructure Shift"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Feature",
+            "Physical Server (On-Premise)",
+            "Cloud Server (AWS EC2)"
+          ],
+          "rows": [
+            [
+              "Cost",
+              "₹8L upfront + idle costs",
+              "₹3/hour (Pay-per-second)"
+            ],
+            [
+              "Speed",
+              "Takes weeks to buy/setup",
+              "Launch in 60 seconds"
+            ],
+            [
+              "Scale",
+              "Stuck with what you bought",
+              "Terminate when done"
+            ]
+          ]
+        },
+        {
+          "type": "write_callout",
+          "text": "Fact: 'The Cloud' = Someone else's incredibly reliable computer in a real building."
+        },
+        {
+          "type": "write_definition_box",
+          "text": "Two finance words you'll hear everywhere:\n• CapEx (Capital Expense) = huge UPFRONT buy — physical servers, racks, your own building.\n• OpEx (Operational Expense) = pay-as-you-go rent — the Cloud way.\n• Elasticity = stretch resources up/down on demand (why CapEx → OpEx matters)."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "ஒரு food delivery startup-க்கு Diwali-அன்று 10x traffic வரும் என எதிர்பார்க்கப்படுகிறது. அவர்கள் physical server வாங்க வேண்டுமா அல்லது Cloud use பண்ண வேண்டுமா?",
+          "options": [
+            "A) Physical Server — Security அதிகம்.",
+            "B) Cloud — Diwali நேரத்திற்கு மட்டும் servers-ஐ scale செய்து, பிறகு குறைத்துக்கொள்ளலாம்."
+          ],
+          "correct_index": 1,
+          "ava_correct": "Exactly! Diwali அன்னைக்கு மட்டும் 50 servers rent பண்ணிட்டு, அடுத்த நாள் 1 server-க்கு மாறிக்கலாம். நீங்க அந்த hours-க்கு மட்டும் pay பண்ணா போதும்.",
+          "ava_wrong": "இல்லை! Physical server வாங்கினால், Diwali முடிந்த பிறகு மீதமுள்ள 90% power waste ஆகும். Cloud-ல் தேவைக்கு ஏற்ப scale பண்ணலாம்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "ஒருவர் 'My data is on the cloud' என்று கூறினால், அது உண்மையில் எங்கு store ஆகியுள்ளது?",
+          "options": [
+            "A) Internet-ல் air-ல் மிதக்கிறது.",
+            "B) Satellite-ல் உள்ளது.",
+            "C) AWS போன்ற நிறுவனங்களின் data center-ல் உள்ள real physical server-ல் உள்ளது."
+          ],
+          "correct_index": 2,
+          "ava_correct": "Perfect. Cloud-ங்குறது ஏதோ magic கிடையாது. AWS-ன் Mumbai அல்லது Virginia data center-ல் உள்ள நிஜமான hard drive-ல் தான் data உள்ளது.",
+          "ava_wrong": "தவறு. Cloud-ல் data காற்றில் இருக்காது. AWS போன்ற நிறுவனங்கள் வைத்திருக்கும் நிஜமான physical servers-ல் தான் store ஆகும்."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Flipkart's Big Billion Days",
+      "ava_speaks": "இந்த decision எவ்ளோ முக்கியம்னு ஒரு real story சொல்றேன். 2014-ல Flipkart அவங்களோட first 'Big Billion Days' sale-ஐ physical servers-ல run பண்ணாங்க. Traffic எதிர்பார்த்ததை விட அதிகமா வந்ததால, 2 hours-ல servers crash ஆகிடுச்சு. ₹100 crore loss.\n\nஇப்போ 2023-ல? Flipkart AWS Cloud-ல இருக்காங்க. ஒரே நாள்ல 3 crore users வந்தாலும், அவங்க AWS-ல auto-scale பண்ணி 2000 servers-ஐ launch பண்றாங்க. Zero downtime. Sale முடிஞ்சதும் அத்தனை servers-ஐயும் terminate பண்ணிடுறாங்க.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Flipkart Big Billion Days"
+        },
+        {
+          "type": "write_definition_box",
+          "text": "2014 (Physical Servers):\n- Servers crashed in 2 hours\n- Result: ₹100 Crore Loss\n\n2023 (AWS Cloud):\n- 3 Crore users\n- Auto-scaled to 2,000 servers\n- Result: Zero Downtime"
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Live: AWS Console & EC2 Launch",
+      "ava_speaks": "AWS console எப்படி இருக்கும், ஒரு server-ஐ எப்படி 60 seconds-ல launch பண்ணலாம்னு live-ஆ பார்ப்போம்.",
+      "editor_session": {
+        "language": "browser",
+        "filename": "AWS Management Console",
+        "environment": "visual_ui",
+        "steps": [
+          {
+            "ava_narration": "இதுதான் AWS Console Home. Top right-ல எப்பவும் நாம 'Mumbai (ap-south-1)' Region-ல் இருக்கோமானு check பண்ணிக்கணும்.",
+            "code": "Region Selector -> Asia Pacific (Mumbai) ap-south-1",
+            "highlight_lines": [
+              1
+            ]
+          },
+          {
+            "ava_narration": "இப்போ EC2 Service-குள்ள போறோம். Launch Instance click பண்ணி ஒரு server-ஐ start பண்றோம். It takes just 60 seconds.",
+            "code": "EC2 Dashboard -> Launch Instance -> Amazon Linux -> t3.micro",
+            "highlight_lines": [
+              1
+            ]
+          },
+          {
+            "ava_narration": "Billing dashboard போய் பாத்தா, நாம use பண்ண போற இந்த server-க்கு hourly ₹3 மட்டும் தான் charge ஆகும்.",
+            "code": "Billing Dashboard -> View Pay-As-You-Go pricing",
+            "highlight_lines": [
+              1
+            ]
+          }
+        ],
+        "expected_output": {
+          "mumbai": "Instance State: Running",
+          "what_to_notice": "No paperwork, no shipping delays. ஒரு click-ல India-ல ஒரு server ready."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "The Power of Instant Compute",
+      "ava_speaks": "Just think about it. Physical world-ல ஒரு computer வாங்கி setup பண்ண 2 weeks ஆகும். இப்போ 60 seconds-ல நீங்க உலகத்துல எந்த மூலையில வேணாலும் ஒரு server-ஐ launch பண்ணலாம்.",
+      "output_preview": {
+        "type": "concept_board",
+        "title": "EC2 Lifecycle",
+        "what_to_look_for": [
+          "Launch instantly",
+          "Pay by the second",
+          "Terminate when no longer needed"
+        ],
+        "ava_narration": "இதுதான் startups-ஐ வேகமா வளர வைக்குது. No capital expense barrier."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "உங்க Turn — Calculate Cost",
+      "instruction": "Physical Server-க்கும் Cloud Server-க்கும் உள்ள cost difference-ஐ calculate பண்ணுங்க.",
+      "requirements": [
+        "Physical server வாங்குவதற்கு ₹40,000 upfront + ₹5,000/month electricity/maintenance.",
+        "AWS EC2 t3.micro server-ஐ rent செய்தால் ₹3/hour. (தினமும் 8 hours மட்டும் run செய்கிறீர்கள்).",
+        "1 year-க்கு எது cheaper?"
+      ],
+      "starter_code": "Calculate for 1 Year:\nPhysical: 40,000 + (5,000 * 12) = ?\nCloud: 3 * 8 hours * 30 days * 12 months = ?",
+      "hints": [
+        "Cloud-ல் weekends-ல் server-ஐ off பண்ணி வைத்தால் இன்னும் cost குறையும்."
+      ],
+      "ava_solution": {
+        "explanation": "Physical server 1 year-க்கு ₹1,00,000 ஆகும். Cloud server 1 year-க்கு வெறும் ₹8,640 தான் ஆகும். அதுமட்டுமில்லாம Cloud-ல் upfront cost (₹40,000) கிடையாது!"
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Forgotten Server Mistake",
+      "ava_speaks": "Cloud-ல் junior developers பண்ற மிக முக்கியமான தப்பு இதுதான்.",
+      "setup": "Developer Tuesday அன்னைக்கு ஏதோ test பண்றதுக்காக ஒரு EC2 server-ஐ launch பண்றார். Test முடிஞ்சதும் அதை 'Terminate' பண்ணாம மறந்துட்டு வீட்டுக்கு போயிடுறார்.",
+      "what_happened": "6 months கழிச்சு கம்பெனிக்கு ₹80,000 AWS bill வருது. யாருமே use பண்ணாத server 6 மாசமா ஓடிக்கிட்டு இருந்திருக்கு.",
+      "the_real_problem": "Cloud-ல் pay-as-you-go இருக்குறதுனால, நீங்க off பண்ற வரைக்கும் meter ஓடிக்கிட்டே இருக்கும்.",
+      "fix": {
+        "code": "1. Set AWS Billing Alerts on Day 1 (e.g., Alert me if bill > ₹500).\n2. Add 'Tags' to every server (Owner: YourName, Env: Test).",
+        "result": "Billing alert set பண்ணிருந்தா, first $10 cross பண்ணும்போதே email வந்திருக்கும். ₹80,000 loss-ஐ தடுத்திருக்கலாம்."
+      },
+      "lesson": "Cloud is cheap only if you turn things off. Always set billing alerts."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "3 Quick Scenarios",
+      "ava_speaks": "Three quick business decisions — head-ல answer பண்ணுங்க.",
+      "challenges": [
+        {
+          "question": "Government tax website-க்கு March மாசம் மட்டும் 90% traffic வரும். Cloud or Physical?",
+          "answer": "Cloud. March மாசம் மட்டும் servers-ஐ அதிகப்படுத்தி, April-ல் குறைத்துக்கொள்ளலாம் (Elasticity)."
+        },
+        {
+          "question": "ஒரு developer-க்கு ஒரு Data Processing script-ஐ run பண்ண 3 மணி நேரம் மட்டும் ஒரு server தேவை. Cloud or Physical?",
+          "answer": "Cloud. 3 hours-க்கு rent செய்து script-ஐ run பண்ணிவிட்டு உடனே terminate செய்துவிடலாம்."
+        },
+        {
+          "question": "Hospital patient records store செய்ய வேண்டும். Privacy laws மிகவும் strict. Cloud or Physical?",
+          "answer": "This can be both. Cloud-ல் strict security policies (like AWS GovCloud) use பண்ணலாம், அல்லது legal requirements இருந்தால் Physical on-premise use பண்ணுவாங்க."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "Real Development-ல எப்படி நடக்கும்",
+      "ava_speaks": "ஒரு Cloud Engineer-ஓட real mindset எப்படி இருக்கும்னு பார்ப்போம்.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Evaluate the Need",
+          "detail": "எனக்கு இந்த server 24x7 தேவையா அல்லது சில மணி நேரங்கள் மட்டுமா என்று யோசிப்பது."
+        },
+        {
+          "step": 2,
+          "action": "Check the Cost",
+          "detail": "Launch செய்வதற்கு முன் Hourly cost எவ்ளோன்னு verify பண்றது."
+        },
+        {
+          "step": 3,
+          "action": "Launch & Tag",
+          "detail": "Server-ஐ launch பண்ணி, இது 'Dev' server அப்படின்னு Tag பண்றது."
+        },
+        {
+          "step": 4,
+          "action": "Terminate immediately",
+          "detail": "வேலை முடிஞ்சதும் உடனே Terminate பண்றது (Stop பண்றது மட்டும் பத்தாது)."
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Pricing Calculator",
+          "use": "Cost-ஐ முன்கூட்டியே கணக்கிட"
+        },
+        {
+          "tool": "AWS Tagging",
+          "use": "எந்த server யாருடையது என கண்டுபிடிக்க"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Internet-ல் air-ல் data மிதக்கல. Cloud என்பது Amazon, Google கட்டியிருக்கிற நிஜமான data centers. Physical server-ல் thousands upfront spend பண்ணி risk எடுக்குறதுக்கு பதிலா, Cloud-ல் rent பண்ணி use பண்ண seconds-க்கு மட்டும் pay பண்றோம். ஆனா மறந்து on-ல வெச்சுட்டா bill ஏறிடும், so always use billing alerts.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson 1.1 — Summary",
+      "points": [
+        "✓ Cloud = Renting computing power per second",
+        "✓ Cloud = Real servers in real data centers (e.g., ap-south-1 Mumbai)",
+        "✓ Pay-as-you-go = Pay only for what you use",
+        "✓ Golden Rule = Always terminate testing instances to avoid bills"
+      ],
+      "coming_next": "Lesson 1.2: AWS Global Infrastructure"
+    }
+  },
+  "workspace_tasks": [
+    {
+      "task_id": "C1.1-T1",
+      "task_number": 1,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Cloud computing definition — applied",
+      "scenario_text": "MedGo is a new telemedicine startup in Chennai. The founder tells investors: 'We're putting patient chat on the cloud, so there's no physical hardware involved — data just floats on the internet.' You are the first cloud hire. What do you correct in the pitch?",
+      "options": [
+        "Nothing — cloud apps truly need no hardware anywhere.",
+        "Patient data does sit on real physical servers in a cloud provider's data center; MedGo rents that capacity over the internet instead of buying boxes for the office.",
+        "Cloud means MedGo must buy its own racks in Mumbai and only use AWS for networking.",
+        "Cloud means the app runs only on user phones with zero servers behind it."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Exactly. Cloud magic Not quite — MedGo AWS ( provider) data center- servers- rent doing. Pitch- clear do.",
+      "ava_feedback_wrong": "Cloud- data float. Provider- physical data center- servers- internet rent doing cloud.",
+      "whiteboard_heading": "MedGo — What the Cloud Really Is",
+      "whiteboard_points": [
+        "Not magic, not in the sky",
+        "Renting someone else's physical server",
+        "Accessed via the Internet"
+      ]
+    },
+    {
+      "task_id": "C1.1-T2",
+      "task_number": 2,
+      "type": "match_task",
+      "ui_component": "MatchComponent",
+      "difficulty": "fresher",
+      "topic": "CapEx, OpEx, Elasticity — MedGo finance decisions",
+      "left_items": [
+        "MedGo spends ₹12L upfront on two office servers before a single patient signs up",
+        "MedGo pays AWS only for the hours its teleconsult servers actually run",
+        "During a viral flu week MedGo adds 8 servers at 9am and removes them at midnight",
+        "MedGo keeps its appointment database on machines locked in its own Chennai office"
+      ],
+      "right_items": [
+        "CapEx (Capital Expense)",
+        "OpEx (Operational Expense)",
+        "Elasticity",
+        "On-Premise"
+      ],
+      "correct_pairs": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "ava_feedback_correct": "Perfect. MedGo- real decisions- CapEx / OpEx / Elasticity / On-Prem- map do — definition rote Not quite — finance judgment.",
+      "ava_feedback_wrong": "Upfront buy = CapEx. Pay-as-you-go rent = OpEx. Scale up/down same day = Elasticity. Own office machines = On-Premise.",
+      "whiteboard_heading": "MedGo Finance Labels",
+      "whiteboard_points": [
+        "CapEx = Buying Upfront (Old Way)",
+        "OpEx = Pay-as-you-go (Cloud Way)",
+        "Elasticity = Stretching resources on demand"
+      ]
+    },
+    {
+      "task_id": "C1.1-T3",
+      "task_number": 3,
+      "type": "scenario_task",
+      "ui_component": "ScenarioComponent",
+      "difficulty": "fresher",
+      "topic": "Handling traffic spikes with Elasticity",
+      "scenario_text": "MedGo expects a 12x spike in video consults during a 48-hour post-cyclone health advisory. Cash in bank: ₹60,000. Hardware quotes for permanent servers: ₹55,000. What should you recommend?",
+      "options": [
+        "Buy the permanent servers now so capacity never fails again.",
+        "Rent extra cloud servers for the advisory window, then terminate them when traffic returns to normal.",
+        "Cap the number of patients allowed to book so the current single server survives."
+      ],
+      "correct_index": 1,
+      "ava_feedback_correct": "Correct call. Short spike = rent + terminate. Elasticity — 48 hours- only pay do, hardware graveyard.",
+      "ava_feedback_wrong": "₹55K hardware buy do advisory machines idle. Cloud- 48 hours rent do terminate doing cash-safe.",
+      "whiteboard_heading": "MedGo Cyclone Spike",
+      "whiteboard_points": [
+        "Physical Server = Fixed capacity",
+        "Cloud = On-demand scaling (Elasticity)",
+        "Terminate when the spike ends"
+      ]
+    },
+    {
+      "task_id": "C1.1-T4",
+      "task_number": 4,
+      "type": "cost_analysis",
+      "ui_component": "CostAnalysisComponent",
+      "difficulty": "fresher",
+      "topic": "The forgotten server billing trap",
+      "scenario_text": "A MedGo intern launches an EC2 server Friday 6pm to test the prescription PDF generator, finishes by 8pm, closes the laptop browser tab, and goes home for the long weekend. Nobody clicks Terminate. What happens to MedGo's AWS bill?",
+      "options": [
+        "AWS detects the idle test box and stops charging automatically.",
+        "Closing the browser tab stops the billing meter.",
+        "The meter keeps running all weekend until someone explicitly terminates the instance."
+      ],
+      "correct_index": 2,
+      "ava_feedback_correct": "Correct. Browser close ≠ server stop. Terminate click pay-as-you-go meter — weekend bill surprise ready.",
+      "ava_feedback_wrong": "AWS- 'intern finished testing'. Explicit Terminate No meter weekend.",
+      "whiteboard_heading": "MedGo Billing Trap",
+      "whiteboard_points": [
+        "Cloud is cheap only if you turn things off",
+        "Closing the browser DOES NOT stop the server",
+        "Always terminate unused resources"
+      ]
+    },
+    {
+      "task_id": "C1.1-T5",
+      "task_number": 5,
+      "type": "order_task",
+      "ui_component": "OrderComponent",
+      "difficulty": "fresher",
+      "topic": "Steps to safely launch an app on cloud",
+      "question": "MedGo is moving its first patient waitlist app to AWS this week. Order the safest money-aware launch sequence.",
+      "items": [
+        "Create the AWS Cloud Account",
+        "Set up Billing Alerts before any heavy usage",
+        "Rent the smallest cloud server that can run the waitlist",
+        "Upgrade to larger servers only after real patient traffic proves you need them"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ava_feedback_correct": "Solid MedGo launch order: account → money safety net → start small → scale on evidence.",
+      "ava_feedback_wrong": "Alerts (server- ). Then small instance. Scale only when traffic is real.",
+      "whiteboard_heading": "MedGo Safe Launch",
+      "whiteboard_points": [
+        "1. Account Setup",
+        "2. Set Billing Alerts (Crucial)",
+        "3. Start Small (OpEx)",
+        "4. Scale on Demand (Elasticity)"
+      ]
+    }
+  ],
+  "content_status": "live"
+}

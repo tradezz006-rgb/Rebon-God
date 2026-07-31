@@ -1,0 +1,326 @@
+{
+  "lesson_id": "C6.4",
+  "lesson_title": "Config and Trusted Advisor",
+  "section_id": "CS6",
+  "section_name": "Monitoring",
+  "mode": "student",
+  "pace": "building_basics",
+  "domain": "cloud",
+  "language": "tanglish",
+  "duration_minutes": 19,
+  "prerequisites": "C6.3 — CloudTrail Audit",
+  "student_will_learn": [
+    "Explain what AWS Config does and how Config Rules detect non-compliant resources",
+    "Configure auto-remediation for a Config Rule using a Lambda function",
+    "Explain what Trusted Advisor checks and its five categories of recommendations",
+    "Set up a Config Rule to continuously monitor for a specific compliance requirement",
+    "Identify the cost of ignoring Trusted Advisor findings over time"
+  ],
+  "ava_lesson_intro": {
+    "ava_speaks": "இதுவரைக்கும் நாம metrics, logs, alarms, audit trails பார்த்தோம் - இதெல்லாம் 'ஏதோ தப்பா நடந்துடுச்சு'nு தெரிஞ்சுக்க உதவும். இப்போ Deepak Menon-ஓட FQ-203 ticket-ல கடைசி கேள்வி - 'ஏதோ தப்பா நடக்கறதுக்கு முன்னாடியே, resources correctly configure பண்ணப்பட்டிருக்கானு continuously verify பண்ண முடியுமா?' இதுதான் இன்னைக்கு நாம கத்துக்கப் போற AWS Config மற்றும் Trusted Advisor - இதுகூட CS6 Monitoring-ஓட கடைசி lesson.",
+    "board": {
+      "type": "write_title",
+      "lines": [
+        "Building Basics · Session CS6 · Lesson C6.4",
+        "Config and Trusted Advisor",
+        "Ticket FQ-203 — closing out with Deepak Menon"
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "block_type": "concept_intro",
+      "block_title": "Config Rules — Continuous Compliance Checking",
+      "ava_speaks": "AWS Config, account-ல இருக்கற resources-ஓட configuration state-ஐ continuously track பண்ணும் - ஒரு resource எப்போ create ஆச்சு, என்ன மாறுச்சு, தற்போது என்ன state-ல இருக்கு. Config Rules, ஒரு specific compliance condition define பண்ணும் (example: 'எல்லா S3 buckets-மும் encryption enabled-ஆ இருக்கணும்') - Config, ஒவ்வொரு resource-ஐயும் இந்த rule-கூட continuously evaluate பண்ணும், non-compliant resources-ஐ flag பண்ணும். Auto-remediation, ஒரு Lambda function-ஐ trigger பண்ணி, non-compliant resource-ஐ automatic-ஆ fix பண்ணும் - manual intervention தேவை இல்லாம.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "How Config Rules Work"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Without Config",
+            "With Config Rules"
+          ],
+          "rows": [
+            [
+              "Non-compliant resources discovered only during manual audits",
+              "Non-compliant resources flagged continuously, in near real-time"
+            ],
+            [
+              "Fixing a violation requires someone to notice and act manually",
+              "Auto-remediation (via Lambda) can fix the violation automatically"
+            ]
+          ]
+        },
+        {
+          "type": "write_important_note",
+          "text": "Config Rules answer 'is my account currently compliant with our own rules?' continuously — not just at the moment of an audit."
+        }
+      ],
+      "inline_questions": [
+        {
+          "type": "inline_quiz",
+          "question": "FoodQuick-க்கு 'எல்லா S3 buckets-மும் Block Public Access enabled-ஆ இருக்கணும்' compliance rule இருக்கு. Config Rule இதை எப்படி enforce பண்ணும்?",
+          "options": [
+            "A) Config Rule ஒரே ஒரு தடவை check பண்ணி, forget பண்ணிடும்",
+            "B) Config Rule continuously evaluate பண்ணும், non-compliant bucket கண்டா flag பண்ணும் (optionally auto-remediate பண்ணும்)",
+            "C) Config Rules S3-கூட வேலை செய்யாது",
+            "D) Manual-ஆ ஒவ்வொரு நாளும் யாராவது check பண்ணனும்"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Correct! Config Rules continuously evaluate பண்ணும் - ஒரு bucket எப்போ non-compliant ஆனாலும், அது immediately flag ஆகும், auto-remediation configure பண்ணி இருந்தா, automatic-ஆ fix-மும் ஆகும்.",
+          "ava_wrong": "இல்ல, Config Rules ஒரு one-time check இல்ல - அது continuously monitor பண்ணும். ஒரு resource எப்போ non-compliant state-க்கு மாறுதோ, உடனே அது detect ஆகும்."
+        },
+        {
+          "type": "inline_quiz",
+          "question": "Auto-remediation-ஓட role என்ன Config Rules-ல?",
+          "options": [
+            "A) Non-compliant resources-ஐ automatic-ஆ delete பண்ணும்",
+            "B) Non-compliant resources-ஐ, Lambda function trigger பண்ணி, automatic-ஆ compliant state-க்கு fix பண்ணும்",
+            "C) Compliance check-ஐ முழுசா disable பண்ணும்",
+            "D) Config Rules-ல auto-remediation option இல்லவே இல்ல"
+          ],
+          "correct_index": 1,
+          "ava_correct": "Sari! Auto-remediation, resource-ஐ delete பண்ணாது - அது ஒரு Lambda function trigger பண்ணி, resource-ஐ correct, compliant configuration-க்கு automatic-ஆ மாற்றும்.",
+          "ava_wrong": "இல்ல, auto-remediation delete பண்ணாது - அது ஒரு configured Lambda function வழியா, resource-ஐ correct state-க்கு fix பண்ணும், manual intervention இல்லாம."
+        }
+      ]
+    },
+    {
+      "block_type": "why_companies",
+      "block_title": "Six Months of Ignored Trusted Advisor Findings",
+      "ava_speaks": "Trusted Advisor, AWS-ஓட built-in advisor tool - Cost Optimization, Security, Fault Tolerance, Performance, Service Limits ஆகிய 5 categories-ல, recommendations தொடர்ந்து தரும். FoodQuick-ஓட ஒரு prior review-ல கண்டுபிடிச்சது - Trusted Advisor, 6 மாசமா, idle load balancers, unattached EBS volumes, over-provisioned instances பத்தி flag பண்ணிட்டே இருந்துச்சு - யாரும் அதை படிக்கவே இல்ல. Total accumulated waste, ஒரு significant amount-ஆ இருந்துச்சு. Freshworks மாதிரி companies, Trusted Advisor findings-ஐ monthly review cadence-ல தான் actively act பண்றாங்க, dashboard-ல வெறுமனே sit பண்ண விடாம.",
+      "board_actions": [
+        {
+          "type": "write_heading",
+          "text": "Trusted Advisor's 5 Categories"
+        },
+        {
+          "type": "draw_comparison_table",
+          "headers": [
+            "Category",
+            "Example Finding"
+          ],
+          "rows": [
+            [
+              "Cost Optimization",
+              "Idle load balancers, unattached EBS volumes still being billed"
+            ],
+            [
+              "Security",
+              "Security groups with unrestricted access, MFA not enabled on root"
+            ],
+            [
+              "Fault Tolerance",
+              "Single-AZ resources with no redundancy"
+            ],
+            [
+              "Performance",
+              "Over-utilized instances that should be resized up"
+            ],
+            [
+              "Service Limits",
+              "Approaching an account's service quota for a resource type"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "block_type": "live_build",
+      "block_title": "Setting Up a Config Rule With Auto-Remediation",
+      "ava_speaks": "karthik-dev இப்போ, S3 buckets-ல encryption enforce பண்ண ஒரு Config Rule set பண்றான், auto-remediation-கூட.",
+      "board_component": "simulated_cloud_console",
+      "editor_session": {
+        "environment": "simulated_cloud_console",
+        "service": "Config",
+        "steps": [
+          {
+            "ava_narration": "AWS Config Console-ல 'Rules' -> 'Add rule' click பண்றோம், AWS managed rule 's3-bucket-server-side-encryption-enabled' தேடி select பண்றோம்.",
+            "console_action": {
+              "type": "navigate",
+              "path": "AWS Config Console → Rules → Add rule",
+              "highlight": "s3-bucket-server-side-encryption-enabled rule in the managed rules list",
+              "result": "This pre-built rule checks whether every S3 bucket has default encryption enabled"
+            }
+          },
+          {
+            "ava_narration": "Rule scope-ஆ 'All S3 buckets in this account' select பண்றோம், rule create பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Rule configuration → Scope",
+              "field": "Resources to evaluate",
+              "value": "All S3 buckets",
+              "highlight": "Scope selection",
+              "result": "Config begins continuously evaluating every S3 bucket in the account against this rule"
+            }
+          },
+          {
+            "ava_narration": "இப்போ auto-remediation configure பண்றோம் - 'Manage remediation' click பண்ணி, action-ஆ 'AWS-EnableS3BucketEncryption' Systems Manager Automation document select பண்றோம்.",
+            "console_action": {
+              "type": "select",
+              "path": "Rule details → Manage remediation",
+              "field": "Remediation action",
+              "value": "AWS-EnableS3BucketEncryption",
+              "highlight": "Remediation action dropdown",
+              "result": "Any bucket found non-compliant will automatically have encryption enabled, without manual intervention"
+            }
+          },
+          {
+            "ava_narration": "'Auto remediation' toggle ON பண்றோம். இப்போ ஒரு engineer, தப்பா ஒரு un-encrypted bucket create பண்ணா, Config automatic-ஆ கண்டுபிடிச்சு, encryption-ஐ automatic-ஆ enable பண்ணிடும்.",
+            "console_action": {
+              "type": "click",
+              "path": "Remediation configuration → Auto remediation toggle",
+              "highlight": "Auto remediation toggle switched to ON",
+              "result": "Non-compliant buckets are now automatically fixed as soon as Config detects them, closing the gap between violation and correction"
+            }
+          },
+          {
+            "ava_narration": "Trusted Advisor Console-ல போய், Cost Optimization category-ல findings review பண்றோம் - idle load balancers மற்றும் unattached EBS volumes flag ஆகி இருக்கு.",
+            "console_action": {
+              "type": "navigate",
+              "path": "Trusted Advisor Console → Cost Optimization",
+              "highlight": "Flagged idle load balancers and unattached volumes",
+              "result": "A clear, actionable list of cost-saving opportunities is visible, ready for the team to act on"
+            }
+          }
+        ],
+        "expected_outcome": {
+          "description": "S3 encryption is now continuously enforced with automatic remediation, and Trusted Advisor's cost findings are visible for the team to act on rather than sitting unreviewed.",
+          "what_to_notice": "Config Rule proactive-ஆ prevent பண்ணுது (structural guardrail), Trusted Advisor findings-க்கு இன்னும் human action தேவை - அதை review பண்ணாம விட்டா, useless-ஆ இருக்கும்."
+        }
+      }
+    },
+    {
+      "block_type": "visual_output",
+      "block_title": "Config Continuous Monitoring vs Trusted Advisor Periodic Recommendations",
+      "ava_speaks": "இந்த diagram பாரு - Config-க்கும் Trusted Advisor-க்கும் உள்ள complementary roles.",
+      "output_preview": {
+        "type": "flow_diagram",
+        "diagram": {
+          "ascii": [
+            "AWS Config:",
+            "  Resource created/changed -> Config evaluates against rules IMMEDIATELY",
+            "  Non-compliant? -> Flag + optional auto-remediation, within minutes",
+            "",
+            "Trusted Advisor:",
+            "  Periodic checks across cost/security/fault-tolerance/performance/limits",
+            "  Findings accumulate on a dashboard -> REQUIRES a human to review and act",
+            "  No automatic remediation — recommendations only"
+          ]
+        },
+        "ava_narration": "Config real-time-ல, automatic-ஆ enforce பண்ணும். Trusted Advisor, recommendations தரும், ஆனா act பண்றது இன்னும் team responsibility தான்."
+      }
+    },
+    {
+      "block_type": "student_try",
+      "block_title": "Your Turn — Create a Config Rule for a Security Requirement",
+      "instruction": "FoodQuick-ஓட security policy-ப்படி, எந்த Security Group-லும் port 22 (SSH), 0.0.0.0/0-க்கு open-ஆ இருக்கக்கூடாது. இதை continuously enforce பண்ண ஒரு Config Rule set பண்ணு.",
+      "scenario": "C3.4-ல நாம port 22 open to the world-ஐ ஒரு critical mistake-ஆ கத்துக்கிட்டோம். Deepak Menon, இதை ஒரு manual review-ஆ இல்லாம, continuous, automatic-ஆ enforce பண்ண வேணும்னு request பண்ணி இருக்காங்க.",
+      "board_component": "simulated_cloud_console",
+      "starter_state": {
+        "console_open": "AWS Config Console → Rules → Add rule",
+        "current_configuration": "No rule currently monitors for open SSH access"
+      },
+      "requirements": [
+        "Select the AWS managed rule 'restricted-ssh' (or equivalent, checking for port 22 open to 0.0.0.0/0)",
+        "Scope the rule to all Security Groups in the account",
+        "Decide whether to enable auto-remediation or leave it as detection-only, with reasoning",
+        "If auto-remediation is chosen, select an appropriate remediation action that removes the offending rule"
+      ],
+      "hints": [
+        "AWS managed rules-ல, 'restricted-ssh' மாதிரி பேரு வெச்சு ready-made rules இருக்கும் - custom rule எழுத வேண்டியதே இல்ல பொதுவான cases-க்கு",
+        "Auto-remediation decision-ஐ யோசி - ஒரு legitimate business reason-க்காக யாராவது intentionally port 22 open பண்ணி இருந்தா (rare, ஆனா possible), auto-remediation அதையும் revert பண்ணிடும், அதனால இது ஒரு real trade-off",
+        "Detection-only தேர்ந்தெடுத்தாலும், அது still valuable - team-க்கு உடனே தெரியப்படுத்தும், manual review பண்ணி decide பண்ணலாம்"
+      ],
+      "expected_outcome": {
+        "verifiable_result": "A Config rule scoped to all Security Groups checks for port 22 open to 0.0.0.0/0, with a clearly reasoned decision on auto-remediation vs detection-only",
+        "ava_correct": "Correct! இப்போ இந்த critical security mistake, C3.4-ல நாம பார்த்தது மாதிரி, ஒரு போதும் unnoticed-ஆ இருக்காது - Config continuously watch பண்ணிட்டே இருக்கும்.",
+        "ava_wrong": "Rule scope-ஐ ஒரு தடவை check பண்ணு - எல்லா Security Groups-மும் cover ஆகுதா, port 22-ஐ specifically target பண்றதா-ன்னு பாரு."
+      }
+    },
+    {
+      "block_type": "mistake_simulation",
+      "block_title": "The Cost Findings Nobody Ever Looked At",
+      "ava_speaks": "ananya-analyst, ஒரு quarterly cost review பண்றப்போ, Trusted Advisor-ல ஒரு shocking discovery பண்றாங்க - Cost Optimization category-ல, 6 மாசமா, தொடர்ந்து flag ஆகிட்டே இருந்த findings, ஒரு போதும் review பண்ணப்படவே இல்ல.",
+      "setup": "FoodQuick's Trusted Advisor dashboard has been flagging several idle load balancers (created for a discontinued feature, never deleted) and multiple unattached EBS volumes (leftover from terminated instances where 'Delete on Termination' wasn't set) for 6 consecutive months, with no one on the team ever reviewing the Cost Optimization tab.",
+      "what_happened": "By the time ananya-analyst discovers this during a routine quarterly review, the accumulated wasted spend on resources that provide zero business value has grown into a substantial, entirely avoidable line item — money that could have been saved with a 10-minute monthly check.",
+      "broken_config": "Trusted Advisor Cost Optimization findings (as of the review):\n- 3 idle Application Load Balancers, no healthy targets for 6+ months\n- 7 unattached EBS volumes, orphaned from terminated instances\n- 2 instances flagged as significantly over-provisioned for their actual usage\n\nReview cadence: none established — findings only surfaced when ananya-analyst happened to open the dashboard",
+      "error_shown": "Trusted Advisor summary: estimated monthly savings available: a substantial recurring amount, flagged and unchanged for 180+ days.",
+      "the_real_problem": "Trusted Advisor findings, automatic-ஆ act ஆகாது - அது ஒரு recommendation, action இல்ல. ஒரு explicit review process இல்லாம, findings dashboard-ல accumulate பண்ணிட்டே இருக்கும், யாரும் பார்க்காம. இது Config Rules-ல இருந்து ஒரு key difference - Trusted Advisor-க்கு human follow-through தேவை.",
+      "fix": {
+        "corrected_config": "1. Immediately act on the current findings — delete idle load balancers, clean up unattached volumes, right-size over-provisioned instances.\n2. Establish a mandatory monthly Trusted Advisor review as part of the team's standing process, with findings assigned to specific owners for action, not just passively viewed.",
+        "result": "The immediate waste is eliminated, and the new monthly cadence prevents future findings from silently accumulating for months again."
+      },
+      "lesson": "Trusted Advisor findings, dashboard-ல sit பண்ணி இருந்தா, அது எந்த value-மும் தராது - ஒரு explicit, recurring review process இல்லாம, valuable recommendations, months-கணக்கான avoidable waste-ஆ சும்மா தேங்கி நிற்கும்."
+    },
+    {
+      "block_type": "mini_challenge",
+      "block_title": "Judgment Round — Config and Trusted Advisor Decisions",
+      "ava_speaks": "இப்போ 3 quick scenarios - யோசிச்சு சொல்லு.",
+      "challenges": [
+        {
+          "question": "A team enables auto-remediation on a Config Rule that automatically terminates any EC2 instance without a required 'owner' tag. What's a risk of blanket auto-remediation like this, versus detection-only?",
+          "answer": "Auto-remediation that TERMINATES a resource is much higher-risk than one that simply fixes a configuration setting (like enabling encryption) — if a legitimate, business-critical instance briefly lacks the tag due to a launch process gap, it could be destroyed automatically with no human review, causing real damage. Detection-only (or a remediation that just alerts/quarantines rather than destroys) is often safer for high-impact actions."
+        },
+        {
+          "question": "Does AWS Config replace the need for Trusted Advisor, since Config can also flag non-compliant resources?",
+          "answer": "No — they serve different purposes. Config checks resources against rules YOU define (custom compliance requirements specific to your organization). Trusted Advisor provides AWS's own broader best-practice recommendations across cost, security, performance, fault tolerance, and service limits, based on general AWS expertise, not your custom rules. Most mature setups use both."
+        },
+        {
+          "question": "A company has zero Config Rules and zero Trusted Advisor review process, but does have CloudWatch alarms and CloudTrail logging. Is their monitoring coverage complete?",
+          "answer": "No — alarms and CloudTrail are reactive (something already happened, or a threshold was already breached) and investigative (after-the-fact tracing). Config and Trusted Advisor add a proactive, preventive layer — catching misconfigurations and waste before they cause an incident or accumulate cost, which alarms and CloudTrail alone don't provide."
+        }
+      ]
+    },
+    {
+      "block_type": "real_workflow",
+      "block_title": "How Teams Build a Complete Preventive Monitoring Practice",
+      "ava_speaks": "Real companies-ல, Deepak Menon மாதிரி DevOps leads, Config மற்றும் Trusted Advisor-ஐ, ஒரு complete monitoring strategy-ஓட proactive layer-ஆ treat பண்றாங்க - reactive alarms மட்டும் இல்லாம.",
+      "workflow_steps": [
+        {
+          "step": 1,
+          "action": "Define a core set of Config Rules covering the organization's non-negotiable security and compliance requirements, with auto-remediation for low-risk, high-confidence fixes",
+          "detail": "இது C3.4, C5.2 மாதிரி lessons-ல கத்துக்கிட்ட mistakes-ஐ, structural-ஆ ஒரு போதும் repeat ஆகாதுனு உறுதி பண்ணும்"
+        },
+        {
+          "step": 2,
+          "action": "Schedule a recurring (monthly, at minimum) Trusted Advisor review with specific findings assigned to specific owners",
+          "detail": "இது ananya-analyst-ஓட 6-month discovery மாதிரி silent accumulation-ஐ தடுக்கும்"
+        },
+        {
+          "step": 3,
+          "action": "Combine Config compliance status and Trusted Advisor findings into the same team dashboard used for CloudWatch metrics (from C6.1), giving one unified view of system health",
+          "detail": "இது monitoring-ஐ, தனித்தனி tools-ஆ இல்லாம, ஒரு single, cohesive practice-ஆ ஆக்கும்"
+        }
+      ],
+      "tools_shown": [
+        {
+          "tool": "AWS Config Conformance Packs",
+          "use": "பல related Config Rules-ஐ, ஒரு single, reusable package-ஆ deploy பண்ண உதவும் - example: ஒரு complete 'PCI compliance' rule set"
+        },
+        {
+          "tool": "AWS Trusted Advisor Priority (via AWS Organizations)",
+          "use": "Multi-account organizations-ல, most critical Trusted Advisor findings-ஐ centrally prioritize பண்ணி, தொலைஞ்சு போகாம track பண்ண உதவும்"
+        }
+      ]
+    }
+  ],
+  "lesson_summary": {
+    "ava_speaks": "Super! இன்னைக்கு நாம AWS Config, Config Rules, auto-remediation, Trusted Advisor-ஓட 5 categories எல்லாம் கத்துக்கிட்டோம். மிக முக்கியமா, Trusted Advisor findings review பண்ணாம விட்டா, months-கணக்கான avoidable waste accumulate ஆகும்னு உறுதியா கத்துக்கிட்ட. இதுகூட CS6 Monitoring முடிஞ்சிடுச்சு - metrics, logs, alarms, audit trails, compliance monitoring வரைக்கும் full observability foundation கட்டிட்டோம். Deepak Menon-ஓட FQ-203 ticket-ஓட phase complete. அடுத்த session-ல நாம CS7-க்கு போவோம் - Building Basics-ஓட கடைசி session, FoodQuick-ஓட முழு architecture-ஐயும் design பண்றது.",
+    "board": {
+      "type": "write_summary",
+      "title": "Lesson C6.4 — Summary",
+      "points": [
+        "✓ AWS Config continuously evaluates resources against defined rules, flagging non-compliance in near real-time",
+        "✓ Auto-remediation uses a Lambda function to automatically fix non-compliant resources without manual intervention",
+        "✓ Trusted Advisor provides recommendations across 5 categories: Cost Optimization, Security, Fault Tolerance, Performance, and Service Limits",
+        "✓ Trusted Advisor findings require human review and action — they don't self-remediate like Config Rules can",
+        "✓ Ignoring Trusted Advisor findings for months lets avoidable cost and risk silently accumulate"
+      ],
+      "coming_next": "Session CS7: Portfolio Project — starting with C7.1, Design 3-Tier Architecture"
+    }
+  }
+}
