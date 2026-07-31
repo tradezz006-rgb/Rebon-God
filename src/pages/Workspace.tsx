@@ -5,6 +5,7 @@ import { useDomain } from "@/contexts/DomainContext";
 import DomainNavbar from "@/components/app/DomainNavbar";
 import CloudFresherWorkspace from "@/components/cloud/CloudFresherWorkspace";
 import CommunicationWorkspace from "@/components/workspace/CommunicationWorkspace";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 /**
  * Work section router.
@@ -22,10 +23,10 @@ const Workspace = () => {
   }, [setSection]);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (AUTH_REQUIRED && !loading && !user) navigate("/auth");
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if (AUTH_REQUIRED && loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />

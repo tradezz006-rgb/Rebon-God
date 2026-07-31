@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDomain } from "@/contexts/DomainContext";
 import { STATUS_COLOR, type DomainWorld } from "@/data/domains";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 const DomainUniverse = lazy(() => import("./DomainUniverse"));
 const WorldEntryTransition = lazy(() => import("./WorldEntryTransition"));
@@ -63,7 +64,7 @@ export const UniverseGateProvider = ({ children }: { children: ReactNode }) => {
     setEntryWorld(null);
     if (!world) return;
     if (world.route) setDomain(world.route);
-    if (user) {
+    if (!AUTH_REQUIRED || user) {
       navigate("/learning");
     } else {
       navigate("/auth", {

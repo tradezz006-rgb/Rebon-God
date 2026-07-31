@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -53,11 +52,6 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                Log in
-              </Button>
-            </Link>
             <Button variant="hero" size="sm" onClick={openUniverse}>
               Choose your path
             </Button>

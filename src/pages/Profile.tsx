@@ -12,6 +12,7 @@ import {
   User, Trophy, TrendingUp, Target, Clock, Award, LogOut, 
   Calendar, Zap, Star, Activity, BarChart3, BookOpen, Code, Flame, Sparkles
 } from "lucide-react";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 interface ProfileData {
   full_name: string | null;
@@ -98,7 +99,7 @@ const Profile = () => {
   }, [setSection]);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (AUTH_REQUIRED && !loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);

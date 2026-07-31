@@ -6,6 +6,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useDomain, Domain, Section } from "@/contexts/DomainContext";
 import { Menu, X, LogOut, User, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 const DomainNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,10 +47,13 @@ const DomainNavbar = () => {
   const handleSignOut = async () => {
     setIsUserMenuOpen(false);
     await signOut();
-    navigate("/auth");
+    navigate(AUTH_REQUIRED ? "/auth" : "/");
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "You";
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    "Guest";
   const initials = displayName.substring(0, 2).toUpperCase();
 
   return (
@@ -119,7 +123,9 @@ const DomainNavbar = () => {
                 >
                   <div className="px-5 py-4 border-b border-white/[0.06]">
                     <p className="text-sm font-medium text-foreground">{displayName}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {user?.email || "Guest mode — auth coming later"}
+                    </p>
                   </div>
                   <div className="px-5 py-4 border-b border-white/[0.06] space-y-3">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Language</p>
@@ -153,14 +159,16 @@ const DomainNavbar = () => {
                       Appearance
                     </button>
                   </div>
-                  <div className="px-5 py-3">
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                      <LogOut className="w-3.5 h-3.5" /> Sign out
-                    </button>
-                  </div>
+                  {AUTH_REQUIRED && (
+                    <div className="px-5 py-3">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        <LogOut className="w-3.5 h-3.5" /> Sign out
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -185,9 +193,11 @@ const DomainNavbar = () => {
                 {s.label}
               </button>
             ))}
-            <button onClick={handleSignOut} className="w-full text-left px-2 py-3 text-sm text-muted-foreground">
-              Sign out
-            </button>
+            {AUTH_REQUIRED && (
+              <button onClick={handleSignOut} className="w-full text-left px-2 py-3 text-sm text-muted-foreground">
+                Sign out
+              </button>
+            )}
           </div>
         )}
       </div>

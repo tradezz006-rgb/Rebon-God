@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,6 +22,11 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Auth paused for teammate testing — send everyone into the product
+    if (!AUTH_REQUIRED) {
+      navigate("/learning", { replace: true });
+      return;
+    }
     if (user) {
       navigate("/learning");
     }

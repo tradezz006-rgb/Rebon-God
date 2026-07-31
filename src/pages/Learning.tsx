@@ -17,6 +17,7 @@ import CloudInitialQuiz from "@/components/cloud/CloudInitialQuiz";
 import CloudLearningDashboard from "@/components/cloud/CloudLearningDashboard";
 import { BookOpen, Mic, ClipboardCheck, Route, Code } from "lucide-react";
 import { internalAiService } from "@/services/internalAiService";
+import { AUTH_REQUIRED } from "@/lib/authGate";
 
 type LearningStep = "level" | "quiz" | "voice" | "dashboard";
 
@@ -41,7 +42,7 @@ const Learning = () => {
   }, [setSection]);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (AUTH_REQUIRED && !loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
@@ -131,7 +132,7 @@ const Learning = () => {
     });
   };
 
-  if (loading || isGeneratingRoadmap) {
+  if ((AUTH_REQUIRED && loading) || isGeneratingRoadmap) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4" />
