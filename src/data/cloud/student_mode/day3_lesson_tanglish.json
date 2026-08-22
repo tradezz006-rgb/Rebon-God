@@ -1,0 +1,126 @@
+{
+  "day": 3,
+  "part": "A",
+  "language": "tanglish",
+  "title": "Networking Basics (VPC)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 3",
+      "board_text": "Student Mode · Day 3 of 5\n\nYou know cloud and IAM.\nToday: Networking Basics — VPC\n\nWe will cover:\n• What a VPC is and why isolation matters\n• Public vs private subnets\n• Internet gateways and traffic paths",
+      "ren_voice": "Welcome Day 3. Cloud and IAM theriyum. Inniku walls draw panrom — networking. VPC na Virtual Private Cloud: AWS-la unga private slice — enna public, enna private, traffic eppadi move aagum. EC2 and database ellam indha map-ku ulleye irukkum. Teach, board, mic check. Network open panrom.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS A VPC?",
+      "board_text": "VPC = Virtual Private Cloud.\n\nIt is your own private section of AWS's network — isolated from every other customer's infrastructure.\n\nWithout a VPC: your resources exist in shared, open space.\nWith a VPC: you define the walls, the doors, and who has the keys.\n\nFour things you control inside a VPC:\n• Your own IP address range\n• Which resources are reachable from the internet\n• Which resources are internal-only\n• The traffic rules between every resource",
+      "ren_voice": "VPC-nu Virtual Private Cloud — namba own private section of AWS's network. AWS-la resources create pannaa, oru open, shared space-la thozhuma pogaadhu. AWS namba-ku isolated section edukka allow pannum. Entire AWS network-a oru city-nu vachu yosinga. VPC namba-oda private property antha city-la — walls engey, doors engey, yaarukku key-nu namba decide pannuvom. IP address range namba control pannuvom, which resources internet-la irundhu reach panna mudiyum, which resources internal-only, every resource-ku traffic rules — ellam namba define pannuvom. VPC illaadhappo, database-a yaaraavathu right address-la reach panna mudiyum. VPC irundha, explicit permission illaamal yedhuvo ulla vara mudiyaadhu.",
+      "check_question": {
+        "question": "What is the core thing a VPC gives you that you don't have without one?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — isolation. Namba resources, veyra AWS customer-oda resources-la irundhu separated. Explicit permission illaamal yedhuvo reach panna mudiyaadhu. Andha isolation-taan networking-la ellathukum foundation.",
+        "ren_response_if_incorrect": "Virtual Private Cloud-la 'Private'-nu oru word irukkuu — adhai yosinga. VPC illaadhappo, resources shared space-la walls illaamal irukkum. VPC kudukkurathuu isolation — namba own walled section of the network, namba allow pannaamal yedhuvo ulla varalaamilla."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DOES EVERY COMPANY NEED A VPC?",
+      "board_text": "Without a VPC (or with a misconfigured one):\n• Your database is exposed to the internet\n• Any port-scanning tool can find it in minutes\n• A weak password = data breach\n• This happens. Constantly. To real companies.\n\nWith a properly configured VPC:\n• Database is in a private subnet — invisible from the internet\n• Even if someone finds the address, the traffic is blocked at the network level\n• A misconfiguration in one service does not automatically expose everything else\n\nVPC is the first wall. Without it, every other security measure is compensating for a missing wall.",
+      "ren_voice": "Theory-ku appuram yen ithu matter-nu solren. Internet-ku exposed databases — VPC isolation illaadhappo — global-a most common data breaches-la oru. Exotic attacks illai. Zero-day vulnerabilities illai. Port scanning. yaravadhu oru tool oottuvaanga, IP ranges scan pannum, open database ports-ku respond panna paakkum, one ketchitta common passwords list try pannum. Password weak-a irundha, network wall illaadhappo, minutes-la breach aagum. VPC, database-yae find panna impossible-a aakaara wall. Database VPC's private section-la irukku, internet-la irundhu reach panna mudiyaadhu. Attacker internet scan pannaa, respond pannaa oru port find panna mudiyaadhu. VPC first wall. Veyra ellam adhai vachhu katta.",
+      "check_question": {
+        "question": "If a VPC is missing or misconfigured, what does an attacker need to access your database — assuming they know the IP address?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — password mattum. Illa, database version-la known vulnerability irundha, adhaiyum kammiya. Network isolation illaadhappo, attacker-ku database-ku data-ku indha mattum thaaan barrier — database credentials. Adhu-taan VPC isolation non-negotiable-a treat pannuvaanga.",
+        "ren_response_if_incorrect": "Network isolation actually enna block pannum-nu yosinga. VPC properly configure illaadhappo, database internet-la irundhu reach aanalaa, attacker-ku address ketchitta, database authentication-a maattum pass panna vendiyathu. Weak password — ulla varaanaa. VPC database-a unreachable-a panniduchu, attack surface-yae remove aaguthu."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW A VPC WORKS — THE MENTAL MODEL",
+      "board_text": "Think of your VPC as a building:\n\n• Public subnet = the reception area — anyone can walk in\n• Private subnet = the server room — internal access only, no public entrance\n• Security Group = the lock on each individual door\n• Internet Gateway (IGW) = the building's main entrance from the street\n• NAT Gateway = a one-way exit — internal resources can reach out, nothing reaches in\n\nRule:\nAPI servers and web servers → public subnet\nDatabases and internal services → private subnet, always",
+      "ren_voice": "Mental model solren. Namba VPC oru building. Andha building-la rendu maathiri spaces irukkum. Public subnet reception area maathiri — street-ku face pannum, yaarum front door-ku walk pannalaam. Web server or API server idha-la irukkum. Private subnet server room maathiri — public entrance illai, internal staff mattum pooglaam. Database idha-la irukkum. Internet Gateway building-oda main entrance from the street — adhu illaadhappo, traffic ulla vara mudiyaadhu, veliyey poga mudiyaadhu. NAT Gateway internal resources-ku one-way exit — database server software updates download pannalaam, ulla varaadhu. Security Groups each individual door-oda lock — which traffic each specific resource-la allow-nu define pannuvaanga. Innaikku oru rule edukkanom: databases always private subnets-la. No exceptions.",
+      "check_question": {
+        "question": "Your API server needs to receive requests from users on the internet. Your database stores user data. Which goes in the public subnet and which goes in the private subnet?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — API server public subnet-la, database private subnet-la. API server internet-la irundhu requests receive panna reach panna vendiyathu. Database direct-a internet-la irundhu reach panna venam — API server mattum reach panna venam, adhu VPC-ku ulleye nadhakkum. Perfect.",
+        "ren_response_if_incorrect": "Rule-a solren. Public subnet, internet-la irundhu traffic receive panna venum-na — API server. Private subnet, internet-la irundhu direct-a reach pannakoodaadha — database. API server database-a internally talk pannum, VPC-ku ulleye. Users database-a direct-a talk pannaadhu."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "In the real AWS console:\n\n→ Services → Networking & Content Delivery → VPC\n→ 'Your VPCs' — see all VPCs, their CIDR blocks (IP ranges)\n→ 'Subnets' — see all subnets, whether public or private, which AZ they're in\n→ Click a subnet → 'Route Table' tab shows where traffic goes\n→ 'Security Groups' — see the traffic rules for each resource\n→ 'Internet Gateways' — see which VPCs have a public entrance\n\nRoute table is the proof: a public subnet's route table has a route to an Internet Gateway. A private subnet does not.",
+      "ren_voice": "AWS console-la enna paappeenga-nu solren. Services → Networking and Content Delivery → VPC. Left sidebar-la 'Your VPCs' — each VPC-oda CIDR block, IP address range, paappeenga. Subnets click pannaa, every subnet — which VPC, which Availability Zone-la. Oru subnet public-a private-a-nu eppadi theriyum-na — click pannunga, Route Table tab parunga. Public subnet-oda route table-la 0.0.0.0/0 traffic-a Internet Gateway-ku route panna oru line irukkum. Private subnet-la andha route illai. Oru difference, route table-la — andha-taan subnet-a public or private-nu decide pannum, checkbox illai, label illai, actual route configuration. Security Groups separately listed, each one-oda exact inbound and outbound rules paakkalaam.",
+      "check_question": {
+        "question": "In the AWS console, how do you confirm whether a subnet is truly public or private — what would you look at?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — route table. Public subnet-la 0.0.0.0/0 Internet Gateway-ku point panna route irukkum. Private subnet-la andha route illai. 'Public'-nu label-a matter illai — route-taan matter.",
+        "ren_response_if_incorrect": "Andha subnet-ku associate aana route table-a parunga. Subnet click pannu, Route Table tab. 0.0.0.0/0-ku Internet Gateway-ku route irundha, subnet public — internet traffic reach panna mudiyum. Andha route missing-na, subnet effectively private. Label peyar mattum. Route-taan reality."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nYour company's new web app is ready to deploy.\nIt has two components:\n• An API server that handles user requests\n• A database that stores user accounts and order history\n\nYou need to decide:\n• Which subnet does the API server go in?\n• Which subnet does the database go in?\n• What Security Group rule does the database need?",
+      "ren_voice": "Real deployment decision. API server-um database-um irukkum. Rendu-um VPC-ku ulleye irukkanum. Enna subnet-la each one, database-a protect panna enna security rules-nu decide panna vendiyathu. Yosinga — API server-a yaaru reach panna vendiyathu, database-a yaaru reach panna vendiyathu, adhu placement and security rules-a eppadi determine pannum?",
+      "check_question": {
+        "question": "Walk me through your decisions — where does each component go, and what is the key security group rule on the database?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — API server public subnet-la, internet-la irundhu HTTPS traffic accept pannum. Database private subnet-la, Security Group API server-oda Security Group-la irundhu mattum inbound traffic allow pannum — internet-la irundhu illai, veyra source-la illai. Andha rule, wall-ku ulayey oru wall.",
+        "ren_response_if_incorrect": "Guide panren. API server user requests internet-la irundhu receive panna vendiyathu — public subnet. Database API server-la irundhu mattum traffic receive panna vendiyathu — private subnet. Database-oda Security Group, inbound connections API server-oda Security Group-la mattum allow pannanum — internet-la irundhu illai. Structure-a purindhudaa?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET NETWORKING WRONG",
+      "board_text": "A real mistake that happens repeatedly:\nA startup puts their RDS database in a public subnet 'for easier access during development.'\n\nWhat actually happened:\n• Database launched in a public subnet with a public IP address\n• Security Group allowed inbound traffic on port 5432 from 0.0.0.0/0\n• Launched on a Monday. Breach detected on Thursday.\n• A scanner found the open port, brute-forced a weak password\n• 6 months of customer data: exposed\n• The database was in production the entire time\n\n'We'll move it to private later' is how this starts every time.",
+      "ren_voice": "Ithu constantly happen aaguchu. Oru startup fast-a build pannikittu irukkaa. Database public subnet-la, yen-naa developer laptop-la irundhu direct connect panna convenient-a irukkum development-la. Security Group database port-la wide open. Production-ku munnaadi tighten panna plan. Production-ku ponnaanga. Nobody database-a move pannala. Nobody Security Group update pannala. Four days piragu, oru port scanner database find panna pannuchu, weak password brute-force pannuchu, six months customer data access pannucha. Developer-oda laptop still andha same database-ku connect aagittu irundha — ippo attacker actively read pannakittu irukkaan. 'We'll move it to private later' — ithu every time-um ippadi start aaguchu. Later-nu oru later illai. Private subnet from day one. No exceptions.",
+      "check_question": {
+        "question": "In that scenario, what two things would have prevented the breach — name one networking fix and one Security Group fix?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — database private subnet-la move pannaa public IP illai, internet-la irundhu reach panna mudiyaadhu. Security Group API server-oda Security Group-la irundhu mattum allow panna configure pannaa, address ketchitta kooda traffic block aagum. Rendu layers. Database effectively invisible and unreachable.",
+        "ren_response_if_incorrect": "Rendu separate layers yosinga. First, subnet — database private subnet-la irundha public IP illai, internet-la irundhu reach panna mudiyaadhu. Second, Security Group — public IP irundhalum, API server-la mattum allow pannaa, brute-force attempt block aagum. Rendu layers. Rendu-um venum."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A developer on your team says:\n'Can you just open port 22 to 0.0.0.0/0 on the EC2 security group? It's easier for me to SSH in.'\n\nWhat do you say, and what do you offer instead?",
+      "ren_voice": "Oru developer-kitta port 22, entire internet-ku, EC2 instance-oda Security Group-la open pannunga-nu solluvaanga. Port 22 SSH — server-a directly access panna use panna port. 0.0.0.0/0-ku open pannaa internet-la every IP address attempt panna mudiyum. Developer-kitta enna solluveengaa, alternative-a enna offer pannuveengaa?",
+      "check_question": {
+        "question": "What is your response — what do you decline, and what do you offer instead?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — port 22 to 0.0.0.0/0 decline pannuveengaa, entire internet-ku attack surface create aaguchu. Alternative: AWS Systems Manager Session Manager — port 22 illaamal EC2 instance-ku terminal access kudukum. Illana SSH-ku insist pannaa, their specific IP address-ku mattum restrict panna vendiyathu, not entire internet.",
+        "ren_response_if_incorrect": "Alternative-a offer pannunga: port 22 to 0.0.0.0/0 means internet-la every machine andha server-ku connect try panna mudiyum. Automated scanners ithai constantly try pannuvaanga. Safer alternative: AWS Systems Manager Session Manager — inbound port illaamal terminal access. SSH venum-nu irundha, Security Group rule their specific IP address-ku mattum restrict pannunga."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW SWIGGY'S NETWORK IS STRUCTURED",
+      "board_text": "Swiggy — Indian food delivery, millions of orders daily:\n\n• Order database → private subnet. No public IP. Unreachable from internet.\n• API servers handling order requests → public subnet behind a load balancer\n• Traffic flow: user → load balancer → API server → database (all inside VPC)\n• At no point does a user request reach the database directly\n• Security Groups: database only accepts traffic from API server's Security Group\n• Multiple Availability Zones — if one AZ fails, traffic routes to the other automatically",
+      "ren_voice": "Swiggy-maathiri scale-la eppadi structure pannaanga-nu paarkalam. Order database private subnet-la — public IP illai, internet-la irundhu reach panna mudiyaadhu, scanner-ku ever find panna mudiyaadhu. API servers public subnet-la, load balancer-oda behind — users-kitta irundhu requests receive panna pannuvaanga. Traffic flow: user request pannaanga, load balancer hit aagum, load balancer API server-ku route pannum, API server database-a query pannum. Andha chain-la user-ku direct-a database-ku path illai. Database-oda Security Group, inbound traffic API server-oda Security Group-la mattum allow pannum — veyra ondrum illai. Entire setup multiple Availability Zones-la — oru data center problem-nu irundha, traffic automatically veyra-ku route aagum. Idhu VPC networking at production scale.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 3:\n\n• VPC = your private, isolated section of AWS's network\n• Public subnet = faces the internet (API servers, load balancers)\n• Private subnet = internal only (databases, internal services) — always\n• Security Groups = per-resource traffic rules — define exactly what is allowed in and out\n• Internet Gateway = the entrance from the internet to your VPC\n• NAT Gateway = one-way exit for private resources to reach the internet\n• Route table = what actually makes a subnet public or private (not the label)",
+    "ren_voice": "Innaikku enna edukkanom. VPC namba isolated network inside AWS — explicit permission illaamal yedhuvo ulla varalaamilla. Public subnets internet-ku face pannum. Private subnets pannaadhaa. Databases always private subnets-la — exceptions illai, 'later-la move panniduvaom' illai. Security Groups each resource-a lock pannum. Route table proof — traffic actually enna ulla vara, veliyey poga mudiyum-nu solluchu, subnet-a enna-nu call pannaa. Naalaikku: EC2 and S3 — andha network-oda mela run aagura compute and storage layer."
+  },
+  "doubt_session": {
+    "ren_opening": "Innaikku networking-ku aavudhu. Yedhaavadhu question irukkaanaa — VPCs, subnets, Security Groups, or innaikku cover panna veyra ondru?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Nalla. Naalaikku EC2 and S3. Ninga design panna network-ku ulleye enna run aaguchu-nu therinchikuveengaa."
+  }
+}

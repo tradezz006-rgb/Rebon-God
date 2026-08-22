@@ -1,0 +1,126 @@
+{
+  "day": 1,
+  "part": "A",
+  "language": "tanglish",
+  "title": "What Is Cloud Computing",
+  "duration_minutes": 17,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 1",
+      "board_text": "Student Mode · Day 1 of 5\n\nToday's focus:\n• What cloud computing actually is\n• Why companies moved to cloud\n• Regions, the AWS console, and scaling\n\nHow this class works:\n• I teach on the board while I speak\n• After each step, I ask a quick check — answer on your mic\n• At the end: summary + doubt session",
+      "ren_voice": "Welcome. Naan Ren. Ithu Student Mode Day 1. IAM, VPC, console tickets ellam apram. First cloud-a clear-a understand pannanum — enna, yen win aaguchu, AWS eppadi organize aaguchu. Step by step poguvom. Naan board-la ezhuthi teach panren. Oru idea mudinchaa, short question kekkuven — mic-la answer pannunga. Ready-aa? Foundation-la start panrom.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS CLOUD COMPUTING?",
+      "board_text": "Cloud computing = using the internet to access computers, storage, and software owned and maintained by someone else.\n\nInstead of buying a server and storing it in your office, you rent one from a provider over the internet.\n\nThree major providers:\n• AWS (Amazon Web Services) — largest, ~31% market share\n• Google Cloud\n• Microsoft Azure\n\nYou pay only for what you use.\nYou can scale up or down instantly.\nYou never touch a physical machine.",
+      "ren_voice": "Cloud computing-nu solnaa, internet-la irukkura computers, storage, software — ellathaiyum veyra yaaravadhu own panni manage panna — rent panni use panrathum maathiri. Namba sonthamaaga server vangitu office-la vachirukkathukku pathilamaaga, internet-la AWS, Google Cloud, Microsoft Azure kitta rent pannuvom. Electricity generator vaangala — grid-la connect panni use panrom, month-la bill katrom. Cloud-um same maathiri. AWS ellam ulleye periya data centers-la servers vachirukkanga. Namba account eduthu, use panna, month-la pay pannuvom. Oru physical machine thodalavae thodalai.",
+      "check_question": {
+        "question": "Before we move on — in your own words, what is the one thing that makes cloud computing different from a company buying its own servers?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — rent panrom, vangala. Andha oru difference ellathayum maathiruchu: upfront capital illai, hardware maintain panna vendam, use pannrathuku mattum pay pannuvom. Adhu-taan cloud computing-oda foundation.",
+        "ren_response_if_incorrect": "'Rent' versus 'buy'-nu yosinga. Server vanganaa, nambathu — upfront pay panrom, maintain pannuvom, use aagadhappo kuda full cost pay pannuvom. Cloud-la, veyra yaarodhu computer-a rent panni use pannuvom, use pannrathukku mattum pay pannuvom. Own to rent-ku shift — adhu core idea."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DO COMPANIES USE CLOUD?",
+      "board_text": "Before cloud computing:\n• Buy servers upfront (crores of rupees, weeks to procure)\n• Rent a data center rack (long-term lease)\n• Hire staff to maintain the hardware\n• Guess how many servers you will need (usually wrong)\n• Pay full cost even during low-traffic periods\n\nWith cloud computing:\n• No upfront hardware cost — start from zero\n• Scale to 10x capacity in minutes, not months\n• Pay only for what you use — idle resources cost nothing\n• No physical maintenance — the cloud provider handles hardware failures",
+      "ren_voice": "Cloud varathukku munnaadi, oru startup product launch panna server vanganum, data center-la rack rent pannanum, hardware maintain panna aalunga vekkanum, ellam serndhaa months of work, crores of rupees — apprama product-ku oru line code ezhutha illai. Guess problem kooda irundhuchu: six months-la how many servers venum-nu decide pannanum. Kammiya vanganaa, traffic spike-la site pochu. Athigama vanganaa, idle-a full cost pay panrom. Cloud rendu-um solve pannuchu. Zero-la irundhu start pannuvom, double overnight aanaalum minutes-la scale panna mudiyum. Traffic kurayum pothu scale back pannuvom. Idle capacity-ku oru paisa-um pay pannaatheenga.",
+      "check_question": {
+        "question": "If a startup's product suddenly becomes viral and traffic goes 20x overnight — what happens with physical servers versus cloud?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — physical servers-la, crash aaguchu, new hardware weeks kazhichu varum. Cloud-la, minutes-la scale up panna mudiyum, traffic handle panna mudiyum. Adhu technical advantage mattum illai — business survival advantage.",
+        "ren_response_if_incorrect": "Timeline-a yosinga. Physical servers-la new hardware order pannanum, delivery wait pannanum, setup pannanum — weeks. Appova namba users down site-a hit pannikittu irukkanga. Cloud-la, minutes-la more capacity appear aaguchu. Viral moment-a handle panna maathaara startup survive aaguchu. Hardware-a wait panna maathaara survive aagathu."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW CLOUD COMPUTING WORKS — THE MENTAL MODEL",
+      "board_text": "AWS has data centers in cities around the world. Each city cluster = a Region.\n\nMumbai = ap-south-1\nSingapore = ap-southeast-1\nVirginia (US) = us-east-1\n\nInside a Region, you create Resources — the things you actually use:\n• Virtual computer → EC2\n• File storage → S3\n• Database → RDS\n\nYou access everything through the AWS Management Console — a website.\nResources start in seconds. AWS bills you by the hour or by the byte.",
+      "ren_voice": "Eppadi actual-a work pannum-nu solren. AWS, world-la cities-la periya data centers vachirukkanga. Oru geographic location-a Region-nu solvaanga. Mumbai-a ap-south-1-nu AWS solluchu. 'ap' Asia Pacific, 'south' South Asia, '1' first region there. Singapore ap-southeast-1. Virginia us-east-1. Resources create pannaa, which Region-la irukkanum-nu choose pannuvom. Oru Region-ku ulleye actual things create pannuvom. Virtual computer-a EC2-nu solvaanga. File storage-a S3. Managed database-a RDS. Ellam AWS Management Console-la — oru website-la — access pannuvom. Login pannuvaanga, service-ku navigate pannuvaanga, configure pannuvaanga, seconds-la start aaguchu. Month-end-la use pannrathukku bill pay pannuvom. Adhu-taan complete loop.",
+      "check_question": {
+        "question": "If FoodQuick wants its servers to be physically close to customers in Mumbai — which AWS Region would you deploy in?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — ap-south-1, Mumbai region. Users-ku physical-a close-a irundha latency kammiyaaguchu — user-oda phone-la irundhu server-ku request travel panna time kammiyaaguchu. Right Region choose pannradhu, AWS-la deploy panna first decisions-la oru.",
+        "ren_response_if_incorrect": "Mumbai Region in AWS, ap-south-1-nu solvaanga. 'ap' Asia Pacific, 'south' South Asia, '1' first region. ap-south-1-la deploy pannaa, physical servers Mumbai-la — India-la irukkura users-ku lowest possible latency, geographically close servers-la irundhu."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THE AWS CONSOLE LOOKS LIKE",
+      "board_text": "When you log into AWS:\n\n→ Top navigation bar: Services menu, search bar, Region selector, account name\n→ Services menu: grouped by category — Compute, Storage, Database, Networking, Security\n→ Region selector (top right): dropdown showing which Region you are currently working in\n→ Search bar: type any service name (EC2, S3, IAM) — it appears immediately\n→ Home screen: recently visited services, cost overview, news\n\nThe Region selector is critical — every resource you create lives in the Region you have selected.\nCreating something in ap-south-1 is not visible when you switch to us-east-1.",
+      "ren_voice": "AWS Management Console first open pannaa enna paappeenga-nu solren. Top-la navigation bar irukkum. Left-la Services menu — click pannaa every AWS service grouped-a paappeenga: Compute, Storage, Database, Networking, Security. Middle-la search bar — EC2-nu type pannaa immediately appear aaguchu. Right side-la Region selector — currently which Region-la work pannrom-nu show pannum dropdown. Ithu oru most important things-la oru — watch pannanum. Create panna every resource, select panna Region-la-taan irukkum. Mumbai-la EC2 server create panni, Region selector-a Virginia-ku switch pannaa, andha server poitadhu maathiri thonum — illai, different Region-la irukkum. New engineers ithula romba confuse aaguvaanga. Always Region selector-a check pannu, yedhaavadhu panna munnaadi.",
+      "check_question": {
+        "question": "You create an EC2 server in the Mumbai region, then someone tells you it is missing. What is the first thing you check?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — Region selector. Server almost certainly irukkum, veyra Region-la paakkiromlanu visible aagathu. AWS-la new engineers-ku ithuthan single most common confusion. Region first check pannradhu, neraya time waste save panna.",
+        "ren_response_if_incorrect": "Answer: top right console-la Region selector. yaravadhu ap-south-1 (Mumbai)-la server create pannanga, namba us-east-1 (Virginia)-la current-a paakaranaa, server invisible — different Region-la irukkum. Region selector Mumbai-ku switch pannaa appear aaguchu. Yedhaavadhu missing-nu conclude panna munnaadi, always Region check pannu."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nA friend is starting a small food delivery business in Chennai.\nThey need:\n• A website for customers to order food\n• A place to store restaurant photos and menus\n• A database to track orders\n\nThey ask you: 'Should we rent a server at a local data center for ₹50,000/month, or use AWS?'\n\nWhat do you tell them, and why?",
+      "ren_voice": "Oru friend Chennai-la food delivery business start panraanga. Customer orders-ku website, restaurant photos store panna idham, orders track panna database — ellam venum. Local data center-la fixed ₹50,000/month server rent panraanaa, illa AWS use panraanaa-nu ninga kitta kekkuvaanga. Beginning-la how much traffic varum-nu theriyaadhu. Fast grow aagalaam, slow grow aagalaam. Enna solluveengaa?",
+      "check_question": {
+        "question": "Walk me through your recommendation — AWS or the local server, and what are the two strongest reasons for your choice?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Good reasoning — AWS correct call. Two most important reasons: first, avanga traffic-a theriyaadhu still, ₹50,000 flat-a pay panna, use aagaadha capacity-ku waste. AWS-la actual usage-ku mattum pay pannuvom. Second, suddenly popular aanaalum — minutes-la scale panna mudiyum. Local fixed server, unexpected load-la crash aaguchu, fast path to more capacity illai.",
+        "ren_response_if_incorrect": "New business-ku rendu specific risks yosinga. First: beginning-la almost yarum use panna illaadhappo? ₹50,000/month, 5% capacity-la run aagura server — neraya wasted money. AWS actual usage-ku charge pannum. Second: suddenly really popular aanaalum? Fixed local server, quickly scale panna way illai. AWS, minutes-la 10x traffic handle panna mudiyum. Early-stage, unpredictable demand-ku cloud default correct."
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU IGNORE CLOUD",
+      "board_text": "A real mistake — 2011, Friendster vs Facebook:\n\n• Friendster (peak: 115 million users) owned physical servers in data centers\n• Facebook moved to cloud infrastructure early\n• Friendster's traffic surged — they could not scale their physical servers fast enough\n• Page load time: 40 seconds. Users left.\n• Facebook scaled with traffic using cloud-like infrastructure — page loads stayed fast\n\nFriendster was the larger, more established platform.\nFacebook won because it could scale. Friendster could not.\n\nToday: every serious tech company runs on cloud. Physical server ownership for web applications is largely obsolete.",
+      "ren_voice": "Scale panna mudiyaadhappo enna aaguchu-nu oru real story solren. Friendster — Facebook varathukku munnaadiyaana dominant social network. Peak-la 115 million users. Aana Friendster physical servers own pannuchu. Traffic, hardware procure and install panna maadhaara fast-a grow aanaa, page load times 40 seconds hit aanuchu. Users 40 seconds wait panna maataanga. Pogutaanga. Facebook smaller irundha, aana demand-oda scale panna infrastructure build panna pannuchu. Page loads fast-a irundhuchu. Users irundhanga. Friendster 115 million users-la irundhu irrelevance-ku ponaa, few years-la. Physical infrastructure, scale panna mudiyaadhappo, companies-a end panna pannuchu. Cloud infrastructure, minutes-la scale panna, companies-a enable panna pannuchu. Theoretical concern illai — documented pattern, repeatedly play out aaguchu.",
+      "check_question": {
+        "question": "In the Friendster story, the core technical failure was not their product — it was something else. What was it?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — scale panna mudiyaadhaa infrastructure. Product-ku users irundhanga. Demand irundhuchu. Aana physical servers load handle panna mudiyaadhaa, new servers fast enough add panna mudiyaadhaa. Infrastructure failure. Cloud computing specifically ithai solve panna design panna — minutes-la capacity add panna mudiyum, weeks illai.",
+        "ren_response_if_incorrect": "Product problem illai — Friendster-ku 115 million users use panna venum-nu irundhanga. Problem physical servers load handle panna mudiyaadhaa, new physical servers add panna too long aachu. Infrastructure failure. Cloud computing specifically ithai solve panna — minutes-la capacity add panna mudiyum, weeks illai."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A company runs 10 EC2 servers to handle their normal daily traffic.\nOn New Year's Eve, they expect 50x the normal traffic for about 4 hours.\n\nWhat should they do before midnight?\nAnd what should they do after 4am when traffic returns to normal?\n\nThink about what cloud makes possible that physical servers cannot.",
+      "ren_voice": "Oru company normally 10 EC2 servers run panruvaanga. Innikku New Year's Eve. Midnight-la irundhu roughly 4 hours, 50 times normal traffic expect panraanga. Midnight-ku munnaadi enna panna vendiyathu, 4am-la traffic normal-ku thirumba aanaa enna panna vendiyathu? Cloud actually enna possible pannuchu-nu yosinga.",
+      "check_question": {
+        "question": "What are your two actions — one before midnight, one after 4am?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — midnight munnaadi, scale up. 50x traffic handle panna enough additional EC2 servers launch pannunga, 10-la 100-ku or more. 4am-la traffic normal-ku thirumba aanaa, scale back down pannunga. Extra servers terminate pannu, pay stop aaguchu. Andha extra 90 servers-ku roughly 4 hours pay pannuvom, permanently illai. Adhu-taan cloud enable panradhu — temporary capacity with temporary cost.",
+        "ren_response_if_incorrect": "Rendu moves: midnight munnaadi, scale up — more EC2 instances launch pannunga, 50x traffic handle panna. Cloud, 10 servers-la 100 servers-ku minutes-la ponga allow panrum. 4am-la scale back down — extra servers terminate, pay stop. Few hours extra capacity-ku mattum pay pannuvom. Physical servers-a own panna company, peak 4 hours-ku year-round 100 servers own panni pay pannanum. Cloud that waste eliminate panniduchu."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW ZEPTO USED CLOUD TO SCALE",
+      "board_text": "Zepto — Indian 10-minute grocery delivery:\n\n• Launched in 2021 with a small engineering team\n• Reached 10 million+ users within 18 months of launch\n• Could not have scaled that fast with physical server procurement\n• Used AWS to spin up new compute capacity as demand grew — in hours, not months\n• Scaled back during off-peak hours to avoid paying for idle capacity\n• Today: one of India's fastest-growing consumer tech companies\n\nPhysical infrastructure timeline: 6–12 weeks to procure, install, and configure servers\nAWS timeline: minutes\n\nFor a startup moving at Zepto's speed, cloud was not a preference — it was the only viable option.",
+      "ren_voice": "Ninga therinja oru company-la close pannuvom. Zepto 2021-la launch aanaa — 10-minute grocery delivery. 18 months-la India-la millions of users-ku serve pannivaanga. Eppadi ithanai speed-la infrastructure build panna mudiyum, how big you will get, how fast — theriyaadhappo? Physical servers-a ithai panna mudiyaadhu. Procurement timeline alone — 6 to 12 weeks, order, deliver, install, configure — means namba always actual demand-ku behind-a irukkuvom. Zepto actually enna panna pannanga: AWS use panna. Demand grow aanappo, more compute capacity turn on pannanga — EC2 instances, hours-la. Raathiri 3am-la quiet period-la scale back panna, pay stop pannaanga. Infrastructure cost, actual revenue-a track panna pannuchu, upfront hardware bet illai. Startup speed-la, oru year-la 10x growth possible-a irukkura market-la, cloud preference illai. Scale panna maathaara only architecture.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 1:\n\n• Cloud computing = renting compute, storage, and networking over the internet — no hardware to buy\n• AWS is the largest cloud provider — it owns the servers, you create resources and pay for usage\n• Regions = AWS data centers in specific cities. Mumbai = ap-south-1.\n• Resources start in seconds. Billing starts when they run, stops when you shut them down.\n• Scale up for traffic spikes, scale down when quiet — you never pay for idle capacity\n• The Region selector in the AWS console controls everything — always check it first",
+    "ren_voice": "Day 1-la enna eduthukitta-nu solren. Cloud computing infrastructure rent pannradhu — physical machine thodalavae thodalai. AWS-taan most infrastructure irukkum, Regions-a organize panna — India users-ku closest, ap-south-1 Mumbai-la. Console-la resources create pannuvom, seconds-la start aaguchu, use pannrathukku pay pannuvom, done aanalaa stop aaguchu. Traffic spike-ku scale up, quiet-a irundha scale down. Idle capacity-ku pay pannaatheenga. Console-la Region selector — always check pannu, yedhaavadhu panna munnaadi. Naalaikku, andha cloud account-a yaaru access panna mudiyum, enna panna mudiyum-nu deeper poga — adhu IAM, ellathukum foundation."
+  },
+  "doubt_session": {
+    "ren_opening": "Day 1 aavudhu. Cloud computing, Regions, console, scaling eppadi work panna-nu cover panna. Close panna munnaadi yedhaavadhu questions irukkaanaa?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Nalla. Naalaikku Identity and Access Management — AWS account-la yaaru ulla varuvaanga, enna panna mudiyum-nu. Paakkalaam."
+  }
+}

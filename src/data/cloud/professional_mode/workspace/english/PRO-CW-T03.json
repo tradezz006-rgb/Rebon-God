@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-CW-T03",
+  "task_number": 3,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "cloudwatch",
+  "session": "PM-5",
+  "source_lesson": "PM-5.1",
+  "approach": "build_monitoring",
+  "duration_minutes": 20,
+  "title": "Composite alarm CPU>80% AND 5XX>5",
+  "brief": "Composite alarm CPU>80% AND 5XX>5",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

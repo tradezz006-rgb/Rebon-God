@@ -1,0 +1,302 @@
+{
+  "lesson_id": "pm_console_intro",
+  "lesson_title": "AWS Console Orientation",
+  "unit": "Console Intro",
+  "lesson_number": 1,
+  "language": "english",
+  "schema_version": 2,
+  "duration_minutes": 15,
+
+  "lesson_intro": {
+    "heading": "Professional Mode · Lesson 1",
+    "board_text": "AWS Console Orientation\nFinova Technologies · finova-dev\n\nToday you will learn:\n• Region selector — why resources seem to disappear\n• Account ID — the 12-digit number you will need\n• Search bar — how engineers actually navigate\n• Global vs Regional — IAM vs EC2\n\nHow this session works:\n• I share my screen and teach in the console\n• I pause for quick checks — answer on your mic\n• You practice once on your own",
+    "ren_voice": "Welcome to Professional Mode. I am Ren. Before IAM policies, before launch wizards, before any ticket — you need to be comfortable inside the AWS console itself. Where things live. Why a resource can look missing when it is not. How experienced engineers navigate without wasting time. This is Lesson one: Console Orientation. I will share my screen, walk you through the console live, and check your understanding as we go. Let us begin."
+  },
+
+  "whiteboard_intro": {
+    "duration_seconds": 30,
+    "board_text": "Three things that will confuse you in your first week.\nAll three are in this console.\nAll three are fixable in under ten seconds — if you know where to look.",
+    "ren_voice": "In your first week at any cloud team, you are going to open this console and something is going to look wrong. A resource will be missing. A teammate will say 'which account are you in?' and you will not know where to look. These are not skill problems — they are familiarity problems. I am going to fix them right now, in this console, before you do anything else."
+  },
+
+  "segments": [
+    {
+      "id": "S1",
+      "type": "demonstrate",
+      "title": "What happens when the region is wrong",
+      "setup_voice": "Watch this. I am not going to do anything complicated. I am going to change one setting and show you what happens to your resources.",
+      "steps": [
+        {
+          "voice": "I have three EC2 instances running right now. Mumbai. ap-south-1. All three active.",
+          "cursor": { "action": "navigate", "target": "ec2-instances-list-mumbai" },
+          "pause_ms": 1000
+        },
+        {
+          "voice": "I am going to change exactly one thing. Watch the top right.",
+          "cursor": { "action": "hover", "target": "region-selector" },
+          "pause_ms": 700
+        },
+        {
+          "voice": "I switch the region to Virginia.",
+          "cursor": { "action": "click", "target": "region-selector" },
+          "pause_ms": 300
+        },
+        {
+          "voice": null,
+          "cursor": { "action": "click", "target": "region-option-us-east-1" },
+          "pause_ms": 1200
+        },
+        {
+          "voice": "Look at the instances list.",
+          "cursor": { "action": "highlight", "target": "ec2-instances-empty-state" },
+          "pause_ms": 1500
+        }
+      ],
+      "lesson_voice": "Zero instances. I did not delete them. They are still running. They are still billing this account. They are in Mumbai. But I am now looking at Virginia — and Virginia has nothing. The region selector does not filter what you see. It changes your entire view of the account. This is the single most common thing that sends engineers into a debugging spiral in their first month. They spend an hour looking for a resource that was never missing.",
+      "check": {
+        "voice": "Before I explain the region selector — in your own words, tell me what you just saw happen.",
+        "wait_for_input": true,
+        "response_if_correct": "Exactly right. The resources did not move. The view moved. That distinction is the whole lesson. Now let me make sure you can always prevent it.",
+        "response_if_incorrect": "Think about what changed and what did not change. Did the instances themselves do anything? Or did something about how you were looking at them change?"
+      }
+    },
+
+    {
+      "id": "S2",
+      "type": "teach",
+      "title": "Region selector — what it is and the two-second habit",
+      "steps": [
+        {
+          "voice": "The region selector is at the top right of every page in this console. It never moves.",
+          "cursor": { "action": "hover", "target": "region-selector" },
+          "pause_ms": 700
+        },
+        {
+          "voice": "Click it.",
+          "cursor": { "action": "click", "target": "region-selector" },
+          "pause_ms": 500
+        },
+        {
+          "voice": "This is the list of AWS data center locations around the world. Mumbai is ap-south-1. Singapore is ap-southeast-1. Virginia is us-east-1.",
+          "cursor": { "action": "highlight", "target": "region-dropdown-list" },
+          "pause_ms": 1000
+        },
+        {
+          "voice": "Whichever region is selected — that is where resources are created when you build something.",
+          "cursor": null,
+          "pause_ms": 700
+        },
+        {
+          "voice": "And that is which resources you can see when you look for something.",
+          "cursor": null,
+          "pause_ms": 600
+        },
+        {
+          "voice": "Switching back to Mumbai.",
+          "cursor": { "action": "click", "target": "region-option-ap-south-1" },
+          "pause_ms": 800
+        },
+        {
+          "voice": "Three instances. Back. The habit: every time you open this console, before you create or look for anything — check the region selector first. Not after you cannot find something. Before.",
+          "cursor": { "action": "hover", "target": "region-selector" },
+          "pause_ms": 900
+        }
+      ],
+      "check": {
+        "voice": "Your team's application runs in Mumbai. You need to create a new EC2 instance for it right now. The region selector shows us-east-1. What do you do before clicking anything else?",
+        "wait_for_input": true,
+        "response_if_correct": "Switch the region to ap-south-1 first. Then create. If you create the instance in Virginia, it runs in Virginia — far from your application, higher latency, cross-region costs, and a confused team when they look for it in Mumbai.",
+        "response_if_incorrect": "Look at the region selector. Your application is in Mumbai. The console is pointing at Virginia right now. What needs to change before you create anything?"
+      }
+    },
+
+    {
+      "id": "S3",
+      "type": "teach",
+      "title": "Account ID — the 12-digit number you will need more than you expect",
+      "steps": [
+        {
+          "voice": "Top right, next to the region selector. Your account name. Click it.",
+          "cursor": { "action": "click", "target": "account-switcher" },
+          "pause_ms": 600
+        },
+        {
+          "voice": "This 12-digit number is your Account ID. It is how AWS uniquely identifies your account.",
+          "cursor": { "action": "hover", "target": "account-id-display" },
+          "pause_ms": 900
+        },
+        {
+          "voice": "You need it for three things. Support tickets — AWS asks for it first.",
+          "cursor": { "action": "highlight", "target": "account-id-display" },
+          "pause_ms": 700
+        },
+        {
+          "voice": "Cross-account IAM roles — when one account's resources need to access another account's resources.",
+          "cursor": null,
+          "pause_ms": 800
+        },
+        {
+          "voice": "And whenever a teammate asks 'which account are you in?' — this is the answer. Three seconds.",
+          "cursor": { "action": "hover", "target": "account-switcher" },
+          "pause_ms": 600
+        }
+      ],
+      "check": {
+        "voice": "Your company has three AWS accounts — production, staging, and development. Your manager asks you to confirm you are in the development account before making any changes. What do you do?",
+        "wait_for_input": true,
+        "response_if_correct": "Click the account name, read the 12-digit Account ID, and cross-reference it with your team's account list. Matches dev — you are in the right place. Does not match — do not touch anything until you switch.",
+        "response_if_incorrect": "The answer is at the top right of this screen. Click the account name and look at the 12-digit number. Your team will have a reference list of which number is production, which is staging, which is dev."
+      }
+    },
+
+    {
+      "id": "S4",
+      "type": "teach",
+      "title": "Search bar — how experienced engineers actually navigate",
+      "steps": [
+        {
+          "voice": "I am going to navigate to IAM twice. Watch the difference.",
+          "cursor": null,
+          "pause_ms": 500
+        },
+        {
+          "voice": "First way — Services menu.",
+          "cursor": { "action": "click", "target": "services-menu" },
+          "pause_ms": 500
+        },
+        {
+          "voice": "Click Security, Identity and Compliance. Find IAM in the list.",
+          "cursor": { "action": "hover", "target": "services-menu-security-category" },
+          "pause_ms": 1000
+        },
+        {
+          "voice": "Three clicks through a category list. Every single time.",
+          "cursor": { "action": "key", "target": "Escape" },
+          "pause_ms": 600
+        },
+        {
+          "voice": "Second way. Search bar. Center of the top navigation bar.",
+          "cursor": { "action": "click", "target": "search-bar" },
+          "pause_ms": 300
+        },
+        {
+          "voice": "I type IAM.",
+          "cursor": { "action": "type", "target": "search-bar", "value": "IAM" },
+          "pause_ms": 500
+        },
+        {
+          "voice": "Top result. And below it — direct shortcuts into Users, Roles, Policies. I can skip the IAM home page entirely and jump straight to what I need.",
+          "cursor": { "action": "hover", "target": "search-result-iam" },
+          "pause_ms": 1000
+        },
+        {
+          "voice": "One click. Done.",
+          "cursor": { "action": "click", "target": "iam-service-result" },
+          "pause_ms": 700
+        },
+        {
+          "voice": "Engineers who have used AWS for years almost never open the Services menu. They type. Within two weeks, you will too.",
+          "cursor": null,
+          "pause_ms": 800
+        }
+      ],
+      "check": {
+        "voice": "When would you actually use the Services menu instead of the search bar?",
+        "wait_for_input": true,
+        "response_if_correct": "Right — when you are exploring and do not know which service you need. The menu shows you categories to browse. Once you know the service name, search is always faster. The menu is for discovery, the search bar is for everything else.",
+        "response_if_incorrect": "Think about the one situation where typing into the search bar does not help. What would you need to not know for the search bar to be the wrong choice?"
+      }
+    },
+
+    {
+      "id": "S5",
+      "type": "practice",
+      "title": "Navigate to EC2 using the search bar",
+      "instruction_voice": "Your turn. Use the search bar to navigate to EC2. Not the Services menu — the search bar. Once you land on the EC2 dashboard, tell me the region the console is showing.",
+      "target": "ec2-dashboard",
+      "hint_after_seconds": 20,
+      "hint_voice": "Click the search bar at the top center of the screen. Then type EC2.",
+      "completion_voice": "Good. Now check the region selector before you do anything here. That is where any instance you create right now would land. Always check before you act."
+    },
+
+    {
+      "id": "S6",
+      "type": "teach",
+      "title": "Global versus Regional — why IAM never shows a region",
+      "steps": [
+        {
+          "voice": "One more thing, and this one surprises most people.",
+          "cursor": { "action": "click", "target": "search-bar" },
+          "pause_ms": 200
+        },
+        {
+          "voice": "Navigate to IAM.",
+          "cursor": { "action": "type", "target": "search-bar", "value": "IAM" },
+          "pause_ms": 300
+        },
+        {
+          "voice": null,
+          "cursor": { "action": "click", "target": "iam-service-result" },
+          "pause_ms": 800
+        },
+        {
+          "voice": "Look at the region selector.",
+          "cursor": { "action": "hover", "target": "region-selector" },
+          "pause_ms": 600
+        },
+        {
+          "voice": "It says Global. You cannot change it for IAM.",
+          "cursor": { "action": "highlight", "target": "region-selector-global-indicator" },
+          "pause_ms": 900
+        },
+        {
+          "voice": "IAM is a global service. IAM users, roles, groups, and policies exist across your entire account — not tied to any region.",
+          "cursor": null,
+          "pause_ms": 900
+        },
+        {
+          "voice": "EC2 instances: regional. VPCs: regional. RDS databases: regional. Lambda functions: regional. S3 buckets: regional.",
+          "cursor": null,
+          "pause_ms": 800
+        },
+        {
+          "voice": "IAM: global. Route 53: global. CloudFront: global.",
+          "cursor": null,
+          "pause_ms": 600
+        },
+        {
+          "voice": "When an engineer says their IAM role is missing — region is never the cause. When they say their EC2 instance is missing — region is the first thing you check.",
+          "cursor": { "action": "hover", "target": "region-selector-global-indicator" },
+          "pause_ms": 900
+        }
+      ],
+      "check": {
+        "voice": "Your teammate says their Lambda function is missing. Lambda — global or regional? And based on that, what is the first thing you tell them to check?",
+        "wait_for_input": true,
+        "response_if_correct": "Regional. Same pattern as EC2 — region selector first. Created it in one region, looking in another, it will not appear in the list.",
+        "response_if_incorrect": "Lambda is a regional service — same category as EC2. So missing Lambda follows the same logic as missing EC2. What was the first check for EC2?"
+      }
+    },
+
+    {
+      "id": "S7",
+      "type": "ask",
+      "title": "Synthesis — a real scenario",
+      "voice": "Last one. This brings everything from today together.",
+      "question": "Your teammate calls you. Their EC2 instance — one they saw running this morning — has disappeared. They are looking at an empty Instances list right now. Walk me through the first two things you tell them to check, and why each one matters.",
+      "wait_for_input": true,
+      "response_if_correct": "Region selector first — are they in the same region where they created the instance? Then account name — are they in the same AWS account? Two checks. Ten seconds. Ninety percent of missing resource cases are solved right there without touching the actual resource. That is today's entire session in one answer.",
+      "response_if_incorrect": "Think about the two things that control what you see in this console — not the resource itself, but the context you are looking from. Which two settings did we focus on today?"
+    }
+  ],
+
+  "session_close": {
+    "ren_voice": "Three things. The region selector changes your entire view — check it before every action, every time, no exceptions. The Account ID is the 12-digit number in your account menu — know where it is, because multiple workflows require it. The search bar is how you navigate — type the service name, not the Services menu. And IAM is global while almost everything else is regional. These are not advanced concepts. They are the habits that separate engineers who waste time from engineers who do not.",
+    "doubt_session": {
+      "ren_opening": "That is the console orientation. Any questions before we go into IAM?",
+      "wait_for_response": true,
+      "ren_response_template": "Answer the student's question using only the concepts covered in this lesson: region selector behavior, Account ID location and use cases, search bar navigation, and global versus regional services. If the question is about IAM policy syntax, EC2 launch configuration, VPC setup, or any service-specific configuration beyond what was introduced today, tell them it is covered in the relevant lesson.",
+      "ren_closing": "Good. IAM Lesson 1 is next. You are going to create your first IAM user correctly — with a group, a scoped policy, and least privilege from day one. No AdministratorAccess as a shortcut."
+    }
+  }
+}

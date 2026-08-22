@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T12",
+  "task_number": 12,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.4",
+  "approach": "real_ticket",
+  "duration_minutes": 30,
+  "title": "Replace unrestricted SSH with Session Manager",
+  "brief": "Replace unrestricted SSH with Session Manager",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-S3-T02",
+  "task_number": 2,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "s3",
+  "session": "PM-4",
+  "source_lesson": "PM-4.1",
+  "approach": "create_and_configure",
+  "duration_minutes": 15,
+  "title": "Lifecycle 30 IA / 90 Glacier / delete 365",
+  "brief": "Lifecycle 30 IA / 90 Glacier / delete 365",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

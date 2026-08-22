@@ -11,7 +11,7 @@ import { UniverseGateProvider } from "@/components/landing/UniverseGate";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Learning from "./pages/Learning";
-import InteractiveLesson from "./pages/InteractiveLesson";
+import LessonRouter from "./pages/LessonRouter";
 import Workspace from "./pages/Workspace";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -33,7 +33,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/learning" element={<Learning />} />
-                    <Route path="/lesson/:id" element={<InteractiveLesson />} />
+                    <Route path="/lesson/:id" element={<LessonRouter />} />
                     <Route path="/workspace" element={<Workspace />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="*" element={<NotFound />} />

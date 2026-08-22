@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T06",
+  "task_number": 6,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.2",
+  "approach": "debug_and_fix",
+  "duration_minutes": 20,
+  "title": "Subnet supposed private but accepts internet  -  fix",
+  "brief": "Subnet supposed private but accepts internet  -  fix",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

@@ -1,0 +1,93 @@
+{
+  "day": 5,
+  "language": "english",
+  "items": [
+    {
+      "id": "D5-Q1",
+      "type": "quiz",
+      "question": "What is the difference between a CloudWatch metric and a CloudWatch alarm?",
+      "options": [
+        "A metric is the raw number; an alarm is the rule + notification when a threshold is crossed",
+        "An alarm is the raw number; a metric is only the email template",
+        "They are the same thing with two names",
+        "Metrics only exist in Billing, alarms only exist in IAM"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Metric = data. Alarm = decision on that data.",
+      "ren_hint_tanglish": "Metric = number. Alarm = threshold cross aana notify.",
+      "explanation": "CloudWatch collects metrics automatically. You set alarms so problems find you — not the other way around."
+    },
+    {
+      "id": "D5-Q2",
+      "type": "quiz",
+      "question": "Why set a CPU alarm to fire after 5 consecutive minutes above 90%, not on the first 1-second spike?",
+      "options": [
+        "Evaluation period filters noise — sustained problems matter more than momentary spikes",
+        "AWS forbids any alarm under 5 minutes always",
+        "Metrics are only collected once per day",
+        "Alarms cannot send email unless you wait 5 minutes"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Short spikes are normal; sustained high CPU is the real signal.",
+      "ren_hint_tanglish": "Momentary spike normal — 5 minutes sustained = real problem.",
+      "explanation": "Evaluation periods reduce false alarms so you only wake up for issues that need action."
+    },
+    {
+      "id": "D5-Q3",
+      "type": "quiz",
+      "question": "Why is 'we'll check the dashboard occasionally' a weak monitoring strategy?",
+      "options": [
+        "Dashboards need a human looking; alarms notify you even at 3am",
+        "Dashboards are illegal in AWS",
+        "CloudWatch cannot show CPU metrics",
+        "Budgets replace the need for any monitoring"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Dashboards = visibility. Alarms = proactive notification.",
+      "ren_hint_tanglish": "Dashboard paakura alavukku mattum illa — alarm unna thedum.",
+      "explanation": "Problems do not wait for office hours. Alarms reach you; dashboards give context after."
+    },
+    {
+      "id": "D5-S1",
+      "type": "scenario",
+      "situation": "Production is down. CloudWatch shows: EC2 CPU 12% (very low), ALB request count near zero, RDS CPU 98% (very high).",
+      "question": "What is the most likely root cause?",
+      "options": [
+        "The database is overloaded — app/EC2 are idle waiting; traffic fails or times out",
+        "EC2 is out of CPU and needs a bigger instance immediately",
+        "S3 Block Public Access caused the outage",
+        "The Region selector was set to the wrong city"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Low EC2 + high RDS + zero traffic → look at the database first.",
+      "ren_hint_tanglish": "EC2 low, RDS 98%, traffic zero — database thaan problem.",
+      "explanation": "Pattern reading: RDS is saturated, EC2 waits, ALB sees unhealthy/failed paths. Fix the DB bottleneck."
+    },
+    {
+      "id": "D5-S2",
+      "type": "scenario",
+      "situation": "A test environment was left running for 6 weeks. Month-end bill: ₹4.2 lakhs. No budget alert existed.",
+      "question": "What should have been set up before anything went live?",
+      "options": [
+        "An AWS Budget with alerts (e.g. 80% / 100%) plus a cleanup habit for test resources",
+        "Nothing — billing surprises are normal and unavoidable",
+        "Only CloudWatch dashboards with no alarms and no budgets",
+        "Sharing the root password so anyone can check cost manually"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Budget alerts catch burn early; tagging/cleanup prevents idle waste.",
+      "ren_hint_tanglish": "Budget alert + test resource cleanup habit — invoice shock avoid aagum.",
+      "explanation": "Set cost budgets before spend. Also tag and expire test environments so idle NAT/EC2/EBS cannot run for weeks unnoticed."
+    },
+    {
+      "id": "D5-A1",
+      "type": "account_id",
+      "situation": "Before going live, Day 5 taught a minimum safety set: watch the system and watch the spend.",
+      "question": "Name the AWS service used for metrics and alarms. (Type the service name)",
+      "expected_answer": "CloudWatch",
+      "ren_hint_english": "Monitoring service that receives metrics from EC2, S3, RDS, and more.",
+      "ren_hint_tanglish": "Metrics + alarms service = CloudWatch.",
+      "explanation": "CloudWatch = system health. Billing / Budgets / Cost Explorer = spend health. You need both."
+    }
+  ]
+}

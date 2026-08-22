@@ -80,6 +80,35 @@ function unverifiedDataSaverPlugin() {
           });
         }
       });
+
+      // Persist Student Mode doubt Q&A into master_datas.json (EN + Tanglish)
+      server.middlewares.use('/api/save-master-datas', (req: any, res: any) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'content-type');
+        if (req.method === 'OPTIONS') { res.statusCode = 200; res.end(); return; }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('Method Not Allowed'); return; }
+
+        let body = '';
+        req.on('data', (chunk: any) => { body += chunk.toString(); });
+        req.on('end', () => {
+          try {
+            const filePath = path.resolve(__dirname, './src/data/master_datas.json');
+            let data: any[] = [];
+            if (fs.existsSync(filePath)) {
+              try { data = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch(e) { data = []; }
+            }
+            if (!Array.isArray(data)) data = [];
+            data.push(JSON.parse(body));
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: true, count: data.length }));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+      });
     }
   }
 }

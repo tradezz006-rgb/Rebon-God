@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T03",
+  "task_number": 3,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.1",
+  "approach": "create_from_scratch",
+  "duration_minutes": 20,
+  "title": "ASG min2 max8 desired2 CPU70% multi-AZ",
+  "brief": "ASG min2 max8 desired2 CPU70% multi-AZ",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

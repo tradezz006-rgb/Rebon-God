@@ -1,0 +1,280 @@
+{
+  "mode": "professional",
+  "mastery_standard": "Student can sit next to a real cloud engineer, take a ticket, open the real AWS console, and handle it independently.",
+  "totals": {
+    "lessons": 22,
+    "workspace_tasks": 77,
+    "estimated_hours": 36.7
+  },
+  "topics": [
+    {
+      "session": "PM-0",
+      "title": "AWS Console Orientation",
+      "description": "Control-room literacy  -  nav, region, Account ID, search, global vs regional.",
+      "lessons": [
+          {
+          "id": "PM-0.1",
+          "title": "AWS Console Orientation",
+          "duration_minutes": 15,
+          "available": true,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-1",
+      "title": "IAM  -  Identity and Access Management",
+      "description": "Users, roles, policies, Access Denied, CloudTrail  -  least privilege first.",
+      "lessons": [
+        {
+          "id": "PM-1.1",
+          "title": "Users, Groups, and the Principle of Least Privilege",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-1.2",
+          "title": "IAM Roles: How Services Get Permissions",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-1.3",
+          "title": "IAM Policies: Writing and Reading Them",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-1.4",
+          "title": "Debugging Access Denied",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-1.5",
+          "title": "CloudTrail: The Audit Record",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-2",
+      "title": "VPC  -  Virtual Private Cloud",
+      "description": "Private network design, custom VPC, security groups, connectivity troubleshooting.",
+      "lessons": [
+        {
+          "id": "PM-2.1",
+          "title": "VPC Architecture: The Building Blocks",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-2.2",
+          "title": "Building a VPC From Scratch",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-2.3",
+          "title": "Security Groups in Practice",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-2.4",
+          "title": "Troubleshooting Connectivity",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-3",
+      "title": "EC2  -  Elastic Compute Cloud",
+      "description": "Launch correctly, ASG, ALB, right-sizing and troubleshooting.",
+      "lessons": [
+        {
+          "id": "PM-3.1",
+          "title": "Launching EC2 Correctly",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-3.2",
+          "title": "Auto Scaling Groups",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-3.3",
+          "title": "Application Load Balancer",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-3.4",
+          "title": "Right-Sizing and Troubleshooting",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-4",
+      "title": "S3  -  Simple Storage Service",
+      "description": "Object storage security, lifecycle cost control, access incidents.",
+      "lessons": [
+        {
+          "id": "PM-4.1",
+          "title": "S3 Fundamentals and Security",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-4.2",
+          "title": "Lifecycle Rules and Cost Control",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-4.3",
+          "title": "Access Control and Incidents",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-5",
+      "title": "CloudWatch  -  Monitoring",
+      "description": "Dashboards, alarms, Logs Insights, incident tracing.",
+      "lessons": [
+        {
+          "id": "PM-5.1",
+          "title": "Dashboards and Metrics",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-5.2",
+          "title": "Alarms",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-5.3",
+          "title": "Logs Insights and Incident Tracing",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    },
+    {
+      "session": "PM-6",
+      "title": "Cost Explorer and Budgets",
+      "description": "Read spend like an engineer; budgets and anomaly detection.",
+      "lessons": [
+        {
+          "id": "PM-6.1",
+          "title": "Reading Cost Explorer Like an Engineer",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        },
+        {
+          "id": "PM-6.2",
+          "title": "Budgets and Anomaly Detection",
+          "duration_minutes": 20,
+          "available": false,
+          "languages": [
+            "english",
+            "tanglish"
+          ]
+        }
+      ]
+    }
+  ]
+}

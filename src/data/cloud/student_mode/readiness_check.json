@@ -1,0 +1,211 @@
+{
+  "total_questions": 15,
+  "pass_threshold": 0.7,
+  "time_limit_minutes": 20,
+  "questions": [
+    {
+      "id": "RC-D1-Q1",
+      "source_day": 1,
+      "type": "quiz",
+      "question": "Day 1 readiness placeholder — Student Mode is for:",
+      "options": [
+        "Fundamentals, quizzes, and simple scenarios only",
+        "Full AWS console configuration from day one",
+        "Production incident response only",
+        "Story-mode mystery reconstruction"
+      ],
+      "correct_index": 0,
+      "explanation": "Student Mode is orientation — concepts and checks before Professional Mode."
+    },
+    {
+      "id": "RC-D1-Q2",
+      "source_day": 1,
+      "type": "quiz",
+      "question": "Placeholder D1 — After Day 5 readiness pass, what unlocks?",
+      "options": [
+        "Professional Mode",
+        "A new story arc",
+        "Another 33 Tanglish story lessons",
+        "Nothing — the course ends"
+      ],
+      "correct_index": 0,
+      "explanation": "Passing the Console Readiness Check unlocks Professional Mode."
+    },
+    {
+      "id": "RC-D1-Q3",
+      "source_day": 1,
+      "type": "scenario",
+      "situation": "You have 15 hours total across 5 days.",
+      "question": "What belongs in Student Mode?",
+      "options": [
+        "Concepts, quizzes, simple scenarios",
+        "Live IAM policy attaches in a simulated console",
+        "VPC peering debug tickets",
+        "Case-board mystery pins"
+      ],
+      "correct_index": 0,
+      "explanation": "No console simulation in Student Mode."
+    },
+    {
+      "id": "RC-D2-Q1",
+      "source_day": 2,
+      "type": "quiz",
+      "question": "Placeholder D2 — Before helping with any AWS request you need:",
+      "options": ["Account ID", "Only the bucket name", "Only the region name", "A shared root password"],
+      "correct_index": 0,
+      "explanation": "Account ID identifies which account the request belongs to."
+    },
+    {
+      "id": "RC-D2-Q2",
+      "source_day": 2,
+      "type": "account_id",
+      "situation": "A developer cannot access an S3 bucket.",
+      "question": "What must you collect first before you can help?",
+      "expected_answer": "Account ID",
+      "explanation": "Account ID uniquely identifies the company's AWS account."
+    },
+    {
+      "id": "RC-D2-Q3",
+      "source_day": 2,
+      "type": "quiz",
+      "question": "Placeholder D2 — Regions exist so that:",
+      "options": [
+        "Workloads run close to users and meet data residency needs",
+        "AWS charges the same everywhere with no choice",
+        "You never need Account IDs",
+        "Root users are shared across companies"
+      ],
+      "correct_index": 0,
+      "explanation": "Regions are geographic locations for latency and compliance."
+    },
+    {
+      "id": "RC-D3-Q1",
+      "source_day": 3,
+      "type": "quiz",
+      "question": "Placeholder D3 — IAM is primarily about:",
+      "options": [
+        "Who can do what in an AWS account",
+        "How to size EC2 instances",
+        "How to price S3 storage classes",
+        "How to draw network diagrams"
+      ],
+      "correct_index": 0,
+      "explanation": "IAM controls identity and permissions."
+    },
+    {
+      "id": "RC-D3-Q2",
+      "source_day": 3,
+      "type": "quiz",
+      "question": "Placeholder D3 — Shared IAM users are a problem because:",
+      "options": [
+        "You cannot tell which person did what",
+        "AWS bills more for shared users",
+        "Shared users cannot open the console",
+        "Shared users disable MFA forever"
+      ],
+      "correct_index": 0,
+      "explanation": "Accountability requires individual principals."
+    },
+    {
+      "id": "RC-D3-Q3",
+      "source_day": 3,
+      "type": "scenario",
+      "situation": "Someone asks you to grant Admin to a shared login for convenience.",
+      "question": "Best Student Mode answer:",
+      "options": [
+        "Prefer individual users with least privilege",
+        "Always use root for daily work",
+        "Share one Admin user for the whole team",
+        "Disable CloudTrail to reduce noise"
+      ],
+      "correct_index": 0,
+      "explanation": "Least privilege and individual identity are fundamentals."
+    },
+    {
+      "id": "RC-D4-Q1",
+      "source_day": 4,
+      "type": "quiz",
+      "question": "Placeholder D4 — EC2 is best described as:",
+      "options": [
+        "Virtual servers in the cloud",
+        "Object storage only",
+        "A DNS service",
+        "A billing invoice format"
+      ],
+      "correct_index": 0,
+      "explanation": "EC2 provides compute instances."
+    },
+    {
+      "id": "RC-D4-Q2",
+      "source_day": 4,
+      "type": "quiz",
+      "question": "Placeholder D4 — S3 is primarily:",
+      "options": [
+        "Object storage",
+        "A relational database",
+        "A VPC router",
+        "An IAM policy language"
+      ],
+      "correct_index": 0,
+      "explanation": "S3 stores objects at scale."
+    },
+    {
+      "id": "RC-D4-Q3",
+      "source_day": 4,
+      "type": "scenario",
+      "situation": "You need durable object storage for images.",
+      "question": "Which service fits the fundamentals map?",
+      "options": ["S3", "IAM users only", "CloudTrail alone", "Route 53 hosted zones only"],
+      "correct_index": 0,
+      "explanation": "S3 is the object store."
+    },
+    {
+      "id": "RC-D5-Q1",
+      "source_day": 5,
+      "type": "quiz",
+      "question": "Placeholder D5 — Console Readiness Check means:",
+      "options": [
+        "You proved fundamentals and can unlock Professional Mode",
+        "You finished configuring production VPCs",
+        "You completed a story mystery",
+        "You skipped Days 1–4"
+      ],
+      "correct_index": 0,
+      "explanation": "The check gates Professional Mode."
+    },
+    {
+      "id": "RC-D5-Q2",
+      "source_day": 5,
+      "type": "quiz",
+      "question": "Placeholder D5 — During the readiness check you get:",
+      "options": [
+        "No hints — exam mode",
+        "Full Ren voice hints on every miss",
+        "Live console attach-policy practice",
+        "Unlimited language-specific spoilers"
+      ],
+      "correct_index": 0,
+      "explanation": "Readiness is clean exam mode."
+    },
+    {
+      "id": "RC-D5-Q3",
+      "source_day": 5,
+      "type": "account_id",
+      "situation": "Support asks you to fix access in the wrong account.",
+      "question": "What identifier prevents working in the wrong place?",
+      "expected_answer": "Account ID",
+      "explanation": "Account ID is the first gate of real AWS work."
+    }
+  ],
+  "on_fail": {
+    "action": "surface_weakest_day",
+    "message_english": "Based on your answers, revisit Day {day} before retaking.",
+    "message_tanglish": "Unoda answers-a pakka, Day {day}-a oru thadavai paaru.",
+    "recheck_after_revisit": true
+  },
+  "on_pass": {
+    "action": "unlock_professional_mode",
+    "message_english": "Professional Mode unlocked. Your real work begins.",
+    "message_tanglish": "Professional Mode unlock aachi. Unn real work starts now."
+  }
+}

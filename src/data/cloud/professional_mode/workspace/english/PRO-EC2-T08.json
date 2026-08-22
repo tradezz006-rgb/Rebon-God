@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T08",
+  "task_number": 8,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.3",
+  "approach": "incident_response",
+  "duration_minutes": 25,
+  "title": "502 errors  -  ALB/EC2 root cause",
+  "brief": "502 errors  -  ALB/EC2 root cause",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T15",
+  "task_number": 15,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.1",
+  "approach": "real_ticket",
+  "duration_minutes": 40,
+  "title": "Ticket: MFA disabled users + access keys older than 90 days",
+  "brief": "Ticket: MFA disabled users + access keys older than 90 days",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

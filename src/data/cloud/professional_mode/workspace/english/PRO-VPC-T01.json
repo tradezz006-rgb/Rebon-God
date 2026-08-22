@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T01",
+  "task_number": 1,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.1",
+  "approach": "create_from_scratch",
+  "duration_minutes": 15,
+  "title": "Create VPC 10.0.0.0/16 + public/private + IGW + routes",
+  "brief": "Create VPC 10.0.0.0/16 + public/private + IGW + routes",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

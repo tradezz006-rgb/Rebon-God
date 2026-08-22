@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-COST-T01",
+  "task_number": 1,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "cost",
+  "session": "PM-6",
+  "source_lesson": "PM-6.1",
+  "approach": "read_and_analyse",
+  "duration_minutes": 10,
+  "title": "Top 3 services by cost this month",
+  "brief": "Top 3 services by cost this month",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

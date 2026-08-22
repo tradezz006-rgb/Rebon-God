@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T01",
+  "task_number": 1,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.1",
+  "approach": "create_from_scratch",
+  "duration_minutes": 10,
+  "title": "Create developer IAM user (console, Developers group, no Admin)",
+  "brief": "Create developer IAM user (console, Developers group, no Admin)",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

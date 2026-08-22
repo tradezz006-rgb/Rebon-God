@@ -1,0 +1,40 @@
+{
+  "mode": "student",
+  "total_days": 5,
+  "hours_ceiling": 15,
+  "hours_per_day": 3,
+  "days": [
+    {
+      "day": 1,
+      "title": "What Is Cloud Computing",
+      "lesson_parts": ["day1"],
+      "workspace": "day1_workspace.json"
+    },
+    {
+      "day": 2,
+      "title": "Identity and Access Management (IAM)",
+      "lesson_parts": ["day2"],
+      "workspace": "day2_workspace.json"
+    },
+    {
+      "day": 3,
+      "title": "Networking Basics (VPC)",
+      "lesson_parts": ["day3"],
+      "workspace": "day3_workspace.json"
+    },
+    {
+      "day": 4,
+      "title": "Compute and Storage (EC2 + S3)",
+      "lesson_parts": ["day4"],
+      "workspace": "day4_workspace.json"
+    },
+    {
+      "day": 5,
+      "title": "Monitoring and Cost (CloudWatch + Billing)",
+      "lesson_parts": ["day5"],
+      "workspace": "day5_workspace.json",
+      "has_readiness_badge": true
+    }
+  ],
+  "readiness_check": "readiness_check.json"
+}

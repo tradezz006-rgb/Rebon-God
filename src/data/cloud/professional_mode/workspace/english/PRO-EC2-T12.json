@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T12",
+  "task_number": 12,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.4",
+  "approach": "architecture",
+  "duration_minutes": 30,
+  "title": "Multi-AZ without downtime",
+  "brief": "Multi-AZ without downtime",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-CW-T04",
+  "task_number": 4,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "cloudwatch",
+  "session": "PM-5",
+  "source_lesson": "PM-5.2",
+  "approach": "investigate",
+  "duration_minutes": 15,
+  "title": "3am alarm  -  when spike started/ended",
+  "brief": "3am alarm  -  when spike started/ended",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

@@ -1,0 +1,132 @@
+{
+  "lesson_id": "pm_console_intro",
+  "lesson_title": "AWS Console Orientation",
+  "unit": "Console Intro",
+  "lesson_number": 1,
+  "language": "tanglish",
+  "duration_minutes": 15,
+
+  "lesson_intro": {
+    "heading": "Professional Mode · Lesson 1",
+    "board_text": "AWS Console Orientation\nFinova Technologies · finova-dev\n\nInge paakapooradhu:\n• Region selector — resources eppadi 'missing' aagudhu\n• Account ID — 12-digit number\n• Search bar — fast navigation\n• Global vs Regional — IAM vs EC2\n\nSession eppadi work aagum:\n• Naan screen share pannitu console-la teach pannuven\n• Check questions — mic-la answer pannunga\n• Oru practice step ungal turn",
+    "ren_voice": "Professional Mode-ku welcome. Naan Ren. IAM policies, launch wizards, tickets — ellam munnaadi, AWS console-la comfortable aaga vendum. Resources enga irukku, missing-nu yennaalum actually illai-ya, experienced engineers eppadi fast-a navigate pannuvaanga — ithu dhaan innaikku focus. Lesson one: Console Orientation. Naan screen share pannitu live-a console walkthrough pannuven, understanding check pannuven. Start pannalaama."
+  },
+
+  "whiteboard_intro": {
+    "duration_seconds": 75,
+    "board_text": "Four things before you touch anything:\n1. Account ID (12 digits) — know which account you are in\n2. Region selector — controls what you see and where resources are created\n3. Search bar — fastest path to any service\n4. Global vs Regional — IAM is global, EC2/VPC/S3 are regional",
+    "ren_voice": "Console-la yedhaavadhu click panna munnaadi, naaLu vishayam purinjukkanum. Ithai sari-a therinji vachaa, new engineers hours waste panna mistakes ellaathayum avoid panna mudiyum. Miss pannaa, resources disappear aagura-nu oru vaara-nu confuse aagi irupeenga. Oru oru-a, console-layae, ippo kaattuven."
+  },
+
+  "console_segments": [
+    {
+      "segment": 1,
+      "type": "ren_navigates",
+      "console_path": "AWS Console Home — Top Navigation Bar",
+      "board_annotation": "Navigation bar: AWS logo | Services | Search | Region Selector | Account Name",
+      "ren_voice": "Top bar parunga. Console-la every single page-layum ithu irukkum — evadha navigate pannaalum, ithu maara maatadhu. Left to right: AWS logo, ithai click pannaa always console home-ku varum. Services menu — click pannaa every AWS service category-a organize aagi kaatum: Compute, Storage, Database, Networking, Security. Center-la search bar — experienced engineers menus click panna povaadha, ippadi-dhan navigate pannuvaanga. Right-la: region selector, evadha data center-la work pannrom-nu kaatum. Adhoda side-la: account name, evadha AWS account-la irukkeenga-nu kaatum. Adha kadeesi vishayam, theriyura maathiri thonum aana romba mukkiyam.",
+      "cursor_actions": [
+        { "action": "hover", "target": "aws-logo" },
+        { "action": "hover", "target": "services-menu" },
+        { "action": "hover", "target": "search-bar" },
+        { "action": "hover", "target": "region-selector" },
+        { "action": "hover", "target": "account-switcher" }
+      ]
+    },
+
+    {
+      "segment": 2,
+      "type": "ren_navigates",
+      "console_path": "Account menu → Account ID",
+      "board_annotation": "Account ID: 12-digit number. Required for support tickets, cross-account access, and IAM trust policies.",
+      "ren_voice": "Account name click pannunga. Adha 12-digit number paakkeengala? Adhu-dhan ungaloda Account ID. Ithu AWS-la ungaloda account-ai uniquely identify pannuchu. Support ticket open panna AWS adhai first-a kekum. Cross-account IAM roles set up panna vendirukkum. Yaaraavathu 'evadha account-la irukkaa?' kekum pothu vendirukkum. Engey irukku-nu therinjukkuvaanga. Moonu seconds.",
+      "cursor_actions": [
+        { "action": "click", "target": "account-switcher" },
+        { "action": "hover", "target": "account-id-display" }
+      ]
+    },
+
+    {
+      "segment": 3,
+      "type": "ren_asks",
+      "ren_voice": "Region selector enna panna-nu kaatta munnaadi, ungalukku ithai pathi oru instinct irukkaanu check pannanum.",
+      "question": "You create an EC2 instance while the region selector shows ap-south-1 Mumbai. Then you switch the region to us-east-1 Virginia and open the EC2 Instances list. What do you expect to see?",
+      "wait_for_input": true,
+      "ren_response_if_correct": "Exactly. Mumbai instance Virginia view-la theriyaadhu. Still running, still billing, aana console Virginia's EC2 list kaatum — adhula onnume illai. Region selector filter illai. Entire context-a maathiruchu. Ithuthan first month engineers-ku most common confusion-oda source.",
+      "ren_response_if_incorrect": "Not quite — region selector deeper level-la enna pannuchu-nu yosinga. Ithu search filter illai. Region select panna ungaloda view pathi exactly enna maaraguthu?"
+    },
+
+    {
+      "segment": 4,
+      "type": "consequence_demo",
+      "scenario": "Switching region selector while EC2 instances are running in another region",
+      "ren_voice": "Console-la kaattuven. Mumbai-la moonu EC2 instances running. Region Virginia-ku maatharappo Instances list-a watch pannunga.",
+      "console_path": "EC2 → Instances (ap-south-1 shows 3 instances) → Switch region to us-east-1 → Instances list shows 0 instances",
+      "lesson": "Moonu instances. Running. Account-a billing. Virginia-la irundhu — theriyaadhu. Region selector ungaloda entire view-a control pannuchu. Yedhaavadhu create panna munnaadi, search panna munnaadi, manager-kitta 'missing' sollu munnaadi — check pannunga.",
+      "cursor_actions": [
+        { "action": "click", "target": "ec2-instances-sidebar" },
+        { "action": "hover", "target": "region-selector" },
+        { "action": "click", "target": "region-selector" },
+        { "action": "click", "target": "region-option-us-east-1" }
+      ]
+    },
+
+    {
+      "segment": 5,
+      "type": "ren_navigates",
+      "console_path": "Search bar → type 'IAM' → results dropdown → click IAM service",
+      "board_annotation": "Search bar shortcut: type service name → click result. Faster than Services menu every time.",
+      "ren_voice": "Ippo search bar. AWS years-a use panna engineers almost never Services menu-la click panna poga maataaLa. Ivanga type pannuvaanga. Parunga: search bar click pannuven, IAM type pannuven, udaley dropdown-la IAM top result-a varuchu. Service name-oda keela sub-sections — Users, Roles, Policies — direct links irukkum, adhai straight-a click panna mudiyum. Intermediate page illai. Per navigation seconds save aaguchu, oru naal hundreds of times navigate pannuvom.",
+      "cursor_actions": [
+        { "action": "click", "target": "search-bar" },
+        { "action": "type", "target": "search-bar", "value": "IAM" },
+        { "action": "hover", "target": "search-result-iam" },
+        { "action": "hover", "target": "search-result-iam-users" },
+        { "action": "click", "target": "iam-service-result" }
+      ]
+    },
+
+    {
+      "segment": 6,
+      "type": "student_navigates",
+      "instruction": "Your turn. Use the search bar to navigate to EC2. Once you land on the EC2 dashboard, tell me the current region shown in the region selector.",
+      "ren_monitors": true,
+      "hint_after_seconds": 25,
+      "hint_text": "Screen-oda top center-la irukkaara search bar click pannunga, EC2 type pannunga."
+    },
+
+    {
+      "segment": 7,
+      "type": "ren_navigates",
+      "console_path": "IAM dashboard — region selector shows 'Global'",
+      "board_annotation": "Global services: IAM. Regional services: EC2, VPC, S3, RDS, CloudWatch, Lambda.",
+      "ren_voice": "Ippo IAM console parunga. Top right-la region selector. 'Global'-nu solluchu. IAM-ku adhai change panna mudiyaadhu. IAM users, roles, groups, policies — account-oda everywhere irukku, region-specific illai. Aana EC2 instances, VPCs, S3 buckets specific regions-la, RDS databases — ellam regional. Resource missing-a therinjaa, first question: ithu service regional-aa? Aamaa-naa, sari-ana region-la paakkiromaa?",
+      "cursor_actions": [
+        { "action": "click", "target": "search-bar" },
+        { "action": "type", "target": "search-bar", "value": "IAM" },
+        { "action": "click", "target": "iam-service-result" },
+        { "action": "hover", "target": "region-selector" }
+      ]
+    },
+
+    {
+      "segment": 8,
+      "type": "ren_asks",
+      "ren_voice": "Lesson close panna oru kelvi. Ithu ellathayum oru-a bring panna.",
+      "question": "A junior engineer tells you their IAM role is missing — it was there this morning but now they cannot find it. They are currently in ap-south-1. What is the first thing you tell them to check and why?",
+      "wait_for_input": true,
+      "ren_response_if_correct": "Right. IAM global — region change-aa role missing aagaadhu. So region problem illai. First check: ivanga irukkura AWS account same-a this morning irundha account-aa? Second: yaaraavathu delete pannaaLaa? Adhai CloudTrail-la investigate pannuvom. Global vs regional therinjukkuradhu alone ivangalukku thirty minutes confusion-a save pannuchu.",
+      "ren_response_if_incorrect": "Close — aana IAM pathi enna sollinomnu specific-a yosinga. IAM global-nu sollinomla. Region selector-ku adhu enna mean pannuchu? Region problem illaa-naa, evadha resources paakkirom-nu veyra enna control pannuchu?"
+    }
+  ],
+
+  "session_close": {
+    "ren_voice": "NaaLu vishayam. Account ID — evadha account-la irukkeenga-nu always therinjukkuvaanga. Region selector — every action, every time, check pannunga. Search bar — navigate panna use pannunga, Services menu click panna poga maateenga. Global versus regional — IAM global, maathavaai ellam regional unless theriyum. Ithu advanced concepts illai. Ithu foundation. Ithai therinja engineers time waste panna maataaLa. Theriyaadhavaaga first month confuse aagi irupaanga.",
+    "doubt_session": {
+      "ren_opening": "Console orientation aaguchu. IAM-ku — users, groups, policies, access actually eppadi work pannum-nu — poga munnaadi yedhaavadhu kelvi irukkaanaa?",
+      "wait_for_response": true,
+      "ren_response_template": "Answer the student's question using only the concepts covered in this lesson: Account ID, region selector behavior, search bar navigation, and global versus regional services. If they ask about IAM policy syntax, EC2 launch steps, VPC configuration, or anything service-specific, tell them it will be covered in the relevant lesson.",
+      "ren_closing": "Nalla. Next: IAM Lesson 1. First IAM user sari-a create pannuveenga — group-oda, scoped policy-oda, day one-layae least privilege. AdministratorAccess illai."
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T11",
+  "task_number": 11,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.4",
+  "approach": "real_ticket",
+  "duration_minutes": 25,
+  "title": "Microservice to private RDS without direct internet",
+  "brief": "Microservice to private RDS without direct internet",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

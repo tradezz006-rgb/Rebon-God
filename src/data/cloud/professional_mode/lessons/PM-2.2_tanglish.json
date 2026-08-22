@@ -1,0 +1,52 @@
+{
+  "lesson_id": "PM-2.2",
+  "lesson_title": "Building a VPC From Scratch",
+  "session_id": "PM-2",
+  "session_name": "VPC  -  Virtual Private Cloud",
+  "mode": "professional",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "Never use default VPC",
+      "Create VPC 10.0.0.0/16",
+      "Public/private subnets",
+      "IGW + routes"
+    ],
+    "ren_navigates": [
+      "Create VPC",
+      "Create subnets",
+      "Create/attach IGW",
+      "Update public RT"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

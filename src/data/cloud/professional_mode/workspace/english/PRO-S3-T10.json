@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-S3-T10",
+  "task_number": 10,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "s3",
+  "session": "PM-4",
+  "source_lesson": "PM-4.3",
+  "approach": "real_ticket",
+  "duration_minutes": 35,
+  "title": "Private images viewable up to 1 hour",
+  "brief": "Private images viewable up to 1 hour",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

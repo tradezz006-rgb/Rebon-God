@@ -1,0 +1,126 @@
+{
+  "day": 4,
+  "part": "A",
+  "language": "tanglish",
+  "title": "Compute and Storage (EC2 + S3)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 4",
+      "board_text": "Student Mode · Day 4 of 5\n\nToday: Compute and Storage — EC2 + S3\n\nWe will cover:\n• EC2 as rented virtual computers\n• S3 as object storage for files\n• How real apps use both together",
+      "ren_voice": "Welcome Day 4. Identity and network ready. Inniku rendu services — almost every app use panradhu: EC2 compute — code run panna virtual computer — and S3 storage — files, images, backups. Run versus store clear aanaa, AWS architecture click aagum. Same class flow. Mental model build panrom.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT ARE EC2 AND S3?",
+      "board_text": "EC2 = Elastic Compute Cloud\nA virtual computer you rent by the hour.\nYou choose: CPU, RAM, operating system, network placement.\nIt runs your code. You pay only while it's running.\n\nS3 = Simple Storage Service\nVirtually unlimited file storage.\nYou create a bucket, upload files, access them via URL.\nYou pay per GB stored per month.\n\nTogether:\nEC2 runs it. S3 stores it.\nAlmost every application on AWS uses both.",
+      "ren_voice": "Rendu services — ithai purinjitaa, most applications-oda core purinjuduvaanga. EC2, AWS-la irundhu rent panna oru virtual computer. Eppadi powerful-nu namba decide pannuvom — how many CPUs, how much RAM — OS-um choose pannuvom. AWS andha machine start pannum, namba code adha-la run pannuvom. Per hour pay pannuvom, anytime stop panna mudiyum. S3, file storage. Database illai — files vaikkara place. Images, videos, log files, config files, backups. Bucket create pannuvom — AWS-oda container-ku bucket-nu peyar — files upload pannuvom, URL or API-la accessible. Per gigabyte per month pay pannuvom. EC2 code run pannum. S3 files hold pannum. Rendu serndhaa, AWS-la run aagura most applications-oda behind irukku.",
+      "check_question": {
+        "question": "In one sentence each — what does EC2 do, and what does S3 do?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — EC2 compute, code run panna computer. S3 storage, files vaikkara idham. Difference matter: EC2 active processing, S3 persistent storage. Different things panniduvaanga, serndhu use panna vendiyadhu.",
+        "ren_response_if_incorrect": "Simple-a solren. EC2 computer — code run pannum, requests process pannum, work pannum. S3 filing cabinet — files hold pannum, yaaravadhu venum-nu irundha edutthukkuvaanga. EC2 active, S3 storage. Difference clear-a theriyudaa?"
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY EC2 AND S3 SPECIFICALLY?",
+      "board_text": "Without EC2:\n• You buy physical servers — weeks to procure, crores of rupees upfront\n• Server sits idle at full cost during low-traffic periods\n• Scaling takes months, not minutes\n\nWithout S3:\n• Files live on EC2 servers — if a server crashes, the files go with it\n• Scaling storage means buying more hardware\n• No shared access between multiple servers\n\nWith EC2 + S3:\n• EC2: start a server in minutes, pay by the hour, scale instantly\n• S3: files survive server crashes, accessible from anywhere, effectively infinite capacity",
+      "ren_voice": "EC2 illaadhappo alternative, physical server vangaradhu. Weeks to procure, significant capital upfront, physically maintain panna yaravadhu venum, busy-a illaadhappo kuda full cost pay pannanum. EC2 ellathaiyum remove panniduchu — server venum, two minutes, done. S3 illaadhappo alternative, EC2 servers-la files store pannardhu. Critical problem create aaguchu — andha server crash aanalaa, restart aanalaa, replace aanalaa, files pogum. S3 storage-a compute-la irundhu completely separate panniduchu. Files S3-la, independent of any server. Account-la every EC2 instance terminated aanalum, S3-la files still there. Andha independence-taan S3, namba keep panna venum-na edhuvum correct place.",
+      "check_question": {
+        "question": "A developer stores user-uploaded photos directly on the EC2 server's local disk. What is the risk?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — EC2 instance stop aanalaa, replace aanalaa, crash aanalaa, photos pogum. EC2 local disk temporary. S3-taan persist vendiyadhukku correct place, any specific server-la independent.",
+        "ren_response_if_incorrect": "EC2 server stop or terminate aanappo andha server-oda local disk-ku enna aagum-nu yosinga. Disk permanent illai — server pogum, disk-um pogum. Andha-la store panra photo-um disappear. S3, any individual server-a outlast panna vendiya files-ukku specifically design panna — adhu-taan separation matter."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW EC2 AND S3 WORK — THE MENTAL MODELS",
+      "board_text": "EC2 mental model:\nYou pick a size (t3.micro = small, m5.large = medium, c5.xlarge = large).\nYou pick an OS (Amazon Linux, Ubuntu).\nYou pick a VPC and subnet (from Day 3).\nYou boot it. Your code runs on it.\n\nS3 mental model:\nYou create a bucket (a named container, globally unique).\nYou upload files. Each file gets a URL.\nNo disk management. No size limit. Pay per GB.\n\nEC2 + S3 together:\nEC2 code receives a file upload → stores it in S3 → saves the S3 URL in the database\nEC2 code needs to display a file → gets the URL from database → browser loads it from S3",
+      "ren_voice": "EC2 mental model: size pick pannuvaanga — instance type. t3.micro, small machine, low-traffic apps-ku good. m5.large, medium machine, typical backend workloads-ku. c5.xlarge, compute-heavy, processing-intensive jobs-ku. OS choose pannuvaanga — Amazon Linux or Ubuntu common. VPC and subnet choose pannuvaanga — yesterday paaththadhu network placement. Boot pannuvaanga, code run aaguchu. S3 mental model: bucket create pannuvaanga — named container. Peyar globally unique across all of AWS. Files upload pannuvaanga, each file-ku URL kidaikkum. Disk manage panna illai, size limit yosikka illai. Per gigabyte per month pay pannuvaanga. EC2 and S3 serndhu: user photo upload pannuvaan, EC2 server receive pannum, S3-la store pannum, S3 URL database-la save pannum. Apparam andha photo display panna, EC2 database-la irundhu URL get pannum, browser directly S3-la irundhu photo load pannum. EC2 file-yae thodalavae thodalai — URL mattum vachu irukku.",
+      "check_question": {
+        "question": "When a user uploads a profile photo through your app, which service receives the file and which service stores it long-term?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — EC2 file receive pannum (application code run panna EC2-la irukkum), apparam S3-ku permanent storage-ku anuppuchu. EC2 S3 URL database-la save pannum. File itself S3-la irukkum. Andha separation-taan pattern.",
+        "ren_response_if_incorrect": "Oru service-oda role yosinga. EC2 application code run panniduchu — user yedhaavadhu upload pannaa, namba code on EC2 receive pannum. Aana code immediately file-a S3-la permanent storage-ku poduvaan, yen-naa EC2 disk-la vaikka vidam illai. EC2 S3 URL database-la keep pannum. File S3-la irukkum."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "EC2 console:\n→ Services → Compute → EC2 → Instances\n→ 'Launch Instance' — choose AMI (OS), instance type (size), VPC, subnet, key pair\n→ Running instances: you see state (running/stopped), instance type, public/private IP, which AZ\n→ Instance types dropdown: t3.micro, t3.small, m5.large, c5.xlarge — each with CPU and RAM listed\n\nS3 console:\n→ Services → Storage → S3 → Buckets\n→ 'Create Bucket' — choose name and region\n→ Inside a bucket: list of files (objects), each with a URL, size, last modified\n→ Upload button: drag files in, they appear in the list with a URL immediately",
+      "ren_voice": "EC2 console: Services → Compute → EC2 → Instances. Ellaa running and stopped instances-oda list — state, type, public and private IP, which Availability Zone. Launch Instance click pannaa oru wizard varum: AMI choose pannuveenga — OS image; instance type choose pannuveenga, CPU and RAM size dropdown-la; VPC and subnet choose pannuveenga; key pair configure pannuveenga. S3 console: Services → Storage → S3. Ellaa buckets list paappeenga. Oru bucket click pannaa, ulayey files — key, size, last modified date, URL. Create Bucket click pannaa, name, region, access settings configure pannuveenga. Console-la file drag pannaa, immediately list-la URL-oda appear aaguchu. Rendu consoles-um workspace-la navigate panuveengaa.",
+      "check_question": {
+        "question": "In the EC2 console, where would you go to see all currently running servers in your account?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — EC2 → Instances. Andha list, every instance, current state, type, network details show pannum. Almost every EC2 task-ku starting point adhu.",
+        "ren_response_if_incorrect": "Path: Services → EC2 → Instances. Account-la every instance-oda full list — running, stopped, terminated. Instances view, EC2 work-oda home base."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nYour team is deploying a food delivery app with three parts:\n• A Node.js backend API that handles orders\n• A React frontend (static HTML, CSS, JS files)\n• Customer profile photos uploaded by users\n\nWhich parts go on EC2?\nWhich parts go in S3?\nIs there anything that goes in neither?",
+      "ren_voice": "Real deployment question. Moonu components: Node.js backend API, React frontend, customer profile photos. Enna-la each one irukkaanum — EC2-aa S3-aa. Yosinga — each component actually enna, enna panna vendiyathu, run aagura code-aa illa store aagura files-aa.",
+      "check_question": {
+        "question": "Walk me through your placement decision for each of the three components — and why.",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — Node.js backend EC2-la, requests process panna code run panniduchu. React frontend static files, S3-la directly serve panna mudiyum, speed-ku CloudFront front-la. Customer photos S3-la, user-generated files any server-la independent-a persist vendiyadhu. Moondrum correct-a sonna.",
+        "ren_response_if_incorrect": "Work through pannuvom. Node.js backend — run aagura code, requests process pannum, database-kku talk pannum. Adhu EC2. React frontend — HTML, CSS, JavaScript files. Andha files server-la run aagaadhu, browsers-ku serve aagum. Adhu S3. Customer photos — user-generated files, persist vendiyadhu. S3. Each component-ku key question: run aagura code-aa, illa file-aa?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET THE INSTANCE TYPE WRONG",
+      "board_text": "A real mistake:\nA team chose a t3.micro EC2 instance for their production database server.\nReason: it was the cheapest option.\n\nWhat happened on launch day:\n• Real user traffic arrived\n• t3.micro uses CPU credits — it can burst, but sustained load drains credits fast\n• 2 hours after launch, CPU credits were exhausted\n• Database queries slowed from 20ms to 30 seconds\n• App appeared broken to users\n• Emergency: upgrade instance type, which required downtime\n\nThe instance type was correct for development. It was wrong for production.",
+      "ren_voice": "Real scenario. Oru startup production database-ku t3.micro EC2 instance choose pannaa — list-la cheapest option-nu. Development and testing-la fine-a irundhu — traffic low, instance handle panniduchu. Real users-oda launch day vandhu. Two hours-la, t3.micro-oda CPU credit balance exhaust aaguchu. t3.micro burstable instance — baseline-ku mela credits use panni short periods-la perform panna mudiyum, aana sustained load credits drain panniduchu. Credits run out aanappo CPU throttle aaguchu, real load-oda production database-ku far too low. 20 milliseconds aarana queries 30 seconds aachu. User perspective-la app broken. Fix: instance stop pannanum, instance type m5.large-maathiri appropriate-ku change pannanum, restart — downtime. Instance type decision, cost mattum illai. Workload fit pathi.",
+      "check_question": {
+        "question": "What should the team have considered when choosing the instance type for a production database — beyond just the hourly price?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — real production load-la sustained CPU and memory requirements, development load-la illai. t3.micro bursts handle panna mudiyum, aana continuous production traffic-oda database-ku sustained performance venum, burst credits illai. Instance type choice, workload-oda steady-state requirements-ku match pannanum.",
+        "ren_response_if_incorrect": "'Development-ku cheap enough' and 'production-ku right' difference yosinga. Development database low, intermittent traffic paakkum. Production database continuous load paakkum. t3 family burstable — light, intermittent workloads-ku works. Sustained, continuous workloads-ku, production database-ku, m5 family maathiri consistent CPU tharum instance type venum, burst credits illai."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A new engineer on your team has set an S3 bucket containing customer invoices to Public access.\n\nYou discover this. What do you do first, and what does that action actually prevent?",
+      "ren_voice": "Customer invoices — sensitive financial documents — irukkaara bucket Public-a set pannaacha. Yaarum URL-a ithandha invoices download panna mudiyum. First enna panreenga, andha action actually enna prevent pannum?",
+      "check_question": {
+        "question": "What is your first action, and what specifically does it prevent?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — immediately bucket-la Block Public Access enable pannu. Andha bucket-la irukkaara objects-ku yedha public access-um prevent pannum, individual files-ku public permissions set aanalum. Adhu master switch. Piragu, yaravadhu accessed panna-nu audit pannuvaanga, data exposed aanaa notify pannuvaanga, policy review implement pannuvaanga.",
+        "ren_response_if_incorrect": "First action: S3 Block Public Access andha bucket-la enable pannu. Ithu master switch — object-level permissions override pannum, veyra-la enna set aanalum, any public access prevent pannum. Second action: S3 access logs check pannu, public-a irunna window-la yedhaavadhu invoices actually download aanaa-nu. First prevent, then investigate."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW ZOMATO USES EC2 AND S3",
+      "board_text": "Zomato — Indian food delivery platform:\n\n• Restaurant photos, menu images, delivery partner photos → S3\n• Backend API servers processing orders, menus, reviews → EC2 behind a load balancer\n• EC2 instances behind an ALB across multiple AZs — if one AZ fails, traffic reroutes\n• S3 costs a fraction of a rupee per GB. EC2 scales with demand.\n• Traffic flow: user request → load balancer → EC2 → fetch S3 URL from database → return to browser → browser loads image from S3\n• EC2 never touches the image file itself — just the URL",
+      "ren_voice": "Zomato, EC2 and S3 serndhu scale-la work panra clear example. Zomato-la ninga paakkaara every image — restaurant photos, dish photos, delivery partner profile photos — S3-la store aaguchu. Ninga oru restaurant page open pannaa, request load balancer-ku poguchu, Zomato backend run panna EC2 instances-la oru-ku route aaguchu. EC2 server database query pannum, photos-oda S3 URLs list edukuchu, response-la return pannum. Browser directly S3-la irundhu each image load pannum — EC2 actual image file thodalavae thodalai, just address. Backend API servers EC2-la, load balancer-oda behind, multiple Availability Zones-la — oru AZ down aanaalum traffic automatically veyra-ku route aaguchu. S3 gigabyte-ku fraction of a rupee. EC2 incoming traffic-ku based-a scale aaguchu. Rendu independently scale aaguchu — adhu correct design.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 4:\n\n• EC2 = virtual computer — runs your code, pay by the hour, choose size and OS\n• S3 = unlimited file storage — pay per GB, files persist independently of servers\n• Never store user-generated files on EC2 local disk — use S3\n• Instance type choice matters: burstable (t3) for light workloads, general purpose (m5) for sustained production load\n• EC2 and S3 work together: EC2 runs the code, S3 holds the files, database holds the URLs",
+    "ren_voice": "Day 4 aavudhu. EC2 virtual computer — code run pannuvaanga, per hour pay pannuvaanga, workload-ku match panna size choose pannuvaanga. S3 storage layer — files, images, backups, any server-la independent-a persist vendiyadhu. Most important thing: EC2 local disk-la files store pannaadheenga. S3 use pannunga. Instance type matter — real traffic-la workload actually enna venum-nu based-a choose pannunga, development-la cheapest-na based-a illai. Naalaikku: CloudWatch and Billing — yedhaavadhu wrong-nu eppadi theriyum, surprise invoices eppadi avoid pannum."
+  },
+  "doubt_session": {
+    "ren_opening": "EC2 and S3 aavudhu. Close panna munnaadi yedhaavadhu questions irukkaanaa — instance types, S3 storage, or innaikku veyra ondru?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Nalla. Naalaikku CloudWatch and Billing. Users-la irundhu solli therinja munnaadiyae yedhaavadhu wrong-nu eppadi therinjukkuvaanga-nu katthukkuveengaa."
+  }
+}

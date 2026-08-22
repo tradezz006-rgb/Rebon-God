@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-COST-T06",
+  "task_number": 6,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "cost",
+  "session": "PM-6",
+  "source_lesson": "PM-6.2",
+  "approach": "real_ticket",
+  "duration_minutes": 25,
+  "title": "Budget 80%/100% of $1000 + anomaly day >$100",
+  "brief": "Budget 80%/100% of $1000 + anomaly day >$100",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

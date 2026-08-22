@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-S3-T09",
+  "task_number": 9,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "s3",
+  "session": "PM-4",
+  "source_lesson": "PM-4.3",
+  "approach": "real_ticket",
+  "duration_minutes": 30,
+  "title": "Compliance: all buckets encrypted + versioned",
+  "brief": "Compliance: all buckets encrypted + versioned",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

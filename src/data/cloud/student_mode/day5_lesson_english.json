@@ -1,0 +1,126 @@
+{
+  "day": 5,
+  "part": "A",
+  "language": "english",
+  "title": "Monitoring and Cost (CloudWatch + Billing)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 5",
+      "board_text": "Student Mode · Day 5 of 5\n\nToday: Monitoring and Cost — CloudWatch + Billing\n\nWe will cover:\n• Metrics and alarms so you know when systems break\n• Cost Explorer and Budgets so spend does not surprise you\n• Closing the Student Mode foundation week",
+      "ren_voice": "Welcome to Day 5 — the last day of Student Mode foundations. You can describe cloud, IAM, networking, compute, and storage. Today we close the loop: CloudWatch so you see when the system is unhealthy, and Billing so you see when the spend is unhealthy. Engineers who skip this learn the hard way. Same rhythm — teach, board, mic checks, then summary and doubts. Let's finish strong.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT ARE CLOUDWATCH AND BILLING?",
+      "board_text": "CloudWatch = AWS's monitoring system.\nEvery AWS service sends data to it automatically.\nYou use that data to set alarms — get notified when something is wrong.\n\nAWS Billing = what you're spending and what's driving it.\nCost Explorer: see spending by service, by day, by region.\nBudgets: set a monthly limit, get alerted before you exceed it.\n\nTogether:\nCloudWatch tells you when your system is broken.\nBilling tells you when your spending is broken.",
+      "ren_voice": "Two final services to close out the week. CloudWatch is AWS's monitoring system. Every AWS service — EC2, S3, RDS, everything — sends metrics to CloudWatch automatically. Metrics are numbers: CPU percentage, error rate, number of requests per second, database connection count. On top of those metrics, you set alarms. An alarm says: if this number crosses this threshold for this long, notify me. AWS Billing is the cost layer. Cost Explorer shows you what you have spent, broken down by service and by day. AWS Budgets lets you set a monthly spending limit and sends you an alert when you are at 80%, 100%, or any threshold you choose. CloudWatch tells you when your system is broken. Billing tells you when your spending is broken. You need to watch both.",
+      "check_question": {
+        "question": "What is the difference between a CloudWatch metric and a CloudWatch alarm?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — a metric is the raw number being collected continuously (CPU at 73%, 5 errors per minute). An alarm is the rule you set on top of that metric (if CPU stays above 90% for 5 minutes, send me a notification). Metrics are data, alarms are decisions about that data.",
+        "ren_response_if_incorrect": "Think of it this way: a metric is the number — it is being measured and stored continuously, just a raw value. An alarm is the action layer — you define a rule on top of the metric, and when the metric crosses your threshold, the alarm fires and notifies you. Metric = what is being measured. Alarm = what you do about it."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY MONITORING AND BILLING CONTROLS ARE NOT OPTIONAL",
+      "board_text": "Without CloudWatch alarms:\n• Your server crashes at 2am\n• You find out at 9am when the support tickets arrive\n• Users experienced 7 hours of downtime\n\nWithout billing controls:\n• A test environment runs unmonitored for 6 weeks\n• Wrong instance size: ₹4.2 lakhs\n• A ₹500/month budget alert would have caught it in week 1\n\nBoth are preventable. Both happen constantly. Both kill startups — one through user trust, one through cash burn.",
+      "ren_voice": "Without monitoring alarms, you find out about problems from your users, not from your system. A server runs out of memory at 2am. Users see errors. Your team sleeps. In the morning, the support tickets tell you what happened seven hours earlier. That gap — between when the problem started and when your team found out — is entirely preventable. With a single CloudWatch alarm on memory utilization, you would have been notified within minutes of the problem starting. Without billing controls, cost surprises arrive at month-end. A real case: a team deployed a test environment for a feature they were evaluating. The evaluation wrapped up, but nobody shut down the test environment. It ran for six weeks at the wrong instance size. The invoice was ₹4.2 lakhs. A budget alert set at ₹10,000 per month would have fired in week one. Both scenarios are preventable with five minutes of setup.",
+      "check_question": {
+        "question": "Why is 'we'll check the dashboard occasionally' not a reliable monitoring strategy?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — dashboards require someone to look at them. Alarms are proactive — they find you. A problem at 3am when no one is watching the dashboard will not be caught until morning. Alarms mean you are notified immediately, regardless of when the problem occurs or who is watching.",
+        "ren_response_if_incorrect": "Think about who is watching the dashboard at 3am, or over a weekend, or during a holiday. Nobody. Problems do not schedule themselves around working hours. Alarms are the difference — they do not wait for someone to look, they reach out to you the moment a threshold is crossed. Dashboards are for context, alarms are for action."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW CLOUDWATCH AND BILLING WORK",
+      "board_text": "CloudWatch — how to set an alarm:\n1. Choose a metric (EC2 CPU utilization, S3 request count, RDS connections)\n2. Set the threshold (e.g. CPU > 90%)\n3. Set the evaluation period (e.g. for 5 consecutive minutes)\n4. Set the action (send email, send SMS, trigger auto-scaling)\n\nAWS Budgets — how to set a budget:\n1. Choose budget type: Cost Budget\n2. Set the amount: your expected monthly spend\n3. Set alert thresholds: 80% and 100% of budget\n4. Set notification: email to the team\n\nBoth take under 5 minutes. Both should exist before anything goes live.",
+      "ren_voice": "CloudWatch alarm setup: you choose a metric — for example, EC2 CPU utilization. You set the threshold: trigger if CPU is above 90%. You set the evaluation period: only trigger if it has been above 90% for 5 consecutive minutes — this prevents false alarms from momentary spikes. Then you set the action: send an email, send an SMS, or even trigger auto-scaling to launch more servers automatically. The alarm is now active and watching. AWS Budgets: you choose a Cost Budget, set the monthly amount — your expected spend based on the resources you have deployed — and set alert thresholds at 80% and 100% of that budget. You add an email for notifications. The moment your spending is on track to exceed your budget, you get an email. That is it. Both of these take under five minutes to set up. Both should be in place before anything goes live. No exceptions.",
+      "check_question": {
+        "question": "Why do you set a CloudWatch alarm to trigger after 5 consecutive minutes above a threshold, rather than triggering immediately on the first spike?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — a single spike might be momentary and harmless. A CPU spike to 95% for 10 seconds during a burst of traffic is not necessarily a problem. Sustained high CPU for 5 minutes is. The evaluation period filters out noise and ensures you are only alerted when something genuinely needs attention.",
+        "ren_response_if_incorrect": "Think about how systems actually behave. CPU usage spikes and drops constantly — that is normal. A single moment above 90% is not necessarily a problem. Five consecutive minutes above 90% is very likely a real problem. The evaluation period is a noise filter — it prevents alarms from firing on normal fluctuations and reserves the alert for situations that genuinely require action."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "CloudWatch console:\n→ Services → Management & Governance → CloudWatch\n→ 'Dashboards' → Create Dashboard → add widgets: EC2 CPU, S3 requests, RDS connections\n→ 'Alarms' → Create Alarm → select metric → set threshold → set notification\n→ Alarm list shows: metric, threshold, current state (OK / ALARM / INSUFFICIENT_DATA)\n\nAWS Budgets:\n→ Services → Billing → Budgets → Create Budget\n→ Monthly cost budget → set amount → alert thresholds → notification email\n→ Budget list shows: budget amount, current spend, forecast for the month",
+      "ren_voice": "CloudWatch console: Services, then Management and Governance, then CloudWatch. On the left you have Dashboards and Alarms. Click Create Dashboard, add widgets — EC2 CPU utilization, S3 request count, RDS connections — you get a live view of those numbers updating in real time. Click Alarms to see all your active alarms. Each one shows the metric it watches, the threshold it is set to, and its current state: OK means the metric is within the normal range, ALARM means the threshold has been crossed and the alert has fired, INSUFFICIENT_DATA means not enough data has been collected yet. To create an alarm, click Create Alarm, pick the metric from a searchable list, set the threshold and evaluation period, and configure the notification. AWS Budgets: navigate to Services, then Billing, then Budgets. You see your budgets with the amount, current spend, and a forecast for the end of the month. Click Create Budget to set up a new one.",
+      "check_question": {
+        "question": "In the CloudWatch Alarms list, you see an alarm in ALARM state. What does that tell you, and what is your immediate next step?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — ALARM state means the metric has crossed the threshold you set, and the evaluation period has been sustained. Something is genuinely wrong. Your next step is to click into the alarm to see which metric triggered it and what its current value is, then investigate the resource that is causing the issue.",
+        "ren_response_if_incorrect": "ALARM state means the threshold has been crossed and sustained for the evaluation period — it is not a false alarm, it is a real signal. Your next step is to investigate. Click the alarm to see which metric triggered, what its current value is, and then go look at the resource — the EC2 instance, the RDS database, whatever is generating that metric — to understand what is happening."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nIt is 11pm. A CloudWatch alarm fires — your EC2 instance's CPU utilization has been at 95% for the last 10 minutes.\n\nWhat are the first two things you check in the CloudWatch console to diagnose what is happening?",
+      "ren_voice": "It is 11pm. An alarm just fired. Your EC2 instance has been at 95% CPU for 10 minutes. You open the AWS console. What are the first two things you look at in CloudWatch to understand what is happening? Think about it — what information do you need first, and then what comes next?",
+      "check_question": {
+        "question": "Walk me through your first two diagnostic steps in CloudWatch.",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Good — first, look at the CPU metric graph to see the timeline: when did it spike, is it still climbing or leveling off, was there a pattern earlier today. Second, check CloudWatch Logs for that instance to see if there are application errors or unusual activity that correlates with the CPU spike. Understanding the timeline and checking logs are the two fastest paths to the root cause.",
+        "ren_response_if_incorrect": "Here is the sequence. First, go to the CPU metric graph — not just the current value, but the timeline. When did CPU start climbing? Is it still going up? Did it happen suddenly or gradually? That tells you when the problem started. Second, check CloudWatch Logs for that instance or application — look for errors, unusual request patterns, or anything that happened at the same time the CPU spiked. Timeline first, logs second."
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU SKIP BILLING ALERTS",
+      "board_text": "A real case:\nA team deployed a test environment to evaluate a new feature.\nNo billing alert set. The evaluation ended. Nobody shut it down.\n\nWhat happened:\n• Test environment ran unmonitored for 6 weeks\n• EC2 instance: wrong size for the workload — running at 10% utilization\n• EBS volumes attached but unused\n• NAT Gateway running for 6 weeks, zero traffic\n• Month-end invoice: ₹4.2 lakhs\n• A ₹10,000/month budget alert would have fired in week 1",
+      "ren_voice": "This happens more often than you would expect. A team wants to test a new feature. They spin up a test environment — EC2, RDS, EBS, a NAT Gateway. They do the evaluation. The feature gets shelved. Everyone moves on to the next thing. Nobody explicitly shuts down the test environment because nobody has a habit of doing that. Six weeks later, the monthly invoice arrives. ₹4.2 lakhs. Everyone is confused. They trace it — the test environment has been running the entire time. The EC2 instance was the wrong size, running at 10% utilization. The EBS volumes were attached and charging. The NAT Gateway was processing exactly zero bytes of traffic but billing by the hour. A budget alert set at ₹10,000 per month would have fired in week one. They would have investigated, found the idle environment, and shut it down. The total cost would have been under ₹15,000. Instead: ₹4.2 lakhs.",
+      "check_question": {
+        "question": "Beyond a billing alert, what habit would have prevented this scenario entirely?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — a shutdown checklist or a convention of tagging every test resource with an expiry date or owner. If every test environment has a tag saying when it should be cleaned up and who owns it, and there is a weekly process to audit untagged or expired resources, idle environments do not survive 6 weeks. Billing alerts catch it if it happens; the habit prevents it from happening.",
+        "ren_response_if_incorrect": "Think about what caused this: nobody had the habit of cleaning up test environments. A billing alert would have caught it after week one, but the underlying problem is that test resources were created without any cleanup plan. The habit to build: tag every test resource with an owner and expiry date, and run a weekly cleanup review of anything that matches 'test' or has passed its expiry. Prevention beats detection."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "Your company's production app just went down.\nYou open CloudWatch.\n\nYou see these metrics all showing abnormal values at the same time:\n• EC2 CPU: 12% (very low)\n• ALB Request Count: dropped to zero\n• RDS CPU: 98% (very high)\n\nBased on these three metrics, what is most likely the cause?",
+      "ren_voice": "Production app just went down. You have three metrics open in CloudWatch showing abnormal values at the same time. EC2 CPU is at 12% — much lower than normal. ALB request count dropped to zero — no traffic reaching the servers. RDS CPU is at 98% — the database is hammered. What does this combination tell you about where the problem is?",
+      "check_question": {
+        "question": "What is the most likely cause, based on the pattern of these three metrics?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — the database is the likely culprit. RDS at 98% CPU means it is overloaded and slow. ALB requests dropped to zero because requests to the app are failing or timing out while waiting for the database. EC2 CPU is low because the servers are idle — they are waiting on the database, not doing any processing themselves. The pattern points to a database problem causing the whole stack to appear down.",
+        "ren_response_if_incorrect": "Look at the pattern together. EC2 CPU is low — the servers are not doing work. But ALB traffic dropped to zero — users are not reaching the app at all. And RDS is at 98% — the database is maxed out. If the database is overwhelmed, queries from EC2 time out or fail. The app returns errors. The load balancer sees unhealthy targets and stops routing traffic. Low EC2 CPU plus high RDS CPU plus zero traffic = database is the problem, not the servers."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW FLIPKART MONITORS DURING BIG BILLION DAYS",
+      "board_text": "Flipkart — Big Billion Days sale, one of India's largest traffic events:\n\n• Engineering team watches CloudWatch dashboards live on a big screen throughout the event\n• Alarms set at 60%, 80%, 95% of every capacity threshold — not just 100%\n• Billing alerts at 50% and 80% of expected daily cost\n• If a metric crosses 80%, investigation starts before 100% is reached\n• Incident response time target: under 3 minutes from alarm to first response\n• Result: the team sees problems before customers do, every time",
+      "ren_voice": "Flipkart's Big Billion Days is one of the highest-stakes traffic events in Indian technology. Millions of concurrent users, flash sales, live countdowns — a 5-minute outage during peak hours is a significant revenue and trust loss. Here is how their engineering team approaches monitoring during the event. CloudWatch dashboards are running on a large screen in the war room throughout the sale. Alarms are set more aggressively than normal — not just at 100% of capacity, but at 60%, 80%, and 95%. By the time a metric hits 80%, the team is already investigating and making decisions. The goal is to act before the threshold that causes user impact is reached, not after. Billing alerts are set at 50% and 80% of expected daily spend — if traffic-driven costs are surging past expected levels, the team knows immediately. The incident response target is under 3 minutes from alarm firing to first human response. That is what monitoring looks like when it matters at scale.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 5:\n\n• CloudWatch collects metrics from all AWS services automatically — you set alarms on top\n• Alarms = proactive notification. Dashboards = visibility. Both are needed.\n• Set billing alerts before spending anything — not after the invoice arrives\n• Minimum before going live: CPU alarm, error rate alarm, monthly budget alert at 80%\n• Never wait for users to tell you something is broken — that is what monitoring is for",
+    "ren_voice": "That is Day 5. CloudWatch watches your system — every metric, every service, continuously. Alarms reach out to you when something crosses a threshold, at 3am, on a Sunday, whenever. Billing alerts protect you from month-end surprises. The minimum before anything goes live: a CPU alarm on every EC2 instance, an error rate alarm on your API, and a monthly budget alert at 80% of what you expect to spend. Set these up before the first server starts. Monitoring is not something you add later. It is infrastructure. And that is the week — you have covered cloud, identity, networking, compute and storage, and monitoring. This is the foundation. The work starts from here."
+  },
+  "doubt_session": {
+    "ren_opening": "That is everything for Day 5 and the week. Do you have any questions — about CloudWatch, Billing, or anything we covered today or earlier this week?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered later.",
+    "ren_closing": "Good. You have the foundation. Five days, five layers — cloud, identity, networking, compute, monitoring. The real work starts now."
+  }
+}

@@ -1,0 +1,778 @@
+{
+  "mode": "professional",
+  "language": "english",
+  "status": "stub_catalog",
+  "total_tasks": 77,
+  "tasks": [
+    {
+      "task_id": "PRO-CONSOLE-T01",
+      "service": "console",
+      "session": "PM-0",
+      "source_lesson": "PM-0.1",
+      "approach": "orientation",
+      "duration_minutes": 8,
+      "title": "Navigate to IAM using the search bar",
+      "file": "workspace/english/PRO-CONSOLE-T01.json"
+    },
+    {
+      "task_id": "PRO-CONSOLE-T02",
+      "service": "console",
+      "session": "PM-0",
+      "source_lesson": "PM-0.1",
+      "approach": "orientation",
+      "duration_minutes": 8,
+      "title": "Switch region to us-east-1 and find EC2",
+      "file": "workspace/english/PRO-CONSOLE-T02.json"
+    },
+    {
+      "task_id": "PRO-CONSOLE-T03",
+      "service": "console",
+      "session": "PM-0",
+      "source_lesson": "PM-0.1",
+      "approach": "orientation",
+      "duration_minutes": 8,
+      "title": "Find your Account ID on this console",
+      "file": "workspace/english/PRO-CONSOLE-T03.json"
+    },
+    {
+      "task_id": "PRO-CONSOLE-T04",
+      "service": "console",
+      "session": "PM-0",
+      "source_lesson": "PM-0.1",
+      "approach": "orientation",
+      "duration_minutes": 8,
+      "title": "Navigate to S3  -  notice multi-region bucket list",
+      "file": "workspace/english/PRO-CONSOLE-T04.json"
+    },
+    {
+      "task_id": "PRO-CONSOLE-T05",
+      "service": "console",
+      "session": "PM-0",
+      "source_lesson": "PM-0.1",
+      "approach": "orientation",
+      "duration_minutes": 8,
+      "title": "Ticket: fix Mumbai VPC  -  first action before touching anything",
+      "file": "workspace/english/PRO-CONSOLE-T05.json"
+    },
+    {
+      "task_id": "PRO-IAM-T01",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 10,
+      "title": "Create developer IAM user (console, Developers group, no Admin)",
+      "file": "workspace/english/PRO-IAM-T01.json"
+    },
+    {
+      "task_id": "PRO-IAM-T02",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 10,
+      "title": "Create read-only analyst user (S3 + CloudWatch read)",
+      "file": "workspace/english/PRO-IAM-T02.json"
+    },
+    {
+      "task_id": "PRO-IAM-T03",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 15,
+      "title": "Create EC2 deployment role with S3 write to one bucket",
+      "file": "workspace/english/PRO-IAM-T03.json"
+    },
+    {
+      "task_id": "PRO-IAM-T04",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 15,
+      "title": "Create cross-account role (dev assumes ops in prod)",
+      "file": "workspace/english/PRO-IAM-T04.json"
+    },
+    {
+      "task_id": "PRO-IAM-T05",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.4",
+      "approach": "debug_and_fix",
+      "duration_minutes": 15,
+      "title": "ananya.data Access Denied on S3  -  find and fix",
+      "file": "workspace/english/PRO-IAM-T05.json"
+    },
+    {
+      "task_id": "PRO-IAM-T06",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.4",
+      "approach": "debug_and_fix",
+      "duration_minutes": 15,
+      "title": "EC2 cannot write S3  -  missing instance profile",
+      "file": "workspace/english/PRO-IAM-T06.json"
+    },
+    {
+      "task_id": "PRO-IAM-T07",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.4",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "Developer has EC2 terminate  -  remove only that permission",
+      "file": "workspace/english/PRO-IAM-T07.json"
+    },
+    {
+      "task_id": "PRO-IAM-T08",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.4",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "Service account has AdministratorAccess  -  replace with scoped policy",
+      "file": "workspace/english/PRO-IAM-T08.json"
+    },
+    {
+      "task_id": "PRO-IAM-T09",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.5",
+      "approach": "security_incident",
+      "duration_minutes": 25,
+      "title": "Deactivate contractor who left 3 weeks ago",
+      "file": "workspace/english/PRO-IAM-T09.json"
+    },
+    {
+      "task_id": "PRO-IAM-T10",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.5",
+      "approach": "security_incident",
+      "duration_minutes": 25,
+      "title": "Leaked access key on GitHub  -  deactivate, rotate, CloudTrail check",
+      "file": "workspace/english/PRO-IAM-T10.json"
+    },
+    {
+      "task_id": "PRO-IAM-T11",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.5",
+      "approach": "security_incident",
+      "duration_minutes": 30,
+      "title": "Audit all AdministratorAccess users and recommend replacements",
+      "file": "workspace/english/PRO-IAM-T11.json"
+    },
+    {
+      "task_id": "PRO-IAM-T12",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.5",
+      "approach": "security_incident",
+      "duration_minutes": 30,
+      "title": "CloudTrail report: who deleted production S3 bucket",
+      "file": "workspace/english/PRO-IAM-T12.json"
+    },
+    {
+      "task_id": "PRO-IAM-T13",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "real_ticket",
+      "duration_minutes": 30,
+      "title": "Ticket: onboard 5 backend developers with scoped access",
+      "file": "workspace/english/PRO-IAM-T13.json"
+    },
+    {
+      "task_id": "PRO-IAM-T14",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "real_ticket",
+      "duration_minutes": 35,
+      "title": "Ticket: CFO unknown charges  -  find IAM actor for unauthorized resources",
+      "file": "workspace/english/PRO-IAM-T14.json"
+    },
+    {
+      "task_id": "PRO-IAM-T15",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.1",
+      "approach": "real_ticket",
+      "duration_minutes": 40,
+      "title": "Ticket: MFA disabled users + access keys older than 90 days",
+      "file": "workspace/english/PRO-IAM-T15.json"
+    },
+    {
+      "task_id": "PRO-IAM-T16",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.3",
+      "approach": "design_decision",
+      "duration_minutes": 15,
+      "title": "Write minimum DynamoDB read + S3 write policy JSON",
+      "file": "workspace/english/PRO-IAM-T16.json"
+    },
+    {
+      "task_id": "PRO-IAM-T17",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.3",
+      "approach": "design_decision",
+      "duration_minutes": 20,
+      "title": "Design group structure for frontend/backend/data teams",
+      "file": "workspace/english/PRO-IAM-T17.json"
+    },
+    {
+      "task_id": "PRO-IAM-T18",
+      "service": "iam",
+      "session": "PM-1",
+      "source_lesson": "PM-1.3",
+      "approach": "design_decision",
+      "duration_minutes": 25,
+      "title": "Third-party security tool read-only role + scoped trust",
+      "file": "workspace/english/PRO-IAM-T18.json"
+    },
+    {
+      "task_id": "PRO-VPC-T01",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 15,
+      "title": "Create VPC 10.0.0.0/16 + public/private + IGW + routes",
+      "file": "workspace/english/PRO-VPC-T01.json"
+    },
+    {
+      "task_id": "PRO-VPC-T02",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 20,
+      "title": "Add second AZ public+private subnets and routes",
+      "file": "workspace/english/PRO-VPC-T02.json"
+    },
+    {
+      "task_id": "PRO-VPC-T03",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 20,
+      "title": "3-tier SGs: ALB, app, RDS with correct rules",
+      "file": "workspace/english/PRO-VPC-T03.json"
+    },
+    {
+      "task_id": "PRO-VPC-T04",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 15,
+      "title": "EC2 no internet  -  missing IGW route",
+      "file": "workspace/english/PRO-VPC-T04.json"
+    },
+    {
+      "task_id": "PRO-VPC-T05",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "Laptop can reach DB but EC2 app cannot  -  SG rule",
+      "file": "workspace/english/PRO-VPC-T05.json"
+    },
+    {
+      "task_id": "PRO-VPC-T06",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "Subnet supposed private but accepts internet  -  fix",
+      "file": "workspace/english/PRO-VPC-T06.json"
+    },
+    {
+      "task_id": "PRO-VPC-T07",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.3",
+      "approach": "debug_and_fix",
+      "duration_minutes": 25,
+      "title": "Two EC2s cannot reach each other  -  NACL",
+      "file": "workspace/english/PRO-VPC-T07.json"
+    },
+    {
+      "task_id": "PRO-VPC-T08",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.3",
+      "approach": "security",
+      "duration_minutes": 20,
+      "title": "Audit SGs for 0.0.0.0/0 on 22 or 3306",
+      "file": "workspace/english/PRO-VPC-T08.json"
+    },
+    {
+      "task_id": "PRO-VPC-T09",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.3",
+      "approach": "security",
+      "duration_minutes": 25,
+      "title": "DB SG opened to world  -  lock down + document",
+      "file": "workspace/english/PRO-VPC-T09.json"
+    },
+    {
+      "task_id": "PRO-VPC-T10",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.4",
+      "approach": "security",
+      "duration_minutes": 30,
+      "title": "Fintech 3-tier VPC from scratch  -  no public RDS",
+      "file": "workspace/english/PRO-VPC-T10.json"
+    },
+    {
+      "task_id": "PRO-VPC-T11",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.4",
+      "approach": "real_ticket",
+      "duration_minutes": 25,
+      "title": "Microservice to private RDS without direct internet",
+      "file": "workspace/english/PRO-VPC-T11.json"
+    },
+    {
+      "task_id": "PRO-VPC-T12",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.4",
+      "approach": "real_ticket",
+      "duration_minutes": 30,
+      "title": "Replace unrestricted SSH with Session Manager",
+      "file": "workspace/english/PRO-VPC-T12.json"
+    },
+    {
+      "task_id": "PRO-VPC-T13",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.4",
+      "approach": "real_ticket",
+      "duration_minutes": 35,
+      "title": "New AZ redundancy  -  match existing network",
+      "file": "workspace/english/PRO-VPC-T13.json"
+    },
+    {
+      "task_id": "PRO-VPC-T14",
+      "service": "vpc",
+      "session": "PM-2",
+      "source_lesson": "PM-2.4",
+      "approach": "real_ticket",
+      "duration_minutes": 40,
+      "title": "Full network audit before launch",
+      "file": "workspace/english/PRO-VPC-T14.json"
+    },
+    {
+      "task_id": "PRO-EC2-T01",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 15,
+      "title": "Launch AL2023 t3.medium private subnet + IAM role",
+      "file": "workspace/english/PRO-EC2-T01.json"
+    },
+    {
+      "task_id": "PRO-EC2-T02",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 20,
+      "title": "Launch Template Ubuntu + nginx user data",
+      "file": "workspace/english/PRO-EC2-T02.json"
+    },
+    {
+      "task_id": "PRO-EC2-T03",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.1",
+      "approach": "create_from_scratch",
+      "duration_minutes": 20,
+      "title": "ASG min2 max8 desired2 CPU70% multi-AZ",
+      "file": "workspace/english/PRO-EC2-T03.json"
+    },
+    {
+      "task_id": "PRO-EC2-T04",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 15,
+      "title": "App slow  -  CPU 91%  -  right-size instance",
+      "file": "workspace/english/PRO-EC2-T04.json"
+    },
+    {
+      "task_id": "PRO-EC2-T05",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "ALB not sending traffic  -  unhealthy target",
+      "file": "workspace/english/PRO-EC2-T05.json"
+    },
+    {
+      "task_id": "PRO-EC2-T06",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.2",
+      "approach": "debug_and_fix",
+      "duration_minutes": 20,
+      "title": "ASG not scaling at 85% CPU  -  fix policy",
+      "file": "workspace/english/PRO-EC2-T06.json"
+    },
+    {
+      "task_id": "PRO-EC2-T07",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.3",
+      "approach": "debug_and_fix",
+      "duration_minutes": 25,
+      "title": "Instance missing IAM role  -  attach without downtime",
+      "file": "workspace/english/PRO-EC2-T07.json"
+    },
+    {
+      "task_id": "PRO-EC2-T08",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.3",
+      "approach": "incident_response",
+      "duration_minutes": 25,
+      "title": "502 errors  -  ALB/EC2 root cause",
+      "file": "workspace/english/PRO-EC2-T08.json"
+    },
+    {
+      "task_id": "PRO-EC2-T09",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.3",
+      "approach": "incident_response",
+      "duration_minutes": 30,
+      "title": "Unauthorized EC2 in us-east-1  -  find and terminate",
+      "file": "workspace/english/PRO-EC2-T09.json"
+    },
+    {
+      "task_id": "PRO-EC2-T10",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.4",
+      "approach": "incident_response",
+      "duration_minutes": 35,
+      "title": "Cost spike  -  idle EC2 CPU <2%",
+      "file": "workspace/english/PRO-EC2-T10.json"
+    },
+    {
+      "task_id": "PRO-EC2-T11",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.4",
+      "approach": "architecture",
+      "duration_minutes": 25,
+      "title": "Variable traffic API  -  ASG + ALB + type",
+      "file": "workspace/english/PRO-EC2-T11.json"
+    },
+    {
+      "task_id": "PRO-EC2-T12",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.4",
+      "approach": "architecture",
+      "duration_minutes": 30,
+      "title": "Multi-AZ without downtime",
+      "file": "workspace/english/PRO-EC2-T12.json"
+    },
+    {
+      "task_id": "PRO-EC2-T13",
+      "service": "ec2",
+      "session": "PM-3",
+      "source_lesson": "PM-3.4",
+      "approach": "architecture",
+      "duration_minutes": 40,
+      "title": "Full deploy LT→ASG→ALB→scale verify",
+      "file": "workspace/english/PRO-EC2-T13.json"
+    },
+    {
+      "task_id": "PRO-S3-T01",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.1",
+      "approach": "create_and_configure",
+      "duration_minutes": 10,
+      "title": "Create bucket Mumbai BPA ON SSE-S3 versioning ON",
+      "file": "workspace/english/PRO-S3-T01.json"
+    },
+    {
+      "task_id": "PRO-S3-T02",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.1",
+      "approach": "create_and_configure",
+      "duration_minutes": 15,
+      "title": "Lifecycle 30 IA / 90 Glacier / delete 365",
+      "file": "workspace/english/PRO-S3-T02.json"
+    },
+    {
+      "task_id": "PRO-S3-T03",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.1",
+      "approach": "create_and_configure",
+      "duration_minutes": 15,
+      "title": "Bucket policy  -  only app-server role can read",
+      "file": "workspace/english/PRO-S3-T03.json"
+    },
+    {
+      "task_id": "PRO-S3-T04",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.2",
+      "approach": "debug_and_security",
+      "duration_minutes": 15,
+      "title": "Public access warning  -  find and fix",
+      "file": "workspace/english/PRO-S3-T04.json"
+    },
+    {
+      "task_id": "PRO-S3-T05",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.2",
+      "approach": "debug_and_security",
+      "duration_minutes": 20,
+      "title": "Pre-signed URL valid 2 hours",
+      "file": "workspace/english/PRO-S3-T05.json"
+    },
+    {
+      "task_id": "PRO-S3-T06",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.2",
+      "approach": "debug_and_security",
+      "duration_minutes": 20,
+      "title": "S3 cost spike  -  lifecycle for old Standard objects",
+      "file": "workspace/english/PRO-S3-T06.json"
+    },
+    {
+      "task_id": "PRO-S3-T07",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.3",
+      "approach": "debug_and_security",
+      "duration_minutes": 25,
+      "title": "Public customer data bucket  -  lock + incident report",
+      "file": "workspace/english/PRO-S3-T07.json"
+    },
+    {
+      "task_id": "PRO-S3-T08",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.3",
+      "approach": "real_ticket",
+      "duration_minutes": 20,
+      "title": "Backup system S3 with 1yr retention lifecycle",
+      "file": "workspace/english/PRO-S3-T08.json"
+    },
+    {
+      "task_id": "PRO-S3-T09",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.3",
+      "approach": "real_ticket",
+      "duration_minutes": 30,
+      "title": "Compliance: all buckets encrypted + versioned",
+      "file": "workspace/english/PRO-S3-T09.json"
+    },
+    {
+      "task_id": "PRO-S3-T10",
+      "service": "s3",
+      "session": "PM-4",
+      "source_lesson": "PM-4.3",
+      "approach": "real_ticket",
+      "duration_minutes": 35,
+      "title": "Private images viewable up to 1 hour",
+      "file": "workspace/english/PRO-S3-T10.json"
+    },
+    {
+      "task_id": "PRO-CW-T01",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.1",
+      "approach": "build_monitoring",
+      "duration_minutes": 15,
+      "title": "Web app dashboard: CPU, ALB requests/errors, network",
+      "file": "workspace/english/PRO-CW-T01.json"
+    },
+    {
+      "task_id": "PRO-CW-T02",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.1",
+      "approach": "build_monitoring",
+      "duration_minutes": 15,
+      "title": "ALB 5XX >10 in 5m  -  3 of 5 datapoints + SNS",
+      "file": "workspace/english/PRO-CW-T02.json"
+    },
+    {
+      "task_id": "PRO-CW-T03",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.1",
+      "approach": "build_monitoring",
+      "duration_minutes": 20,
+      "title": "Composite alarm CPU>80% AND 5XX>5",
+      "file": "workspace/english/PRO-CW-T03.json"
+    },
+    {
+      "task_id": "PRO-CW-T04",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.2",
+      "approach": "investigate",
+      "duration_minutes": 15,
+      "title": "3am alarm  -  when spike started/ended",
+      "file": "workspace/english/PRO-CW-T04.json"
+    },
+    {
+      "task_id": "PRO-CW-T05",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.2",
+      "approach": "investigate",
+      "duration_minutes": 20,
+      "title": "Logs Insights ERROR 14:00-14:30 yesterday",
+      "file": "workspace/english/PRO-CW-T05.json"
+    },
+    {
+      "task_id": "PRO-CW-T06",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.2",
+      "approach": "investigate",
+      "duration_minutes": 25,
+      "title": "2hr degradation  -  full incident trace",
+      "file": "workspace/english/PRO-CW-T06.json"
+    },
+    {
+      "task_id": "PRO-CW-T07",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.3",
+      "approach": "investigate",
+      "duration_minutes": 25,
+      "title": "Too many false alarms  -  fix single datapoint",
+      "file": "workspace/english/PRO-CW-T07.json"
+    },
+    {
+      "task_id": "PRO-CW-T08",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.3",
+      "approach": "real_ticket",
+      "duration_minutes": 20,
+      "title": "S3 spend over $500/month billing alarm",
+      "file": "workspace/english/PRO-CW-T08.json"
+    },
+    {
+      "task_id": "PRO-CW-T09",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.3",
+      "approach": "real_ticket",
+      "duration_minutes": 30,
+      "title": "New API monitoring pack + on-call email",
+      "file": "workspace/english/PRO-CW-T09.json"
+    },
+    {
+      "task_id": "PRO-CW-T10",
+      "service": "cloudwatch",
+      "session": "PM-5",
+      "source_lesson": "PM-5.3",
+      "approach": "real_ticket",
+      "duration_minutes": 35,
+      "title": "Tuesday outage  -  what should have alarmed",
+      "file": "workspace/english/PRO-CW-T10.json"
+    },
+    {
+      "task_id": "PRO-COST-T01",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.1",
+      "approach": "read_and_analyse",
+      "duration_minutes": 10,
+      "title": "Top 3 services by cost this month",
+      "file": "workspace/english/PRO-COST-T01.json"
+    },
+    {
+      "task_id": "PRO-COST-T02",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.1",
+      "approach": "read_and_analyse",
+      "duration_minutes": 15,
+      "title": "EC2 +$200 MoM  -  what changed",
+      "file": "workspace/english/PRO-COST-T02.json"
+    },
+    {
+      "task_id": "PRO-COST-T03",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.1",
+      "approach": "fix_waste",
+      "duration_minutes": 15,
+      "title": "Unattached EBS volumes  -  list cost delete",
+      "file": "workspace/english/PRO-COST-T03.json"
+    },
+    {
+      "task_id": "PRO-COST-T04",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.1",
+      "approach": "fix_waste",
+      "duration_minutes": 20,
+      "title": "Unattached Elastic IPs  -  release",
+      "file": "workspace/english/PRO-COST-T04.json"
+    },
+    {
+      "task_id": "PRO-COST-T05",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.2",
+      "approach": "real_ticket",
+      "duration_minutes": 20,
+      "title": "Bill $800 vs $500  -  find unexpected $300",
+      "file": "workspace/english/PRO-COST-T05.json"
+    },
+    {
+      "task_id": "PRO-COST-T06",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.2",
+      "approach": "real_ticket",
+      "duration_minutes": 25,
+      "title": "Budget 80%/100% of $1000 + anomaly day >$100",
+      "file": "workspace/english/PRO-COST-T06.json"
+    },
+    {
+      "task_id": "PRO-COST-T07",
+      "service": "cost",
+      "session": "PM-6",
+      "source_lesson": "PM-6.2",
+      "approach": "real_ticket",
+      "duration_minutes": 30,
+      "title": "Quarterly idle resource audit + savings report",
+      "file": "workspace/english/PRO-COST-T07.json"
+    }
+  ]
+}

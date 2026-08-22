@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T10",
+  "task_number": 10,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.5",
+  "approach": "security_incident",
+  "duration_minutes": 25,
+  "title": "Leaked access key on GitHub  -  deactivate, rotate, CloudTrail check",
+  "brief": "Leaked access key on GitHub  -  deactivate, rotate, CloudTrail check",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

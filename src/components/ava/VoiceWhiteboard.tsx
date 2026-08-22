@@ -13,7 +13,7 @@ interface WhiteboardProps {
 const HANDWRITING_FONTS = "'Caveat', 'Kalam', cursive";
 
 // ─── Typewriter effect ──────────────────────────────────────────────────────
-const TypewriterText = ({ text, speed = 28, className = "", animate = true }: { text: string; speed?: number; className?: string; animate?: boolean }) => {
+const TypewriterText = ({ text, speed = 36, className = "", animate = true }: { text: string; speed?: number; className?: string; animate?: boolean }) => {
   const [displayed, setDisplayed] = useState(animate ? '' : text);
   const done = useRef(!animate);
 
@@ -146,7 +146,7 @@ const renderBoardAction = (action: any, idx: number, isLatest: boolean) => {
               <motion.li key={i} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: d + 0.1 + i * 0.1 }} className="flex items-start gap-3">
                 <span className="text-white/50 text-[26px] leading-none mt-0.5">→</span>
-                <TypewriterText text={item} speed={18} animate={isLatest} className="text-[24px] text-white/85 leading-relaxed" />
+                <TypewriterText text={item} speed={26} animate={isLatest} className="text-[24px] text-white/85 leading-relaxed" />
               </motion.li>
             ))}
           </ul>

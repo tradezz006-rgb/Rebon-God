@@ -1,0 +1,126 @@
+{
+  "day": 4,
+  "part": "A",
+  "language": "english",
+  "title": "Compute and Storage (EC2 + S3)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 4",
+      "board_text": "Student Mode · Day 4 of 5\n\nToday: Compute and Storage — EC2 + S3\n\nWe will cover:\n• EC2 as rented virtual computers\n• S3 as object storage for files\n• How real apps use both together",
+      "ren_voice": "Welcome to Day 4. Identity and network are in place. Now the two services almost every app uses: EC2 for compute — a virtual computer that runs your code — and S3 for storage — files, images, backups. Once you can separate run versus store, AWS architecture starts to click. Same class flow. Let's build that mental model.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT ARE EC2 AND S3?",
+      "board_text": "EC2 = Elastic Compute Cloud\nA virtual computer you rent by the hour.\nYou choose: CPU, RAM, operating system, network placement.\nIt runs your code. You pay only while it's running.\n\nS3 = Simple Storage Service\nVirtually unlimited file storage.\nYou create a bucket, upload files, access them via URL.\nYou pay per GB stored per month.\n\nTogether:\nEC2 runs it. S3 stores it.\nAlmost every application on AWS uses both.",
+      "ren_voice": "Two services, and once you understand these two, you understand the core of most applications. EC2 is a virtual computer you rent from AWS. You choose how powerful it is — how many CPUs, how much RAM — and you choose the operating system. AWS starts that machine, and you run your code on it. You pay by the hour, and you can stop it whenever you are done. S3 is file storage. Not a database — a place to put files. Images, videos, log files, configuration files, backups. You create a bucket — which is AWS's name for a container — upload your files, and they are accessible via URL or API. You pay per gigabyte per month. EC2 runs the code. S3 holds the files. Together, they are behind the majority of what runs on AWS.",
+      "check_question": {
+        "question": "In one sentence each — what does EC2 do, and what does S3 do?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — EC2 is compute, a computer that runs your code. S3 is storage, a place to put files. The distinction matters: EC2 is active processing, S3 is persistent storage. They do different things and are used together.",
+        "ren_response_if_incorrect": "Let me give you the simplest version. EC2 is the computer — it runs your code, it processes requests, it does work. S3 is the filing cabinet — it holds files, they sit there until someone needs them. EC2 is active, S3 is storage. Does that help clarify the difference?"
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY EC2 AND S3 SPECIFICALLY?",
+      "board_text": "Without EC2:\n• You buy physical servers — weeks to procure, crores of rupees upfront\n• Server sits idle at full cost during low-traffic periods\n• Scaling takes months, not minutes\n\nWithout S3:\n• Files live on EC2 servers — if a server crashes, the files go with it\n• Scaling storage means buying more hardware\n• No shared access between multiple servers\n\nWith EC2 + S3:\n• EC2: start a server in minutes, pay by the hour, scale instantly\n• S3: files survive server crashes, accessible from anywhere, effectively infinite capacity",
+      "ren_voice": "Without EC2, the alternative is buying a physical server. That means weeks to procure it, a significant capital investment upfront, someone physically maintaining it, and you are paying for it whether it is busy or sitting idle. EC2 removes all of that — need a server, two minutes, done. Without S3, the alternative is storing files on your EC2 servers. That creates a critical problem: if that server crashes, restarts, or gets replaced, the files go with it. S3 solves this by separating storage from compute entirely. Your files live in S3, independent of any server. Even if every EC2 instance in your account is terminated simultaneously, the files in S3 are still there. That independence is what makes S3 the right place for anything you want to keep.",
+      "check_question": {
+        "question": "A developer stores user-uploaded photos directly on the EC2 server's local disk. What is the risk?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — if the EC2 instance is stopped, replaced, or crashes, those photos are gone. EC2 local disk is temporary. S3 is where files that need to persist should live, independent of any specific server.",
+        "ren_response_if_incorrect": "Think about what happens to the EC2 server's local disk when the server is stopped or terminated. The disk is not permanent — it goes away with the server. Any photo stored there disappears. S3 is specifically designed to hold files that need to outlast any individual server — that is the separation that matters."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW EC2 AND S3 WORK — THE MENTAL MODELS",
+      "board_text": "EC2 mental model:\nYou pick a size (t3.micro = small, m5.large = medium, c5.xlarge = large).\nYou pick an OS (Amazon Linux, Ubuntu).\nYou pick a VPC and subnet (from Day 3).\nYou boot it. Your code runs on it.\n\nS3 mental model:\nYou create a bucket (a named container, globally unique).\nYou upload files. Each file gets a URL.\nNo disk management. No size limit. Pay per GB.\n\nEC2 + S3 together:\nEC2 code receives a file upload → stores it in S3 → saves the S3 URL in the database\nEC2 code needs to display a file → gets the URL from database → browser loads it from S3",
+      "ren_voice": "EC2 mental model: you pick a size — the instance type. A t3.micro is a small machine, good for low-traffic apps. An m5.large is a medium-sized machine for typical backend workloads. A c5.xlarge is compute-heavy, for processing-intensive jobs. You pick the operating system — Amazon Linux or Ubuntu are common choices. You pick the VPC and subnet — the network placement we covered yesterday. You boot it, and your code runs on it. S3 mental model: you create a bucket, which is a named container. The name must be globally unique across all of AWS. You upload files into the bucket, and each file gets a URL. There is no disk to manage, no size limit to worry about. You pay per gigabyte stored per month. When EC2 and S3 work together: a user uploads a photo, the EC2 server receives it, stores it in S3, and saves the S3 URL in the database. Later, when displaying that photo, EC2 gets the URL from the database and the browser loads the photo directly from S3. EC2 never holds the file itself — just the address.",
+      "check_question": {
+        "question": "When a user uploads a profile photo through your app, which service receives the file and which service stores it long-term?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — EC2 receives the file (it's running your application code), then passes it to S3 for permanent storage. EC2 saves the S3 URL in the database. The file itself lives in S3. That separation is the pattern.",
+        "ren_response_if_incorrect": "Think about the role each service plays. EC2 is running your application code — so when a user uploads something, your code on EC2 receives it. But your code then immediately puts the file into S3 for permanent storage, because you do not want it on the EC2 disk. EC2 keeps the S3 URL in the database. The file lives in S3."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "EC2 console:\n→ Services → Compute → EC2 → Instances\n→ 'Launch Instance' — choose AMI (OS), instance type (size), VPC, subnet, key pair\n→ Running instances: you see state (running/stopped), instance type, public/private IP, which AZ\n→ Instance types dropdown: t3.micro, t3.small, m5.large, c5.xlarge — each with CPU and RAM listed\n\nS3 console:\n→ Services → Storage → S3 → Buckets\n→ 'Create Bucket' — choose name and region\n→ Inside a bucket: list of files (objects), each with a URL, size, last modified\n→ Upload button: drag files in, they appear in the list with a URL immediately",
+      "ren_voice": "EC2 console: you navigate to Services, then Compute, then EC2, then Instances. You see a list of all running and stopped instances — their state, type, public and private IP, and which Availability Zone they are in. Click Launch Instance and you walk through a wizard: choose the AMI, which is the operating system image; choose the instance type, where you pick CPU and RAM size from a dropdown list; choose the VPC and subnet; and configure a key pair for SSH access. S3 console: navigate to Services, then Storage, then S3. You see a list of all buckets. Click one and you see the files inside — each one with its key, size, last modified date, and a URL you can copy. Click Create Bucket and you name it, choose a region, and configure access settings. Drag a file into the console and it appears in the list with a URL immediately. Both of these consoles are what you will navigate in the workspace.",
+      "check_question": {
+        "question": "In the EC2 console, where would you go to see all currently running servers in your account?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — EC2 → Instances. That list shows every instance, its current state, type, and network details. That is the starting point for almost any EC2 task.",
+        "ren_response_if_incorrect": "The path is Services → EC2 → Instances. That gives you the full list of every instance in the account — running, stopped, or terminated. The Instances view is the home base for EC2 work."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nYour team is deploying a food delivery app with three parts:\n• A Node.js backend API that handles orders\n• A React frontend (static HTML, CSS, JS files)\n• Customer profile photos uploaded by users\n\nWhich parts go on EC2?\nWhich parts go in S3?\nIs there anything that goes in neither?",
+      "ren_voice": "Here is a real deployment question. Three components: a Node.js backend API, a React frontend, and customer profile photos. You need to decide where each one lives — EC2 or S3. Think through what each component actually is, what it needs to do, and whether it is code that needs to run or files that need to be stored.",
+      "check_question": {
+        "question": "Walk me through your placement decision for each of the three components — and why.",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — the Node.js backend goes on EC2 because it is running code that processes requests. The React frontend is static files that can be served directly from S3, potentially with CloudFront in front for speed. The customer photos go in S3 because they are user-generated files that need to persist independently of any server. You covered all three correctly.",
+        "ren_response_if_incorrect": "Let me work through it. Node.js backend — it is code that runs, processes requests, talks to a database. That is EC2. The React frontend — it is HTML, CSS, and JavaScript files. Those are static files that do not run on a server, they are just served to browsers. That is S3. Customer photos — user-generated files that need to persist. S3. The key question for each component: is it running code, or is it a file?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET THE INSTANCE TYPE WRONG",
+      "board_text": "A real mistake:\nA team chose a t3.micro EC2 instance for their production database server.\nReason: it was the cheapest option.\n\nWhat happened on launch day:\n• Real user traffic arrived\n• t3.micro uses CPU credits — it can burst, but sustained load drains credits fast\n• 2 hours after launch, CPU credits were exhausted\n• Database queries slowed from 20ms to 30 seconds\n• App appeared broken to users\n• Emergency: upgrade instance type, which required downtime\n\nThe instance type was correct for development. It was wrong for production.",
+      "ren_voice": "This is a real scenario. A startup chose a t3.micro EC2 instance for their production database because it was the cheapest option on the list. During development and testing, it worked fine — traffic was low, the instance handled it. Launch day arrived with real users. Within two hours, the CPU credit balance on the t3.micro was exhausted. A t3.micro is a burstable instance — it can perform above its baseline for short periods using credits, but sustained load drains those credits. Once the credits ran out, the CPU was throttled to its baseline, which was far too low for a production database under real load. Queries that took 20 milliseconds started taking 30 seconds. From a user's perspective, the app was broken. The fix required stopping the instance, changing the instance type to something appropriate like an m5.large, and restarting — which meant downtime. The instance type decision is not just about cost. It is about workload fit.",
+      "check_question": {
+        "question": "What should the team have considered when choosing the instance type for a production database — beyond just the hourly price?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — the sustained CPU and memory requirements under real production load, not development load. A t3.micro can handle bursts, but a database under continuous production traffic needs sustained performance, not burst credits. Instance type choice should match the workload's steady-state requirements.",
+        "ren_response_if_incorrect": "Think about the difference between 'cheap enough for development' and 'right for production.' A development database sees low, intermittent traffic. A production database sees continuous load. The t3 family is burstable — it works for light, intermittent workloads. For sustained, continuous workloads like a production database, you want an instance type from the m5 or similar family that provides consistent CPU, not burst credits."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A new engineer on your team has set an S3 bucket containing customer invoices to Public access.\n\nYou discover this. What do you do first, and what does that action actually prevent?",
+      "ren_voice": "A bucket containing customer invoices — sensitive financial documents — has been set to Public. Anyone with the URL can download the invoices. What is the first thing you do, and what does that action actually prevent?",
+      "check_question": {
+        "question": "What is your first action, and what specifically does it prevent?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — enable Block Public Access on the bucket immediately. That prevents any public access to the objects in that bucket, even if individual files have public permissions set. It is the master switch. After that, you audit what was accessed, notify the right people if data was exposed, and implement a policy review so this cannot happen again.",
+        "ren_response_if_incorrect": "The first action is to enable S3 Block Public Access on that bucket. This is the master switch — it overrides any object-level permissions and prevents any public access regardless of what is set elsewhere. The second action is to check the S3 access logs to understand whether any invoices were actually downloaded during the window it was public. Prevent first, then investigate."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW ZOMATO USES EC2 AND S3",
+      "board_text": "Zomato — Indian food delivery platform:\n\n• Restaurant photos, menu images, delivery partner photos → S3\n• Backend API servers processing orders, menus, reviews → EC2 behind a load balancer\n• EC2 instances behind an ALB across multiple AZs — if one AZ fails, traffic reroutes\n• S3 costs a fraction of a rupee per GB. EC2 scales with demand.\n• Traffic flow: user request → load balancer → EC2 → fetch S3 URL from database → return to browser → browser loads image from S3\n• EC2 never touches the image file itself — just the URL",
+      "ren_voice": "Zomato is a clear example of EC2 and S3 working together at scale. Every image you see on Zomato — restaurant photos, dish photos, delivery partner profile photos — is stored in S3. When you open a restaurant page, the request goes to a load balancer, which routes it to one of many EC2 instances running the Zomato backend. The EC2 server queries the database, gets the list of photos and their S3 URLs, and returns those URLs in the response. Your browser then loads each image directly from S3 — EC2 never touches the actual image file, just the address. The backend API servers are on EC2, sitting behind a load balancer that spans multiple Availability Zones, so if one AZ goes down, traffic routes to the others automatically. S3 costs fractions of a rupee per gigabyte. EC2 scales based on how much traffic is coming in. Both scale independently, which is the right design.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 4:\n\n• EC2 = virtual computer — runs your code, pay by the hour, choose size and OS\n• S3 = unlimited file storage — pay per GB, files persist independently of servers\n• Never store user-generated files on EC2 local disk — use S3\n• Instance type choice matters: burstable (t3) for light workloads, general purpose (m5) for sustained production load\n• EC2 and S3 work together: EC2 runs the code, S3 holds the files, database holds the URLs",
+    "ren_voice": "Day 4 done. EC2 is the virtual computer — you run your code on it, you pay by the hour, and you choose the size to match the workload. S3 is the storage layer — files, images, backups, anything you want to persist independent of any server. The most important thing: do not store files on EC2 local disk. Use S3. And instance type matters — choose based on what the workload actually needs under real traffic, not what is cheapest in development. Tomorrow: CloudWatch and Billing — how you know when something is wrong, and how you avoid surprise invoices."
+  },
+  "doubt_session": {
+    "ren_opening": "That is EC2 and S3. Any questions before we close — about instance types, S3 storage, or anything from today?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Good. Tomorrow: CloudWatch and Billing. You will learn how to know when something is wrong before your users tell you."
+  }
+}

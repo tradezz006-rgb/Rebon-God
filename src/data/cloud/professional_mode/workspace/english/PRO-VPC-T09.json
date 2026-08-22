@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T09",
+  "task_number": 9,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.3",
+  "approach": "security",
+  "duration_minutes": 25,
+  "title": "DB SG opened to world  -  lock down + document",
+  "brief": "DB SG opened to world  -  lock down + document",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

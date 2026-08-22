@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-CW-T10",
+  "task_number": 10,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "cloudwatch",
+  "session": "PM-5",
+  "source_lesson": "PM-5.3",
+  "approach": "real_ticket",
+  "duration_minutes": 35,
+  "title": "Tuesday outage  -  what should have alarmed",
+  "brief": "Tuesday outage  -  what should have alarmed",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

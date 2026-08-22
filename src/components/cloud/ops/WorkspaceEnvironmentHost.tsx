@@ -12,6 +12,11 @@ import {
 } from "lucide-react";
 import type { CloudWorkspaceTask } from "@/types/cloudLesson";
 import { CostExplorerPanel } from "@/components/cloud/ops/AwsInteractivePanels";
+import {
+  OpsConsoleHost,
+  type AccountUnlockState,
+  type IamConsoleAction,
+} from "@/components/cloud/awsConsole";
 
 export type EnvAnswerState = {
   selected: number | null;
@@ -28,6 +33,10 @@ type Props = {
   review: "idle" | "correct" | "retry" | "revealed";
   state: EnvAnswerState;
   onChange: (next: Partial<EnvAnswerState>) => void;
+  /** Ops console: Account ID unlock + IAM action log (aws_iam_console) */
+  opsUnlock?: AccountUnlockState;
+  onOpsUnlock?: (next: AccountUnlockState) => void;
+  onOpsActions?: (actions: IamConsoleAction[]) => void;
 };
 
 const clean = (t?: string) => (t ? t.replace(/\[cite:\s*\d+\]/g, "").trim() : "");
@@ -49,6 +58,8 @@ function resolveEnvironment(task: CloudWorkspaceTask): string {
       return "cost_explorer";
     case "scenario_task":
       return "incident_card";
+    case "ops_console":
+      return "aws_iam_console";
     default:
       return "incident_card";
   }
@@ -117,6 +128,9 @@ export function WorkspaceEnvironmentHost({
   review,
   state,
   onChange,
+  opsUnlock,
+  onOpsUnlock,
+  onOpsActions,
 }: Props) {
   const env = resolveEnvironment(task);
   const locked = review === "correct" || review === "revealed";
@@ -138,6 +152,23 @@ export function WorkspaceEnvironmentHost({
       task.task_id,
     [task]
   );
+
+  if (env === "aws_iam_console") {
+    return (
+      <OpsConsoleHost
+        task={task}
+        unlockState={
+          opsUnlock || {
+            unlocked: false,
+            accountId: "",
+            accountName: "",
+          }
+        }
+        onAccountUnlock={(next) => onOpsUnlock?.(next)}
+        onActionsChange={(actions) => onOpsActions?.(actions)}
+      />
+    );
+  }
 
   return (
     <div>
@@ -395,6 +426,7 @@ export function WorkspaceEnvironmentHost({
         "scenario_card",
         "monaco_editor",
         "iam_console",
+        "aws_iam_console",
         "cloudwatch_logs",
         "sequence_card",
         "cost_explorer",

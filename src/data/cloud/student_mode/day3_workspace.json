@@ -1,0 +1,93 @@
+{
+  "day": 3,
+  "language": "english",
+  "items": [
+    {
+      "id": "D3-Q1",
+      "type": "quiz",
+      "question": "What is the core thing a VPC gives you?",
+      "options": [
+        "Network isolation — your private section of AWS with walls you control",
+        "Free unlimited AdministratorAccess for every engineer",
+        "Automatic deletion of all databases every night",
+        "A replacement for IAM Users and Policies"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Virtual Private Cloud — isolation is the product.",
+      "ren_hint_tanglish": "VPC = private isolated network — walls + doors neenga control panreenga.",
+      "explanation": "A VPC is your isolated slice of AWS networking. You decide IP ranges, what faces the internet, and traffic rules."
+    },
+    {
+      "id": "D3-Q2",
+      "type": "quiz",
+      "question": "Where should an internet-facing API server and a user database live?",
+      "options": [
+        "API in a public subnet; database in a private subnet",
+        "Both in a public subnet with open 0.0.0.0/0 on every port",
+        "Both in a private subnet with no path for users at all",
+        "Database in a public subnet; API only in a private subnet"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Public faces users. Database never faces the internet.",
+      "ren_hint_tanglish": "API = public subnet. Database = private subnet — always.",
+      "explanation": "API needs to receive user traffic (public). Database is reached only by the API inside the VPC (private)."
+    },
+    {
+      "id": "D3-Q3",
+      "type": "quiz",
+      "question": "In the AWS console, how do you prove a subnet is truly public?",
+      "options": [
+        "Its route table has 0.0.0.0/0 pointing to an Internet Gateway",
+        "The subnet name contains the word 'public'",
+        "Someone said it is public in Slack",
+        "It has a Security Group attached"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Labels lie — the route table is the proof.",
+      "ren_hint_tanglish": "Subnet name illa — Route Table-la IGW route irundha thaan public.",
+      "explanation": "A public subnet routes internet traffic (0.0.0.0/0) to an Internet Gateway. No IGW route means it is effectively private."
+    },
+    {
+      "id": "D3-S1",
+      "type": "scenario",
+      "situation": "You are deploying a web app: an API that handles user requests, and a database with accounts and order history.",
+      "question": "What Security Group rule should the database have?",
+      "options": [
+        "Allow inbound only from the API server's Security Group — never from the whole internet",
+        "Allow inbound 0.0.0.0/0 on the database port for convenience",
+        "Disable all Security Groups so nothing blocks traffic",
+        "Allow SSH from the entire internet on port 22"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Database SG = wall inside the wall — only API may talk to it.",
+      "ren_hint_tanglish": "DB Security Group — API SG mattum allow. Internet-ku open pannaadheenga.",
+      "explanation": "Least network privilege: DB accepts traffic only from the API. Opening 0.0.0.0/0 on a DB port is a classic breach path."
+    },
+    {
+      "id": "D3-S2",
+      "type": "scenario",
+      "situation": "A developer asks: 'Open port 22 to 0.0.0.0/0 on the EC2 Security Group so I can SSH easily.'",
+      "question": "What do you do?",
+      "options": [
+        "Decline — offer Session Manager, or SSH locked to their specific IP only",
+        "Open 22 to the world because velocity matters more than security",
+        "Move the database into a public subnet instead",
+        "Delete the VPC so networking is simpler"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "0.0.0.0/0 on SSH = entire internet can knock. Safer paths exist.",
+      "ren_hint_tanglish": "Port 22 → 0.0.0.0/0 = full internet attack surface. Decline pannunga.",
+      "explanation": "Opening SSH to the world is scanned constantly. Prefer Systems Manager Session Manager, or restrict SSH to a known IP."
+    },
+    {
+      "id": "D3-A1",
+      "type": "account_id",
+      "situation": "Day 3 rule with no exceptions: databases must not be reachable from the public internet.",
+      "question": "Which subnet type should a database always use? (Type: public or private)",
+      "expected_answer": "private",
+      "ren_hint_english": "No public entrance for the server room.",
+      "ren_hint_tanglish": "Database always private subnet-la.",
+      "explanation": "Databases always live in private subnets — no public IP, no direct internet path."
+    }
+  ]
+}

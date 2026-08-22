@@ -1,0 +1,50 @@
+{
+  "lesson_id": "PM-2.4",
+  "lesson_title": "Troubleshooting Connectivity",
+  "session_id": "PM-2",
+  "session_name": "VPC  -  Virtual Private Cloud",
+  "mode": "professional",
+  "language": "english",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "5-check internet path",
+      "VPC Flow Logs",
+      "Wrong subnet scenario"
+    ],
+    "ren_navigates": [
+      "Broken EC2 no internet",
+      "Fix missing IGW route",
+      "Flow Logs"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

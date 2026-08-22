@@ -1,0 +1,52 @@
+{
+  "lesson_id": "PM-1.1",
+  "lesson_title": "Users, Groups, and the Principle of Least Privilege",
+  "session_id": "PM-1",
+  "session_name": "IAM  -  Identity and Access Management",
+  "mode": "professional",
+  "language": "english",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "IAM Users vs Groups",
+      "Least Privilege",
+      "Reading Effect/Action/Resource",
+      "Create User 4 steps",
+      "Add user to group"
+    ],
+    "ren_navigates": [
+      "IAM → Users → Create User",
+      "IAM → Groups → Create Group",
+      "User detail Permissions"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

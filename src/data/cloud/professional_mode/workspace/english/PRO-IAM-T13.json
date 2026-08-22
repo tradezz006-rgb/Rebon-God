@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T13",
+  "task_number": 13,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.1",
+  "approach": "real_ticket",
+  "duration_minutes": 30,
+  "title": "Ticket: onboard 5 backend developers with scoped access",
+  "brief": "Ticket: onboard 5 backend developers with scoped access",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

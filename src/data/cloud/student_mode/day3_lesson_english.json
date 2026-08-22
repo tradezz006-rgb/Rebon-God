@@ -1,0 +1,126 @@
+{
+  "day": 3,
+  "part": "A",
+  "language": "english",
+  "title": "Networking Basics (VPC)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 3",
+      "board_text": "Student Mode · Day 3 of 5\n\nYou know cloud and IAM.\nToday: Networking Basics — VPC\n\nWe will cover:\n• What a VPC is and why isolation matters\n• Public vs private subnets\n• Internet gateways and traffic paths",
+      "ren_voice": "Welcome to Day 3. You understand cloud and who gets into the account. Today we draw the walls — networking. VPC means Virtual Private Cloud: your private slice of AWS where you decide what is public, what stays private, and how traffic moves. This is the map every EC2 and database sits inside. I will teach, write, and check you as we go. Let's open the network.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS A VPC?",
+      "board_text": "VPC = Virtual Private Cloud.\n\nIt is your own private section of AWS's network — isolated from every other customer's infrastructure.\n\nWithout a VPC: your resources exist in shared, open space.\nWith a VPC: you define the walls, the doors, and who has the keys.\n\nFour things you control inside a VPC:\n• Your own IP address range\n• Which resources are reachable from the internet\n• Which resources are internal-only\n• The traffic rules between every resource",
+      "ren_voice": "VPC is Virtual Private Cloud — your own private section of AWS's network. When you create resources in AWS, they don't just float in one open, shared space. AWS lets you carve out your own isolated section. Think of the entire AWS network as a city. A VPC is your private property inside that city — you decide where the walls are, where the doors are, and who gets a key. You control your IP address range, you decide which resources can be reached from the internet and which ones cannot, and you define the traffic rules between everything inside. Without a VPC, your database could be reachable by anyone with the right address. With a VPC, nothing gets in or out without explicit permission.",
+      "check_question": {
+        "question": "What is the core thing a VPC gives you that you don't have without one?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — isolation. Your resources are separated from every other AWS customer's resources. Nothing reaches them without explicit permission. That isolation is the foundation that everything else in networking builds on.",
+        "ren_response_if_incorrect": "Think about the word 'private' in Virtual Private Cloud. Without a VPC, your resources exist in shared space with no walls around them. The core thing a VPC gives you is isolation — your own walled section of the network, where nothing gets in without you explicitly allowing it."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DOES EVERY COMPANY NEED A VPC?",
+      "board_text": "Without a VPC (or with a misconfigured one):\n• Your database is exposed to the internet\n• Any port-scanning tool can find it in minutes\n• A weak password = data breach\n• This happens. Constantly. To real companies.\n\nWith a properly configured VPC:\n• Database is in a private subnet — invisible from the internet\n• Even if someone finds the address, the traffic is blocked at the network level\n• A misconfiguration in one service does not automatically expose everything else\n\nVPC is the first wall. Without it, every other security measure is compensating for a missing wall.",
+      "ren_voice": "Here is why this matters beyond the theory. Databases exposed to the internet — databases that have no VPC isolation between them and the public internet — are one of the most common sources of data breaches globally. Not exotic attacks. Not zero-day vulnerabilities. Port scanning. Someone runs a tool that scans IP ranges for open database ports, finds one that responds, tries a list of common passwords. If the password is weak and the database has no network wall in front of it, the breach happens in minutes. A VPC is the wall that makes even finding the database impossible. The database exists inside the VPC's private section, which is not reachable from the internet at all. An attacker scanning the internet cannot find a port that does not respond. The VPC is the first wall. Everything else builds on it.",
+      "check_question": {
+        "question": "If a VPC is missing or misconfigured, what does an attacker need to access your database — assuming they know the IP address?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — just the password. Or sometimes less, if there's a known vulnerability in the database version. With no network isolation, the only thing standing between an attacker and your data is the database credentials. That is why VPC isolation is treated as non-negotiable.",
+        "ren_response_if_incorrect": "Think about what network isolation actually blocks. If there is no VPC properly configured, and the database is reachable from the internet, the only thing an attacker needs after finding the address is to get past the database's authentication. A weak password and they are in. The VPC removes the entire attack surface by making the database unreachable in the first place."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW A VPC WORKS — THE MENTAL MODEL",
+      "board_text": "Think of your VPC as a building:\n\n• Public subnet = the reception area — anyone can walk in\n• Private subnet = the server room — internal access only, no public entrance\n• Security Group = the lock on each individual door\n• Internet Gateway (IGW) = the building's main entrance from the street\n• NAT Gateway = a one-way exit — internal resources can reach out, nothing reaches in\n\nRule:\nAPI servers and web servers → public subnet\nDatabases and internal services → private subnet, always",
+      "ren_voice": "Here is the mental model. Your VPC is a building. Inside that building, you have two kinds of spaces. A public subnet is the reception area — it faces the street, anyone can walk up to the front door. Your web server or API server lives here. A private subnet is the server room — no public entrance, only internal staff can get there. Your database lives here. The Internet Gateway is the building's main entrance from the street — it connects the building to the internet. Without it, no traffic enters or exits at all. The NAT Gateway is a one-way exit for internal resources — it lets your database server download software updates, but prevents anything from reaching in. And Security Groups are the lock on each individual door — they define which traffic is allowed into each specific resource. The rule you take from today: databases always live in private subnets. No exceptions.",
+      "check_question": {
+        "question": "Your API server needs to receive requests from users on the internet. Your database stores user data. Which goes in the public subnet and which goes in the private subnet?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — API server in the public subnet, database in the private subnet. The API server needs to be reachable from the internet to receive requests. The database never needs to be reached directly from the internet — only the API server needs to reach it, and that happens inside the VPC. Perfect.",
+        "ren_response_if_incorrect": "Let me restate the rule. Public subnet is for things that need to receive traffic from the internet — your API server. Private subnet is for things that should never be reached directly from the internet — your database. The API server talks to the database internally, inside the VPC. Users never talk to the database directly."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "In the real AWS console:\n\n→ Services → Networking & Content Delivery → VPC\n→ 'Your VPCs' — see all VPCs, their CIDR blocks (IP ranges)\n→ 'Subnets' — see all subnets, whether public or private, which AZ they're in\n→ Click a subnet → 'Route Table' tab shows where traffic goes\n→ 'Security Groups' — see the traffic rules for each resource\n→ 'Internet Gateways' — see which VPCs have a public entrance\n\nRoute table is the proof: a public subnet's route table has a route to an Internet Gateway. A private subnet does not.",
+      "ren_voice": "Let me describe what you will see in the AWS console. You navigate to Services, then Networking and Content Delivery, then VPC. The left sidebar shows you Your VPCs — each VPC with its CIDR block, which is the IP address range it owns. Click on Subnets and you see every subnet in the account — which VPC it belongs to, which Availability Zone it's in. Now, here is how you tell whether a subnet is truly public or private: click on it and look at the Route Table tab. A public subnet's route table has a line that routes 0.0.0.0/0 traffic — all internet traffic — to an Internet Gateway. A private subnet does not have that route. That single difference in the route table is what makes a subnet public or private — not a checkbox, not a label, but the actual route configuration. Security Groups are listed separately, and you can see the exact inbound and outbound rules for each one.",
+      "check_question": {
+        "question": "In the AWS console, how do you confirm whether a subnet is truly public or private — what would you look at?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — the route table. A public subnet has a route pointing 0.0.0.0/0 to an Internet Gateway. A private subnet does not have that route. The label 'public' means nothing by itself — the route is what matters.",
+        "ren_response_if_incorrect": "The answer is the route table associated with that subnet. Click the subnet, go to the Route Table tab. If there is a route for 0.0.0.0/0 pointing to an Internet Gateway, the subnet is public — internet traffic can reach it. If that route is missing, the subnet is effectively private. The label is just a name. The route is the reality."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nYour company's new web app is ready to deploy.\nIt has two components:\n• An API server that handles user requests\n• A database that stores user accounts and order history\n\nYou need to decide:\n• Which subnet does the API server go in?\n• Which subnet does the database go in?\n• What Security Group rule does the database need?",
+      "ren_voice": "Here is a real deployment decision. You have an API server and a database. Both need to live inside your VPC. You need to decide which subnet each one goes in and what security rules protect the database. Think through it: who needs to reach the API server, who needs to reach the database, and how does that determine placement and security rules?",
+      "check_question": {
+        "question": "Walk me through your decisions — where does each component go, and what is the key security group rule on the database?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — API server in the public subnet, accepting HTTPS traffic from the internet. Database in the private subnet, with a Security Group that only allows inbound traffic from the API server's Security Group — nothing from the internet, nothing from any other source. That rule is the wall inside the wall.",
+        "ren_response_if_incorrect": "Let me guide you through this. API server needs to receive user requests from the internet — public subnet. Database only needs to receive traffic from the API server — private subnet. The Security Group on the database should allow inbound connections only from the API server's Security Group — specifically from that source, not from the internet. Does that make sense as a structure?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET NETWORKING WRONG",
+      "board_text": "A real mistake that happens repeatedly:\nA startup puts their RDS database in a public subnet 'for easier access during development.'\n\nWhat actually happened:\n• Database launched in a public subnet with a public IP address\n• Security Group allowed inbound traffic on port 5432 from 0.0.0.0/0\n• Launched on a Monday. Breach detected on Thursday.\n• A scanner found the open port, brute-forced a weak password\n• 6 months of customer data: exposed\n• The database was in production the entire time\n\n'We'll move it to private later' is how this starts every time.",
+      "ren_voice": "This scenario plays out constantly. A startup is building fast. The database is in a public subnet because the developer wants to connect to it directly from their laptop during development — it is convenient. The Security Group is wide open on the database port. The plan is to tighten it before going to production. They go to production. Nobody moved the database. Nobody updated the Security Group. Four days later, a port scanner found the database, brute-forced a weak password, and accessed six months of customer data. The developer's laptop was still connecting to that same database — the one that was now actively being read by an attacker. 'We'll move it to private later' is how this starts every single time. There is no later. Private subnet from day one. No exceptions.",
+      "check_question": {
+        "question": "In that scenario, what two things would have prevented the breach — name one networking fix and one Security Group fix?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — moving the database to a private subnet removes its public IP and makes it unreachable from the internet entirely. Restricting the Security Group to only accept inbound traffic from the API server's Security Group means even if someone found the address, the traffic would be blocked. Both together make the database effectively invisible and unreachable from outside.",
+        "ren_response_if_incorrect": "Think about two separate layers. First, the subnet — if the database is in a private subnet, it has no public IP address and cannot be reached from the internet at all. Second, the Security Group — even with a public IP, if the Security Group only allows inbound from the API server, the brute-force attempt would be blocked. Two layers. Both needed."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A developer on your team says:\n'Can you just open port 22 to 0.0.0.0/0 on the EC2 security group? It's easier for me to SSH in.'\n\nWhat do you say, and what do you offer instead?",
+      "ren_voice": "A developer asks you to open port 22 to the entire internet on an EC2 instance's Security Group. Port 22 is SSH — the port used to access the server directly. Opening it to 0.0.0.0/0 means every IP address on the internet can attempt to connect. What do you say to the developer, and what do you offer as an alternative?",
+      "check_question": {
+        "question": "What is your response — what do you decline, and what do you offer instead?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — you decline opening port 22 to 0.0.0.0/0 because it creates an attack surface across the entire internet. The alternative is AWS Systems Manager Session Manager, which gives terminal access to the EC2 instance without any open inbound port. No port 22 needed at all. Or if they insist on SSH, restrict it to only their specific IP address — not the entire internet.",
+        "ren_response_if_incorrect": "Here is what to offer: port 22 open to 0.0.0.0/0 means every machine on the internet can attempt to connect to that server. Automated scanners try this constantly. The safer alternative is AWS Systems Manager Session Manager — it gives terminal access to the instance without opening any inbound port at all. If they must use SSH, restrict the Security Group rule to their specific IP address only."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW SWIGGY'S NETWORK IS STRUCTURED",
+      "board_text": "Swiggy — Indian food delivery, millions of orders daily:\n\n• Order database → private subnet. No public IP. Unreachable from internet.\n• API servers handling order requests → public subnet behind a load balancer\n• Traffic flow: user → load balancer → API server → database (all inside VPC)\n• At no point does a user request reach the database directly\n• Security Groups: database only accepts traffic from API server's Security Group\n• Multiple Availability Zones — if one AZ fails, traffic routes to the other automatically",
+      "ren_voice": "Here is how a company at Swiggy's scale structures this. The order database is in a private subnet — it has no public IP address, it is not reachable from the internet, and no scanner will ever find it. The API servers are in a public subnet behind a load balancer — they receive requests from users and process them. The traffic flow is: user makes a request, it hits the load balancer, the load balancer routes it to an API server, the API server queries the database. At no point in that chain does a user have any direct path to the database. The Security Group on the database allows inbound traffic only from the API server's Security Group — nothing else. And the whole setup spans multiple Availability Zones so that if one data center has a problem, traffic automatically reroutes to the other. This is VPC networking at production scale.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 3:\n\n• VPC = your private, isolated section of AWS's network\n• Public subnet = faces the internet (API servers, load balancers)\n• Private subnet = internal only (databases, internal services) — always\n• Security Groups = per-resource traffic rules — define exactly what is allowed in and out\n• Internet Gateway = the entrance from the internet to your VPC\n• NAT Gateway = one-way exit for private resources to reach the internet\n• Route table = what actually makes a subnet public or private (not the label)",
+    "ren_voice": "Here is what you take from today. VPC is your isolated network inside AWS — nothing reaches it without your explicit permission. Public subnets face the internet. Private subnets do not. Databases always live in private subnets — no exceptions, no 'we'll move it later.' Security Groups lock each individual resource. And the route table is the proof — it tells you what traffic can actually enter and exit, regardless of what the subnet is called. Tomorrow: EC2 and S3 — the compute and storage layer that runs on top of this network."
+  },
+  "doubt_session": {
+    "ren_opening": "That is everything for networking today. Do you have any questions — about VPCs, subnets, Security Groups, or anything from this lesson?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Good. Tomorrow: EC2 and S3. You will understand what runs inside the network you just learned to design."
+  }
+}

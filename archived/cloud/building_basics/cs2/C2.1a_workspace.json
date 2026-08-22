@@ -1,0 +1,272 @@
+{
+  "lesson_id": "C2.1a",
+  "act_number": 1,
+  "act_title": "Who Has the Keys",
+  "builds_layer": "Identity Layer",
+  "total_tasks": 10,
+  "arc_intro": "FQ-142 starts here. Ravi Krishnan has flagged FoodQuick's IAM setup as priority one before next month's audit. First stop: figure out who actually has access to what — because right now, nobody can answer that question with confidence.",
+  "tasks": [
+    {
+      "id": "C2.1a-T1",
+      "sequence": 1,
+      "type": "ops_console",
+      "difficulty": "medium",
+      "environment": "aws_iam_console",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "title": "Priya cannot list S3 buckets",
+      "ticket": {
+        "from": "priya.sharma@foodquick.com",
+        "subject": "Cannot list objects in fq-menu-assets — need S3 read",
+        "priority": "P2",
+        "request_kind": "attach_policy",
+        "body": "Hi Cloud team,\n\nI joined FoodQuick last week as a menu analyst. My IAM user is priya.sharma. I can sign in to the console, but when I open S3 I get AccessDenied listing fq-menu-assets.\n\nCan you attach AmazonS3ReadOnlyAccess to my user in the FoodQuick Prod account?\n\nAccount ID (from Ravi's onboarding mail): 482917364051\nRegion: ap-south-1\n\nThanks,\nPriya"
+      },
+      "account_gate": {
+        "expected_account_id": "482917364051",
+        "hint": "Priya pasted the Account ID in the ticket body — look for a 12-digit number.",
+        "account_directory": [
+          { "account_id": "482917364051", "name": "FoodQuick-Prod", "environment": "prod" },
+          { "account_id": "719203846512", "name": "FoodQuick-Staging", "environment": "staging" },
+          { "account_id": "305184627930", "name": "FoodQuick-Sandbox", "environment": "sandbox" }
+        ]
+      },
+      "iam_state": {
+        "users": [
+          {
+            "user_name": "priya.sharma",
+            "user_id": "AIDAFOODQUICK001",
+            "arn": "arn:aws:iam::482917364051:user/priya.sharma",
+            "groups": ["Analysts"],
+            "attached_policies": [],
+            "access_keys": 0,
+            "console_access": true,
+            "create_date": "2026-07-22"
+          },
+          {
+            "user_name": "dev-shared",
+            "user_id": "AIDAFOODQUICK099",
+            "arn": "arn:aws:iam::482917364051:user/dev-shared",
+            "groups": [],
+            "attached_policies": ["AdministratorAccess"],
+            "access_keys": 2,
+            "console_access": true,
+            "create_date": "2024-01-10"
+          },
+          {
+            "user_name": "ravi.krishnan",
+            "user_id": "AIDAFOODQUICK010",
+            "arn": "arn:aws:iam::482917364051:user/ravi.krishnan",
+            "groups": ["DevOps"],
+            "attached_policies": ["ReadOnlyAccess"],
+            "access_keys": 1,
+            "console_access": true,
+            "create_date": "2023-11-02"
+          }
+        ],
+        "groups": [
+          { "name": "Analysts", "policies": [] },
+          { "name": "DevOps", "policies": ["ReadOnlyAccess"] }
+        ],
+        "available_policies": [
+          "AmazonS3ReadOnlyAccess",
+          "AmazonS3FullAccess",
+          "IAMUserChangePassword",
+          "CloudWatchReadOnlyAccess",
+          "ReadOnlyAccess"
+        ]
+      },
+      "success_criteria": {
+        "required_actions": ["attach_policy"],
+        "target_user": "priya.sharma",
+        "target_policy": "AmazonS3ReadOnlyAccess"
+      },
+      "explanation": "Real IAM tickets start with Account ID, then the principal, then the exact permission change. You typed 482917364051, opened IAM → Users → priya.sharma, and attached AmazonS3ReadOnlyAccess. That is the muscle memory FQ-142 needs before the audit.",
+      "ren_correct": "Ticket resolved. You asked for Account ID, unlocked Prod, found priya.sharma, and attached AmazonS3ReadOnlyAccess — not a quiz guess.",
+      "ren_wrong": "Not done yet. Unlock the account from the ticket ID, open Users → priya.sharma, then Attach AmazonS3ReadOnlyAccess.",
+      "hints": [
+        "Account ID is in Priya's ticket body — type all 12 digits to open the console.",
+        "IAM → Users → search priya.sharma → Add permissions → AmazonS3ReadOnlyAccess."
+      ]
+    },
+    {
+      "id": "C2.1a-T2",
+      "sequence": 2,
+      "type": "quiz",
+      "difficulty": "easy",
+      "environment": "quiz_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "question": "Before you touch anything else, Ravi wants to know: is FoodQuick's root account itself being used safely?",
+      "options": [
+        "A) Root account should be used for daily admin work since it has full access",
+        "B) Root account should be used only once during initial setup, then locked away with MFA enabled",
+        "C) Root account is only a risk if it's shared, individual use is always fine",
+        "D) Root account doesn't need MFA if the password is long enough"
+      ],
+      "correct_index": 1,
+      "explanation": "The root account is the master key. Use it only for initial setup, enable MFA, then lock it away. Day-to-day work belongs on IAM users and roles.",
+      "ren_correct": "Correct! Root locked away — non-negotiable for the rest of this investigation.",
+      "ren_wrong": "Not quite. Daily root use is always a risk. Setup only, then lock it."
+    },
+    {
+      "id": "C2.1a-T3",
+      "sequence": 3,
+      "type": "config_audit",
+      "difficulty": "medium",
+      "environment": "iam_console",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "You pull up the full current IAM state to map exactly how bad this is before touching anything.",
+      "broken_config": "Current IAM Setup:\n├── Root Account\n│   ├── MFA: DISABLED\n│   ├── Access Keys: 2 ACTIVE\n│   └── Last used: 3 days ago\n│\n├── IAM Users\n│   ├── dev-shared (used by 10 developers)\n│   │   └── Policy: AdministratorAccess\n│   └── backup-script\n│       └── Policy: AdministratorAccess\n│\n└── No Groups configured",
+      "what_to_find": [
+        "Root account used daily — should be locked away after setup",
+        "Root account MFA disabled — critical vulnerability",
+        "Root account has active access keys — must be deleted",
+        "10 developers sharing one IAM user — zero individual audit trail",
+        "dev-shared has AdministratorAccess — massively overprivileged",
+        "backup-script has AdministratorAccess — needs only S3/RDS read",
+        "No IAM groups — impossible to manage permissions at scale"
+      ],
+      "correct_fix": "Correct target structure:\n├── Root Account — MFA enabled, keys deleted, setup-only\n├── IAM Groups — Developers (scoped), DevOps (scoped)\n├── IAM Users — one per person, assigned to correct group\n└── IAM Role — backup-role, scoped to only what the script needs",
+      "explanation": "Seven problems on one map — that is the full FQ-142 scope. Map everything before you fix anything, or you will miss something."
+    },
+    {
+      "id": "C2.1a-T4",
+      "sequence": 4,
+      "type": "order_task",
+      "difficulty": "easy",
+      "environment": "sequence_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "question": "Before executing anything, plan the fix in the correct order. Arrange these steps.",
+      "items": [
+        "Secure the root account first (MFA + delete access keys)",
+        "Create proper IAM groups matching actual roles (Developers, DevOps)",
+        "Create individual IAM users for each of the 10 developers",
+        "Assign each new user to their correct group",
+        "Migrate backup-script from AdministratorAccess to a scoped role",
+        "Only after all of the above — deactivate dev-shared"
+      ],
+      "correct_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "explanation": "Secure root first so you keep control. Only deactivate dev-shared after every person has a working individual login — otherwise you lock out the team."
+    },
+    {
+      "id": "C2.1a-T5",
+      "sequence": 5,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "You start executing the plan. First: root account. You enable MFA using an authenticator app and confirm the setup with two consecutive codes. Next, you check for active access keys on root.",
+      "question": "You find 2 active access keys on the root account, both unused in the last 90 days according to Access Advisor. What do you do?",
+      "options": [
+        "A) Leave them — they might be needed for something later",
+        "B) Delete both immediately — root should never have active access keys, used or not",
+        "C) Deactivate but don't delete, in case they're needed",
+        "D) Rotate them to new keys instead of deleting"
+      ],
+      "correct_index": 1,
+      "explanation": "Root access keys should not exist at all — used or unused. Delete them. Deactivating or rotating still leaves a standing risk.",
+      "ren_correct": "Correct! Root access keys should not exist at all, period.",
+      "ren_wrong": "Not quite — do not just deactivate or rotate. Root access keys are not needed; delete them."
+    },
+    {
+      "id": "C2.1a-T6",
+      "sequence": 6,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "Root is secured. Now you're creating the 10 individual developer accounts and assigning them to a new 'Developers' group. Midway through, priya-dev messages you: 'Wait — before you deactivate dev-shared, one thing. Ravi mentioned last week that a contractor, external to the company, was ALSO using dev-shared for a two-week project that ended a month ago.'",
+      "question": "How does this change your plan?",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "This is more urgent than a routine cleanup — an external, non-employee had access via a shared account with no individual tracking",
+        "Check CloudTrail for what that contractor actually did during and after their access period, since there's no way to filter by 'contractor' specifically without knowing the exact dates",
+        "This reinforces why dev-shared needs to be deactivated as soon as possible, not just cleaned up later"
+      ],
+      "explanation": "A former contractor also used the shared login — that makes this urgent. You cannot filter CloudTrail by 'contractor', so use the project date window, and deactivate the shared account as soon as individual users are ready."
+    },
+    {
+      "id": "C2.1a-T7",
+      "sequence": 7,
+      "type": "debug_task",
+      "difficulty": "hard",
+      "environment": "cloudwatch_logs",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "Following priya-dev's tip, you pull CloudTrail for the dev-shared user around the contractor's project window and slightly after. Something looks off — one entry, after the contractor's project officially ended, that nobody on the team seems to remember.",
+      "error_shown": "CloudTrail Event History — filtered by userName: dev-shared, date range: contractor project + 30 days after\n\n{\n  \"eventTime\": \"[project + 12 days]T02:41:07Z\",\n  \"eventName\": \"CreateAccessKey\",\n  \"userIdentity\": { \"userName\": \"dev-shared\" },\n  \"sourceIPAddress\": \"[unrecognized IP, not matching FoodQuick office or any known developer's typical range]\",\n  \"requestParameters\": { \"userName\": \"dev-shared\" }\n}",
+      "diagnosis": "This event happened 12 days AFTER the contractor's project ended, at 2:41 AM, from an IP address nobody on the current team recognizes. Someone — possibly the former contractor, possibly someone else who obtained the shared credentials — generated a brand new access key for dev-shared well after they should have lost access entirely. This cannot be fully explained yet with what you know right now.",
+      "fix": "This cannot be resolved in this task alone. Document it precisely (timestamp, IP, event type) and flag it for deeper investigation — this is now officially 'something to watch' rather than something you can close today. Proceed with securing the rest of the account, but this thread stays open.",
+      "explanation": "Document the unexplained CreateAccessKey event precisely (time, IP, event type) and keep the thread open. You cannot close it from this task alone."
+    },
+    {
+      "id": "C2.1a-T8",
+      "sequence": 8,
+      "type": "config_audit",
+      "difficulty": "hard",
+      "environment": "iam_console",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "Setting the mystery aside for now, you finish executing the plan: 10 individual users created, all assigned to Developers group, backup-script migrated to a scoped role, dev-shared finally deactivated. Do a final check before calling this piece done.",
+      "broken_config": "Post-Fix IAM Setup:\n├── Root Account — MFA ✓, no access keys ✓\n├── IAM Groups\n│   └── Developers (10 members) — Policy: AmazonS3ReadOnlyAccess, AmazonEC2ReadOnlyAccess\n├── IAM Users\n│   ├── priya.dev, karthik.dev, + 8 others → Developers group ✓\n│   └── dev-shared — STATUS: still shows 'Active' in the console\n└── IAM Role: backup-role — S3:GetObject, RDS:CreateDBSnapshot ✓",
+      "what_to_find": [
+        "dev-shared user still shows as Active — deactivation did not actually complete despite the plan saying it should be done",
+        "This is the exact kind of gap that undermines an otherwise correct cleanup — one leftover thread"
+      ],
+      "correct_fix": "Go back and actually disable dev-shared's console access and deactivate any access keys still attached to it — including, notably, the mysterious one created 12 days after the contractor's project ended (from T7). Confirm status shows fully deactivated before considering this closed.",
+      "explanation": "The cleanup looks almost done, but dev-shared is still Active — including that mysterious key. Finish full deactivation before you call the piece closed."
+    },
+    {
+      "id": "C2.1a-T9",
+      "sequence": 9,
+      "type": "architecture_choice",
+      "difficulty": "hard",
+      "environment": "scenario_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "dev-shared is now fully deactivated. Ravi asks: 'Good — but how do we make sure we never end up back here? What's the actual process going forward, for both new employees AND future contractors?'",
+      "options": [
+        "A) Just remember to be careful next time — no formal process needed",
+        "B) Every new person (employee or contractor) gets their own IAM user in the correct group. Contractors get a documented END DATE at creation time, with a calendar reminder to deactivate on that exact date — not 'whenever someone notices.'",
+        "C) Only employees need individual accounts, contractors can keep sharing one since they're temporary anyway",
+        "D) Require all contractors to use their personal AWS accounts instead of FoodQuick's account entirely"
+      ],
+      "correct_index": 1,
+      "explanation": "Everyone gets an individual account in the right group. Contractors also get a documented end date and a calendar reminder — 'someone will remember' is not a process.",
+      "ren_correct": "Correct — this is the long-term fix: process, not just cleanup.",
+      "ren_wrong": "Not quite. 'Be careful next time' is not a process. Contractors need an end date plus a reminder."
+    },
+    {
+      "id": "C2.1a-T10",
+      "sequence": 10,
+      "type": "scenario_task",
+      "difficulty": "medium",
+      "environment": "incident_card",
+      "source_lesson": "C2.1a",
+      "max_attempts": 3,
+      "scenario": "Time to report back to Ravi and close this piece of FQ-142.",
+      "question": "Write your status update. It should cover: what you fixed, what's now in place going forward, and the one thing that's still genuinely unresolved.",
+      "response_type": "text",
+      "expected_answer_contains": [
+        "Root account secured with MFA, no access keys",
+        "10 individual developer accounts created, properly grouped, dev-shared fully deactivated",
+        "New process in place for future contractors with defined end dates",
+        "Flag clearly: an unexplained access key was created on dev-shared 12 days after a former contractor's project ended, from an unrecognized IP — this needs further investigation and should not be considered closed"
+      ],
+      "explanation": "Report what you fixed, what process is now in place, and clearly flag the unexplained post-project access key as still open."
+    }
+  ],
+  "arc_outro": "Identity Layer: secured. But something doesn't add up — a key created weeks after access should have ended, from nowhere anyone recognizes. Ravi says: 'Good work. Keep that CloudTrail entry in mind — I have a feeling we haven't seen the last of it.' Next: FoodQuick's services are still using old habits that are just as risky as shared logins ever were."
+}

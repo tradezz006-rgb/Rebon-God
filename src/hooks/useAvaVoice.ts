@@ -168,44 +168,90 @@ export const useAvaVoice = () => {
   }, []);
 
   /** Play a data URL or CDN URL via HTML Audio element */
-  const playAudioUrl = useCallback((url: string, onEnd?: () => void) => {
+  const playAudioUrl = useCallback((
+    url: string,
+    opts?: { onStart?: (durationMs: number) => void; onEnd?: () => void }
+  ) => {
     const audio = new Audio(url);
     activeAudioRef.current = audio;
-    audio.onended = () => { setIsSpeaking(false); activeAudioRef.current = null; onEnd?.(); };
+
+    const kickOff = () => {
+      const durationMs =
+        Number.isFinite(audio.duration) && audio.duration > 0
+          ? Math.round(audio.duration * 1000)
+          : 0;
+      opts?.onStart?.(durationMs);
+      audio.play().catch((err) => {
+        console.warn('⚠️ Audio.play() was blocked (autoplay policy):', err);
+        setIsSpeaking(false);
+        activeAudioRef.current = null;
+        opts?.onEnd?.();
+      });
+    };
+
+    audio.onended = () => {
+      setIsSpeaking(false);
+      activeAudioRef.current = null;
+      if (!cancelledRef.current) opts?.onEnd?.();
+    };
     audio.onerror = (e) => {
       console.error('🔇 Audio playback error:', e);
-      setIsSpeaking(false); activeAudioRef.current = null; onEnd?.();
+      setIsSpeaking(false);
+      activeAudioRef.current = null;
+      if (!cancelledRef.current) opts?.onEnd?.();
     };
-    audio.play().catch(err => {
-      console.warn('⚠️ Audio.play() was blocked (autoplay policy):', err);
-      setIsSpeaking(false); activeAudioRef.current = null; onEnd?.();
-    });
+
+    if (audio.readyState >= 1) kickOff();
+    else audio.onloadedmetadata = () => kickOff();
   }, []);
 
   /** Chrome TTS — last-resort fallback only */
-  const chromeTTSFallback = useCallback((text: string, onEnd?: () => void) => {
-    if (!window.speechSynthesis) { onEnd?.(); return; }
-    // Always replace AVA→Ren even in fallback
+  const chromeTTSFallback = useCallback((
+    text: string,
+    opts?: { onStart?: (durationMs: number) => void; onEnd?: () => void }
+  ) => {
+    if (!window.speechSynthesis) { opts?.onEnd?.(); return; }
     const clean = sanitizeForSarvam(text);
     const romanized = romanizeTamilText(clean);
     const u = new SpeechSynthesisUtterance(romanized);
     if (activeVoice) u.voice = activeVoice;
     u.rate = 0.92;
     u.pitch = 1.0;
-    u.onend = () => { setIsSpeaking(false); onEnd?.(); };
-    u.onerror = () => { setIsSpeaking(false); onEnd?.(); };
+    const estMs = Math.min(95_000, Math.max(2_500, romanized.length * 70));
+    u.onstart = () => {
+      if (!cancelledRef.current) opts?.onStart?.(estMs);
+    };
+    u.onend = () => {
+      setIsSpeaking(false);
+      if (!cancelledRef.current) opts?.onEnd?.();
+    };
+    u.onerror = () => {
+      setIsSpeaking(false);
+      if (!cancelledRef.current) opts?.onEnd?.();
+    };
     window.speechSynthesis.speak(u);
     console.warn('⚠️ Using Chrome TTS fallback (Sarvam not available)');
   }, [activeVoice]);
 
-  const speak = useCallback((text: string, onEnd?: () => void) => {
-    // Reset cancellation flag and stop whatever is playing
+  type SpeakOptions = {
+    onStart?: (durationMs: number) => void;
+    onEnd?: () => void;
+  };
+
+  const speak = useCallback((
+    text: string,
+    onEndOrOpts?: (() => void) | SpeakOptions
+  ) => {
+    const opts: SpeakOptions =
+      typeof onEndOrOpts === 'function'
+        ? { onEnd: onEndOrOpts }
+        : onEndOrOpts || {};
+
     cancelledRef.current = false;
     if (activeAudioRef.current) { activeAudioRef.current.pause(); activeAudioRef.current = null; }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setIsSpeaking(true);
 
-    // ── PATH A: Already a playable URL (Pillar 1 pre-generated / cached CDN / data URI)
     if (
       text.startsWith('data:audio/') ||
       text.startsWith('http://') ||
@@ -214,24 +260,23 @@ export const useAvaVoice = () => {
       text.includes('/audio/lessons/')
     ) {
       console.log('▶️ Playing pre-generated audio (Pillar 1 cache hit)');
-      playAudioUrl(text, onEnd);
+      playAudioUrl(text, opts);
       return;
     }
 
-    // ── PATH B: Generate with Sarvam AI (Priya · bulbul:v3 · ta-IN) ──────────
     const preview = text.substring(0, 60).replace(/\n/g, ' ');
     console.log(`🎙️ [Sarvam] Generating Priya voice for: "${preview}..."`);
 
     callSarvamTTS(text)
       .then(dataUrl => {
-        if (cancelledRef.current) return; // stopped by user before audio arrived
+        if (cancelledRef.current) return;
         console.log('✅ [Sarvam] Audio ready — playing Priya voice');
-        playAudioUrl(dataUrl, onEnd);
+        playAudioUrl(dataUrl, opts);
       })
       .catch(err => {
         if (cancelledRef.current) return;
         console.error('❌ [Sarvam] TTS failed — using Chrome TTS as fallback:', err.message);
-        chromeTTSFallback(text, onEnd);
+        chromeTTSFallback(text, opts);
       });
 
   }, [playAudioUrl, chromeTTSFallback]);

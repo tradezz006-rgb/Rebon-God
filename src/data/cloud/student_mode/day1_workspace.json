@@ -1,0 +1,93 @@
+{
+  "day": 1,
+  "language": "english",
+  "items": [
+    {
+      "id": "D1-Q1",
+      "type": "quiz",
+      "question": "What is the clearest definition of cloud computing from Day 1?",
+      "options": [
+        "Renting compute, storage, and software over the internet instead of owning hardware",
+        "Buying physical servers once and keeping them forever in your office",
+        "Writing code only on a laptop with no internet connection",
+        "Sharing one root password across the whole engineering team"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Think rent vs own — like the electricity grid, not buying a generator.",
+      "ren_hint_tanglish": "Rent vs own — electricity grid maadhiri think pannunga, generator vangaadheenga.",
+      "explanation": "Cloud means you rent infrastructure from providers like AWS, GCP, or Azure and pay for what you use. You never buy or maintain the physical machines."
+    },
+    {
+      "id": "D1-Q2",
+      "type": "quiz",
+      "question": "FoodQuick wants servers close to users in Mumbai. Which AWS Region should they choose?",
+      "options": [
+        "ap-south-1 (Mumbai)",
+        "us-east-1 (Virginia)",
+        "ap-southeast-1 (Singapore)",
+        "eu-west-1 (Ireland)"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Closest Region to Indian users in this lesson was Mumbai.",
+      "ren_hint_tanglish": "India users-ku closest Region — Mumbai (ap-south-1).",
+      "explanation": "ap-south-1 is the Mumbai Region. Placing resources near users reduces latency."
+    },
+    {
+      "id": "D1-Q3",
+      "type": "quiz",
+      "question": "You create an EC2 instance in Mumbai, then a teammate says it is missing. What do you check first?",
+      "options": [
+        "The Region selector in the AWS console",
+        "Delete the whole AWS account and start over",
+        "Open IAM and disable every user",
+        "Assume AWS deleted the instance automatically"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Resources live in the Region you selected — wrong Region looks like missing.",
+      "ren_hint_tanglish": "Resource create panna Region-la thaan irukum — wrong Region-la paathaa missing maadhiri theriyum.",
+      "explanation": "Every resource lives in a Region. If the selector is on us-east-1, Mumbai resources will not show. Always check Region first."
+    },
+    {
+      "id": "D1-S1",
+      "type": "scenario",
+      "situation": "A friend in Chennai is launching a food delivery app. Traffic is unknown — they might stay small or go viral. A local data center quotes ₹50,000/month for a fixed server.",
+      "question": "What do you recommend, and why?",
+      "options": [
+        "Use AWS — pay for usage and scale up or down as demand changes",
+        "Rent the fixed server forever even if usage is near zero",
+        "Buy 100 physical servers on day one just in case",
+        "Skip servers and store everything only on one phone"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Unpredictable demand + no idle waste = cloud.",
+      "ren_hint_tanglish": "Traffic theriyama irukumbodhu — cloud-la pay-for-use + scale best.",
+      "explanation": "Early businesses need elasticity. Cloud avoids paying for idle capacity and can scale in minutes if traffic spikes."
+    },
+    {
+      "id": "D1-S2",
+      "type": "scenario",
+      "situation": "A company runs 10 EC2 servers on normal days. On New Year's Eve they expect ~50x traffic for about 4 hours, then back to normal.",
+      "question": "What should they do before midnight and after 4am?",
+      "options": [
+        "Scale up before midnight, then scale back down after the spike",
+        "Buy 500 physical servers permanently for one night",
+        "Shut everything down before midnight and hope users wait",
+        "Change nothing — 10 servers can handle 50x traffic"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Cloud's superpower: temporary capacity with temporary cost.",
+      "ren_hint_tanglish": "Spike-ku scale up, quiet-ku scale down — temporary capacity, temporary cost.",
+      "explanation": "Scale up for the spike, scale down when traffic returns. You pay for the extra capacity only for those hours — not all year."
+    },
+    {
+      "id": "D1-A1",
+      "type": "account_id",
+      "situation": "In the AWS console, every resource you create lives in a geographic location AWS calls a Region. Mumbai's Region code was taught today.",
+      "question": "Type the AWS Region code for Mumbai.",
+      "expected_answer": "ap-south-1",
+      "ren_hint_english": "Asia Pacific South, first Region — starts with ap-south.",
+      "ren_hint_tanglish": "Mumbai Region code: ap-south-1.",
+      "explanation": "Mumbai = ap-south-1. Remembering Region codes stops the most common console confusion."
+    }
+  ]
+}

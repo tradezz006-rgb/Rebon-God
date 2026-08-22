@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T07",
+  "task_number": 7,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.4",
+  "approach": "debug_and_fix",
+  "duration_minutes": 20,
+  "title": "Developer has EC2 terminate  -  remove only that permission",
+  "brief": "Developer has EC2 terminate  -  remove only that permission",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

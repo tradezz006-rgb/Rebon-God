@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T01",
+  "task_number": 1,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.1",
+  "approach": "create_from_scratch",
+  "duration_minutes": 15,
+  "title": "Launch AL2023 t3.medium private subnet + IAM role",
+  "brief": "Launch AL2023 t3.medium private subnet + IAM role",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

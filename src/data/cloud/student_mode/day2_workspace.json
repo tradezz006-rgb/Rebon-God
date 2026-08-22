@@ -1,0 +1,93 @@
+{
+  "day": 2,
+  "language": "english",
+  "items": [
+    {
+      "id": "D2-Q1",
+      "type": "quiz",
+      "question": "What two questions does IAM answer for every AWS account?",
+      "options": [
+        "Who can get in, and what they are allowed to do",
+        "Which Region is cheapest, and which AMI to pick",
+        "How many VPCs to create, and which subnet is public",
+        "When to scale EC2, and how to set a billing alarm"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Identity + permissions — who and what.",
+      "ren_hint_tanglish": "IAM = WHO get in + WHAT they can do.",
+      "explanation": "IAM controls identity (who) and access (what). Users, roles, and policies exist to answer those two questions."
+    },
+    {
+      "id": "D2-Q2",
+      "type": "quiz",
+      "question": "An EC2 server needs to read files from an S3 bucket. What should you use?",
+      "options": [
+        "An IAM Role assumed by the EC2 instance (no long-lived password on the server)",
+        "An IAM User password hardcoded in a text file on the server",
+        "The root account access keys stored in the application",
+        "Share one teammate's login with the whole EC2 fleet"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Services get Roles — never hardcode user credentials on machines.",
+      "ren_hint_tanglish": "Service/machine-ku Role — server-la password store pannaadheenga.",
+      "explanation": "Roles give temporary credentials. Hardcoded IAM User keys on a server are a classic breach path."
+    },
+    {
+      "id": "D2-Q3",
+      "type": "quiz",
+      "question": "What is the most dangerous default when onboarding a new developer?",
+      "options": [
+        "Giving them AdministratorAccess 'to make things easy for now'",
+        "Creating a scoped IAM User for their job",
+        "Attaching a least-privilege policy for one S3 bucket",
+        "Putting them in a team Group with shared read-only access"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "AdminAccess means they can delete production — least privilege first.",
+      "ren_hint_tanglish": "AdministratorAccess = full control — least privilege thaan correct.",
+      "explanation": "AdministratorAccess is full control. If they make a mistake (or credentials leak), blast radius is the whole account."
+    },
+    {
+      "id": "D2-S1",
+      "type": "scenario",
+      "situation": "A new mobile-backend developer starts tomorrow. They need read/write to one S3 bucket (mobile-app-assets) and permission to view EC2 in ap-south-1 — nothing else.",
+      "question": "What is the correct IAM setup order?",
+      "options": [
+        "Create IAM User → create a scoped Policy → attach Policy to the User (or Group)",
+        "Give them root login and change the password later",
+        "Share an existing developer's credentials for the first month",
+        "Skip IAM and open all S3 buckets to the public"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "User for login, Policy for permissions, attach — scoped to need only.",
+      "ren_hint_tanglish": "User create → scoped Policy → attach. Need mattum, more illa.",
+      "explanation": "One User per human, one Policy scoped to exact needs, then attach. That is least privilege in practice."
+    },
+    {
+      "id": "D2-S2",
+      "type": "scenario",
+      "situation": "A contractor finished a 3-month project last week. Their IAM User still exists and credentials still work.",
+      "question": "What do you do first, then second?",
+      "options": [
+        "Disable the IAM User immediately, then rotate or delete credentials",
+        "Wait until next quarter's access review",
+        "Give them AdministratorAccess as a thank-you",
+        "Change only the account alias and leave the user active"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Access off first — every extra day is unnecessary risk.",
+      "ren_hint_tanglish": "First disable — access cut pannunga. Apram credentials cleanup.",
+      "explanation": "Disable same day to cut access while keeping audit history. Then clean up credentials. Never leave ex-contractors active."
+    },
+    {
+      "id": "D2-A1",
+      "type": "account_id",
+      "situation": "A developer says they cannot open an S3 bucket. Before you can help in the right place, you need the unique address of their company's AWS account.",
+      "question": "What must you collect first? (Type the term.)",
+      "expected_answer": "Account ID",
+      "ren_hint_english": "Building address of the AWS account — not the user's password.",
+      "ren_hint_tanglish": "AWS account-oda unique address = Account ID.",
+      "explanation": "Account ID uniquely identifies which AWS account you are working in. IAM User ID is who is inside that account."
+    }
+  ]
+}

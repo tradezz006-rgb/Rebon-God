@@ -1,0 +1,743 @@
+/* Isolate Cloudscape + custom chrome from Rebon Tailwind */
+.aws-console-root {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f2f3f3;
+  color: #16191f;
+  font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
+}
+
+.aws-console-root,
+.aws-console-root * {
+  box-sizing: border-box;
+}
+
+.aws-console-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.aws-console-body > * {
+  min-height: 100%;
+  height: auto !important;
+}
+
+/* Cloudscape AppLayout: keep content scrollable inside console */
+.aws-console-root [class*="awsui_content"],
+.aws-console-root [class*="awsui_layout"] {
+  min-height: 0;
+}
+
+.aws-console-root main {
+  overflow: visible;
+}
+
+/* ── Universal navigation bar (real AWS chrome) ── */
+.aws-topnav {
+  height: 48px;
+  min-height: 48px;
+  background: #232f3e;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 4px;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1;
+  position: relative;
+  z-index: 5000;
+  flex-shrink: 0;
+  border-bottom: 1px solid #1a242f;
+}
+
+.aws-topnav button,
+.aws-topnav input {
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.aws-topnav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.aws-topnav-btn:hover,
+.aws-topnav-btn.is-open {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.aws-topnav-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.aws-topnav-logo {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px 0 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.aws-topnav-logo:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.aws-topnav-search {
+  flex: 1;
+  max-width: 520px;
+  margin: 0 12px 0 8px;
+  position: relative;
+  min-width: 180px;
+}
+
+.aws-topnav-search input {
+  width: 100%;
+  height: 32px;
+  background: #16191f;
+  border: 1px solid #545b64;
+  border-radius: 2px;
+  color: #ffffff;
+  padding: 0 72px 0 32px;
+  outline: none;
+}
+
+.aws-topnav-search input::placeholder {
+  color: #aab7b8;
+}
+
+.aws-topnav-search input:focus {
+  border-color: #0073bb;
+  box-shadow: 0 0 0 1px #0073bb;
+}
+
+.aws-topnav-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.aws-topnav-search-hint {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  font-size: 11px;
+  color: #aab7b8;
+  border: 1px solid #545b64;
+  border-radius: 2px;
+  padding: 1px 5px;
+  pointer-events: none;
+}
+
+.aws-topnav-spacer {
+  flex: 1;
+}
+
+.aws-topnav-iconbtn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 2px;
+  position: relative;
+}
+
+.aws-topnav-iconbtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.aws-topnav-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  background: #d13212;
+  border-radius: 50%;
+  border: 1px solid #232f3e;
+}
+
+.aws-topnav-caret {
+  font-size: 9px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.aws-topnav-panel {
+  position: absolute;
+  top: 48px;
+  background: #ffffff;
+  color: #16191f;
+  border: 1px solid #d5dbdb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 5100;
+  font-size: 13px;
+}
+
+.aws-topnav-panel.services {
+  left: 12px;
+  width: 640px;
+  padding: 16px 20px;
+}
+
+.aws-topnav-panel.search {
+  left: 180px;
+  width: 480px;
+  max-width: calc(100% - 200px);
+}
+
+.aws-topnav-panel.region {
+  right: 168px;
+  width: 280px;
+}
+
+.aws-topnav-panel.account {
+  right: 48px;
+  width: 280px;
+}
+
+.aws-topnav-panel h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #16191f;
+}
+
+.aws-topnav-row {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.aws-topnav-row:hover,
+.aws-topnav-row.is-active {
+  background: #f2f8fd;
+}
+
+.aws-topnav-row strong {
+  color: #0073bb;
+  font-weight: 400;
+}
+
+.aws-topnav-row span {
+  color: #545b64;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.aws-svc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 24px;
+}
+
+/* ── Console Home ── */
+.aws-home {
+  padding: 20px 24px 40px;
+  max-width: 1280px;
+}
+
+.aws-home-title {
+  font-size: 28px;
+  font-weight: 400;
+  color: #16191f;
+  margin: 0 0 4px;
+}
+
+.aws-home-sub {
+  font-size: 13px;
+  color: #545b64;
+  margin: 0 0 20px;
+}
+
+.aws-home-search {
+  position: relative;
+  max-width: 640px;
+  margin-bottom: 24px;
+}
+
+.aws-home-search input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #7d8998;
+  border-radius: 2px;
+  padding: 0 12px 0 36px;
+  font-size: 14px;
+  color: #16191f;
+  background: #fff;
+}
+
+.aws-home-search svg {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  opacity: 0.55;
+}
+
+.aws-home-section {
+  background: #ffffff;
+  border: 1px solid #d5dbdb;
+  border-radius: 2px;
+  padding: 16px 20px 20px;
+  margin-bottom: 16px;
+}
+
+.aws-home-section h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.aws-recent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aws-recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px 0 8px;
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #0073bb;
+}
+
+.aws-recent-chip:hover {
+  background: #f2f8fd;
+  border-color: #0073bb;
+}
+
+.aws-svc-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .aws-svc-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aws-svc-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 14px;
+  border: 1px solid #d5dbdb;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+}
+
+.aws-svc-card:hover {
+  border-color: #0073bb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.aws-svc-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.aws-svc-card strong {
+  display: block;
+  color: #0073bb;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.aws-svc-card em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  color: #687078;
+  margin-bottom: 4px;
+}
+
+.aws-svc-card p {
+  margin: 0;
+  font-size: 12px;
+  color: #545b64;
+  line-height: 1.35;
+}
+
+.aws-widget-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.aws-widget-stat {
+  font-size: 22px;
+  font-weight: 400;
+  color: #16191f;
+}
+
+.aws-widget-label {
+  font-size: 12px;
+  color: #545b64;
+}
+
+/* Create VPC — form + Preview map (matches AWS VPC console layout) */
+.aws-vpc-create-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .aws-vpc-create-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aws-vpc-preview {
+  font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
+}
+
+.aws-vpc-preview-vpc {
+  position: relative;
+  border: 2px solid #0972d3;
+  border-radius: 4px;
+  background: #f2f8fd;
+  padding: 12px 12px 10px;
+  min-height: 220px;
+}
+
+.aws-vpc-preview-vpc-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #16191f;
+}
+
+.aws-vpc-preview-vpc-label span {
+  font-size: 12px;
+  color: #545b64;
+}
+
+.aws-vpc-preview-igw {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: #fff;
+  border: 1px dashed #0972d3;
+  color: #0972d3;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.aws-vpc-preview-azs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.aws-vpc-preview-az {
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 3px;
+  padding: 8px;
+  min-height: 120px;
+}
+
+.aws-vpc-preview-az-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #545b64;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.aws-vpc-preview-subnet {
+  position: relative;
+  font-size: 11px;
+  padding: 8px 6px;
+  margin-bottom: 6px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.aws-vpc-preview-subnet.public {
+  background: #e9f6ef;
+  border-color: #1d8102;
+  color: #1d8102;
+}
+
+.aws-vpc-preview-subnet.private {
+  background: #f4f4f4;
+  border-color: #687078;
+  color: #16191f;
+  border-style: dashed;
+}
+
+.aws-vpc-preview-nat {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ff9900;
+  color: #16191f;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.aws-vpc-preview-empty {
+  font-size: 11px;
+  color: #879596;
+  padding: 12px 4px;
+}
+
+.aws-vpc-preview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #545b64;
+}
+
+.aws-vpc-preview-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.aws-vpc-preview-legend .dot.public {
+  background: #1d8102;
+}
+
+.aws-vpc-preview-legend .dot.private {
+  background: #687078;
+}
+
+/* Top-nav utility panels + CloudShell */
+.aws-topnav-panel.utility {
+  right: 12px;
+  left: auto;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(70vh, 480px);
+  overflow: auto;
+}
+
+.aws-cloudshell {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6000;
+  background: #16191f;
+  color: #d5dbdb;
+  border: 1px solid #545b64;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  max-height: min(42vh, 360px);
+  font-family: ui-monospace, Consolas, "Courier New", monospace;
+}
+
+.aws-cloudshell-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #232f3e;
+  color: #fff;
+  font-size: 12px;
+  font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
+}
+
+.aws-cloudshell-out {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.aws-cloudshell-form {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid #3d464f;
+}
+
+.aws-cloudshell-form input {
+  flex: 1;
+  background: #0f1114;
+  border: 1px solid #545b64;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 3px;
+  font: inherit;
+}
+
+.aws-cloudshell-form button {
+  background: #ff9900;
+  border: none;
+  color: #16191f;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.aws-console-learn-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #f2f3f3;
+}
+
+[data-highlight-target] [data-console-target] {
+  outline: none;
+}
+
+[data-highlight-target="ec2-instances-list"] [data-console-target="ec2-instances-list"],
+[data-highlight-target="ec2-instances-empty"] [data-console-target="ec2-instances-empty"],
+[data-highlight-target="ec2-instances-empty-state"] [data-console-target="ec2-instances-empty"],
+[data-highlight-target="region-selector"] [data-console-target="region-selector"],
+[data-highlight-target="region-dropdown"] [data-console-target="region-dropdown"],
+[data-highlight-target="region-dropdown-list"] [data-console-target="region-dropdown"],
+[data-highlight-target="account-badge"] [data-console-target="account-badge"],
+[data-highlight-target="search-bar"] [data-console-target="search-bar"],
+[data-highlight-target="services-menu"] [data-console-target="services-menu"] {
+  outline: 2px solid #ff9900 !important;
+  outline-offset: 2px;
+}
+.aws-learn-ec2-header {
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid #d5dbdb;
+  background: #fff;
+}
+
+.aws-learn-ec2-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #16191f;
+}
+
+.aws-learn-ec2-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #545b64;
+}
+
+.aws-learn-ec2-table-wrap {
+  background: #fff;
+  overflow-x: auto;
+}
+
+.aws-learn-ec2-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.aws-learn-ec2-table th,
+.aws-learn-ec2-table td {
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eaeded;
+}
+
+.aws-learn-ec2-table th {
+  background: #fafafa;
+  font-weight: 700;
+  color: #16191f;
+}
+
+.aws-learn-ec2-empty {
+  padding: 48px 24px;
+  text-align: center;
+  background: #fff;
+  color: #545b64;
+}
+
+.aws-learn-ec2-empty strong {
+  display: block;
+  font-size: 16px;
+  color: #16191f;
+  margin-bottom: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

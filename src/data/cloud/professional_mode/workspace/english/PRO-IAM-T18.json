@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T18",
+  "task_number": 18,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.3",
+  "approach": "design_decision",
+  "duration_minutes": 25,
+  "title": "Third-party security tool read-only role + scoped trust",
+  "brief": "Third-party security tool read-only role + scoped trust",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

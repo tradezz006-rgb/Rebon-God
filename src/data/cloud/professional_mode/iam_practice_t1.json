@@ -1,0 +1,77 @@
+{
+  "task_id": "PRO-IAM-T1",
+  "type": "ops_console",
+  "difficulty": "medium",
+  "environment": "aws_iam_console",
+  "title": "Priya cannot list S3 buckets",
+  "ticket": {
+    "from": "priya.sharma@foodquick.com",
+    "subject": "Cannot list objects in fq-menu-assets  -  need S3 read",
+    "priority": "P2",
+    "request_kind": "attach_policy",
+    "body": "Hi Cloud team,\n\nI joined FoodQuick last week as a menu analyst. My IAM user is priya.sharma. I can sign in to the console, but when I open S3 I get AccessDenied listing fq-menu-assets.\n\nCan you attach AmazonS3ReadOnlyAccess to my user in the FoodQuick Prod account?\n\nAccount ID (from Ravi's onboarding mail): 482917364051\nRegion: ap-south-1\n\nThanks,\nPriya"
+  },
+  "account_gate": {
+    "expected_account_id": "482917364051",
+    "hint": "Priya pasted the Account ID in the ticket body  -  look for a 12-digit number.",
+    "account_directory": [
+      {
+        "account_id": "482917364051",
+        "name": "FoodQuick-Prod",
+        "environment": "prod"
+      },
+      {
+        "account_id": "719203846512",
+        "name": "FoodQuick-Staging",
+        "environment": "staging"
+      },
+      {
+        "account_id": "305184627930",
+        "name": "FoodQuick-Sandbox",
+        "environment": "sandbox"
+      }
+    ]
+  },
+  "iam_state": {
+    "users": [
+      {
+        "user_name": "priya.sharma",
+        "user_id": "AIDAFOODQUICK001",
+        "arn": "arn:aws:iam::482917364051:user/priya.sharma",
+        "groups": ["Analysts"],
+        "attached_policies": [],
+        "access_keys": 0,
+        "console_access": true,
+        "create_date": "2026-07-22"
+      },
+      {
+        "user_name": "dev-shared",
+        "user_id": "AIDAFOODQUICK099",
+        "arn": "arn:aws:iam::482917364051:user/dev-shared",
+        "groups": [],
+        "attached_policies": ["AdministratorAccess"],
+        "access_keys": 2,
+        "console_access": true,
+        "create_date": "2024-01-10"
+      }
+    ],
+    "groups": [
+      { "name": "Analysts", "policies": [] },
+      { "name": "DevOps", "policies": ["ReadOnlyAccess"] }
+    ],
+    "available_policies": [
+      "AmazonS3ReadOnlyAccess",
+      "AmazonS3FullAccess",
+      "IAMUserChangePassword",
+      "CloudWatchReadOnlyAccess",
+      "ReadOnlyAccess"
+    ]
+  },
+  "success_criteria": {
+    "required_actions": ["attach_policy"],
+    "attach_policy": {
+      "user_name": "priya.sharma",
+      "policy_name": "AmazonS3ReadOnlyAccess"
+    }
+  }
+}

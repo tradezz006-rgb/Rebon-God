@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T08",
+  "task_number": 8,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "medium",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.3",
+  "approach": "security",
+  "duration_minutes": 20,
+  "title": "Audit SGs for 0.0.0.0/0 on 22 or 3306",
+  "brief": "Audit SGs for 0.0.0.0/0 on 22 or 3306",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

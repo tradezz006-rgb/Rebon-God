@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-CONSOLE-T05",
+  "task_number": 5,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "console",
+  "session": "PM-0",
+  "source_lesson": "PM-0.1",
+  "approach": "orientation",
+  "duration_minutes": 8,
+  "title": "Ticket: fix Mumbai VPC  -  first action before touching anything",
+  "brief": "Ticket: fix Mumbai VPC  -  first action before touching anything",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

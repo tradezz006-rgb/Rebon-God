@@ -1,0 +1,52 @@
+{
+  "lesson_id": "PM-2.1",
+  "lesson_title": "VPC Architecture: The Building Blocks",
+  "session_id": "PM-2",
+  "session_name": "VPC  -  Virtual Private Cloud",
+  "mode": "professional",
+  "language": "english",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "VPC as private network",
+      "CIDR /16 and /24",
+      "Public vs private subnets",
+      "SG vs NACL"
+    ],
+    "ren_navigates": [
+      "VPC dashboard",
+      "Subnets",
+      "Route tables",
+      "Security Groups"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "day": 2,
+  "part": "A",
+  "language": "english",
+  "title": "Identity and Access Management (IAM)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 2",
+      "board_text": "Student Mode · Day 2 of 5\n\nYesterday: what cloud is and how AWS is organized.\nToday: Identity and Access Management (IAM)\n\nWe will cover:\n• Users, roles, and policies\n• Why root is dangerous for daily work\n• Least privilege and real IAM mistakes",
+      "ren_voice": "Welcome back. Day 2. Yesterday we built the cloud mental model — renting infrastructure, Regions, the console. Today we go inside the account itself. Who can sign in? What are they allowed to do? That is IAM — Identity and Access Management — and every secure AWS setup starts here. Same classroom rhythm: I teach, I write, then I check you on the mic. Let's begin.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS IAM?",
+      "board_text": "IAM = Identity and Access Management.\n\nIt controls two things for every AWS account:\n  WHO can get in\n  WHAT they are allowed to do once they're in\n\nThree core pieces:\n• Users — real humans. One per person, never shared.\n• Roles — identities for services and machines (not humans).\n• Policies — documents that define exactly what is Allowed or Denied.\n\nAccount ID = the unique address of your AWS account.\nIAM User ID = who is at that address.",
+      "ren_voice": "IAM is Identity and Access Management — it answers two questions that every secure system needs to answer. Who is allowed in? And what are they allowed to do once they are in? In AWS, every human gets an IAM User. Every service or machine that needs to call AWS gets an IAM Role. And attached to each of those identities is a Policy — a document that says exactly what that identity can and cannot do. The Account ID is the address of your AWS account. The IAM User ID is who is at that address. You cannot do anything in AWS without an identity. IAM is where every identity is defined.",
+      "check_question": {
+        "question": "In your own words — what is the difference between an IAM User and an IAM Role?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right. Users are for real humans with their own credentials — they log in with a username and password. Roles are for services and machines — they don't have passwords, they assume the role temporarily when they need to act. That distinction matters a lot as we go deeper.",
+        "ren_response_if_incorrect": "Not quite — think about who is on the other side. An IAM User has credentials a person types in to log in. A Role doesn't have credentials in that sense — it's assumed by a service, like an EC2 server, when that service needs to do something in AWS. Try thinking about it from that angle."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DOES EVERY COMPANY NEED IAM?",
+      "board_text": "Without IAM properly set up:\n• Any developer can delete the production database\n• Any intern can see all billing data\n• If one person's credentials are stolen, the attacker has full account access\n• No audit trail — you cannot tell who deleted what\n\nWith IAM properly set up:\n• Each person has only the access their job requires\n• A stolen credential causes limited damage, not total compromise\n• Every action is logged — who did what, when, from which IP address\n\nAt scale: Infosys manages 15,000+ AWS accounts. IAM is the only mechanism that makes that governable.",
+      "ren_voice": "Here is what happens without IAM done correctly. Someone shares the root account password across the team — the master key to everything. A developer gets curious and accidentally deletes something in production. Or a disgruntled employee leaves and takes the credentials with them. You have no way to revoke just their access without changing the password for everyone. And you have no record of what they did. IAM makes this controllable. Each person gets exactly the access their role requires — nothing more. If a junior developer only needs to view EC2 logs, their policy says that and nothing else. If their account is compromised, the attacker sees EC2 logs and nothing else. And every action — every API call, every click — is logged against that specific identity. That audit trail is what lets you investigate, not just react.",
+      "check_question": {
+        "question": "If a company has 50 engineers all sharing one login, what is the single biggest risk they face?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Yes — and I'd add one more thing: it is not just access control. When that shared login does something destructive, you cannot tell which of the 50 engineers was responsible. The audit trail is useless. IAM gives you both control and accountability.",
+        "ren_response_if_incorrect": "Think about what happens after something goes wrong — not just during. If all 50 share one login, and someone deletes the production database, how do you know who did it? You cannot. That is the real problem — not just access, but accountability."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW IAM WORKS — THE MENTAL MODEL",
+      "board_text": "Think of your AWS account as a building:\n\n• Account ID = the building's address\n• IAM User = a specific person's keycard\n• Policy = which doors that keycard can open\n• Role = a temporary keycard issued to a visitor or contractor\n• Groups = departments — one policy applies to everyone in the group\n\nThe building's master key (root account) is locked in a vault.\nYou use it for almost nothing. Daily work happens through your IAM User.",
+      "ren_voice": "Here is the mental model. Your AWS account is a building. The Account ID is the building's address — it's how AWS knows which building you're in. Every IAM User is a specific person's keycard. The Policy attached to that keycard determines which doors open and which stay locked. A junior developer's keycard might open the EC2 room and nothing else. The billing room stays locked for them. IAM Roles are like temporary keycards — you issue them to a contractor who needs access for a specific job, and they can be revoked at any time. Groups are departments: you put the entire data team in one group, attach one policy to that group, and every person in it inherits exactly those permissions. And the root account — the master key — should be in a vault. Enable multi-factor authentication on it immediately, and then use it for almost nothing. Daily admin work happens through a regular IAM User, not root.",
+      "check_question": {
+        "question": "An EC2 server needs to read files from an S3 bucket. Should you create an IAM User with credentials stored on that server, or use something else?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — a Role. Services get Roles, not Users. You never put credentials on a server. The server assumes a Role, gets temporary access, does its job. If the server is ever compromised, those temporary credentials expire automatically. That is exactly why Roles exist.",
+        "ren_response_if_incorrect": "Careful — think about what an IAM User requires. It has long-lived credentials. Do you want a password sitting on a server? What happens if someone gets into that server? Roles are designed for this case — temporary credentials that an EC2 server can assume without any hardcoded password."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "In the real AWS console:\n\n→ Top nav: Services → Security, Identity & Compliance → IAM\n→ Left sidebar: Users, Groups, Roles, Policies\n→ Click 'Users' → list of every IAM User, their last login, MFA status\n→ Click one user → 'Permissions' tab shows which policies are attached\n→ Click a policy → see the exact rules: which Actions are Allowed, on which Resources\n\nThis is where you will work. Every permission in your account is visible and auditable from these screens.",
+      "ren_voice": "Let me describe what you will see when you open the real AWS console. Navigate to Services at the top, go to Security, Identity and Compliance, and click IAM. On the left side, you have a sidebar: Users, Groups, Roles, Policies. Click Users and you see every IAM User in the account — their name, when they last logged in, and whether they have multi-factor authentication enabled. Click on one user, go to the Permissions tab, and you see exactly which policies are attached. Click into a policy and you see the actual rules: which actions this identity is allowed to perform, on which resources. It is all there, visible, auditable. When you get into the workspace, you will navigate this exact structure. Right now, the goal is to know it exists and know where it lives.",
+      "check_question": {
+        "question": "If you want to check whether a specific developer has access to S3 — where in the AWS console would you navigate to find that?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — IAM, then Users, click that developer's name, check the Permissions tab. That is the right path. You could also go to the policy itself and see which users have it attached. Either direction works.",
+        "ren_response_if_incorrect": "Let me walk you through it: Services → IAM → Users → click the developer's name → Permissions tab. That shows every policy attached to them and what those policies allow. Walk through that path in your head before we move on."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nA new developer joins your team tomorrow morning.\nThey are building features for the mobile app backend.\nThey need:\n• Read and write access to one S3 bucket: mobile-app-assets\n• Permission to view EC2 instances in ap-south-1\n• Nothing else\n\nWhat are the three things you set up in IAM before their first day?",
+      "ren_voice": "Here is a real situation. A new developer starts tomorrow. Mobile backend team. They need to read and write to one specific S3 bucket and view EC2 instances in one region — and nothing else. Before they walk in the door, what three things do you create or configure in IAM? Think through it — what does this developer need to log in, and what controls what they can do once they are in?",
+      "check_question": {
+        "question": "Walk me through your three steps — what would you create, in what order, and what goes into each one?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Good — create the IAM User so they have credentials to log in, create a Policy that allows S3 read/write on that specific bucket and EC2 describe in ap-south-1 only, then attach the Policy to the User. Optionally put them in a Group if others on the team have the same needs. The key thing you got right: the policy is scoped to exactly what they need, not more.",
+        "ren_response_if_incorrect": "Let me help you sequence this. First, an IAM User — that gives them credentials to log in. Second, a Policy — that document defines what they can do. Third, attach the Policy to the User. The policy should reference only that specific S3 bucket and only EC2 describe actions in ap-south-1. Not all S3. Not all regions. Does that make the structure clearer?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET IAM WRONG",
+      "board_text": "The most common IAM mistake:\nGiving a new developer AdministratorAccess 'to make things easy.'\n\nWhat actually happened at one startup:\n• Developer given AdministratorAccess on Day 1 — 'we'll scope it later'\n• 3 months later, doing cleanup work, accidentally deletes the production RDS database\n• CloudTrail confirms it was their credentials\n• No backup was configured\n• 6 hours of customer order records: gone\n\nIAM existed. Policies were not scoped. AdministratorAccess means full control of everything.",
+      "ren_voice": "This is the most common IAM mistake I see. A new developer joins, and someone on the team says 'just give them AdministratorAccess, it is easier than figuring out the right permissions right now.' Three months go by, everything seems fine. Then one afternoon the developer is doing some cleanup, selects the wrong database, and deletes it. In production. They had full access to do exactly that — their policy said AdministratorAccess, which means full control of everything in the account. The database had no automated backup. Six hours of customer order records are gone. You check CloudTrail — their specific IAM User ID is right there in the logs. You know exactly who did it. But the data is gone. IAM was set up. The user existed. The policy just was not scoped. Never hand out AdministratorAccess as a default.",
+      "check_question": {
+        "question": "In that scenario, what single IAM change could have prevented the data loss — even if the developer still made the exact same mistake?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — if the policy had not included the permission to delete RDS databases, the API call would have been rejected with Access Denied. The developer could have tried, AWS would have blocked it, and the database would still be there. That is least-privilege: not trusting humans to always do the right thing, trusting the policy to enforce it.",
+        "ren_response_if_incorrect": "Think about what stopped the developer from deleting the database — or rather, what did not stop them. Their policy included delete permissions for RDS. If that permission was not in the policy, the API call would have returned Access Denied. The mistake would have been harmless. The fix is scoping the policy to only what they actually need."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A contractor finished a 3-month project at your company last week.\nTheir IAM User still exists in the account — credentials are still valid.\n\nWhat is the first thing you do in IAM today?\nAnd what is the second thing?",
+      "ren_voice": "Here is a clean scenario. A contractor just finished their engagement. Project is over, they are gone. But their IAM User is still sitting in your account, fully configured, credentials still valid. What do you do? Give me two things, in order.",
+      "check_question": {
+        "question": "What are your two steps — what do you do first, and what do you do second?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — first, disable the IAM User immediately. That revokes all access without deleting the audit history. Second, rotate or delete the credentials. The non-negotiable is: disable the moment the engagement ends. Every day the user is active after they leave is a window of risk you did not need to open.",
+        "ren_response_if_incorrect": "Think about urgency first. The contractor is gone — can they still log in right now? Yes. So the first thing is to cut that access immediately — disable the user. That revokes access without destroying the audit trail. Then, separately, handle the credentials — rotate or delete them. The key order: access off first, cleanup second."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW IAM WORKS AT ZEPTO",
+      "board_text": "Zepto — Indian 10-minute grocery delivery, 200+ engineers:\n\n• Every engineer gets a scoped IAM User on Day 1\n• Mobile team: access to mobile services only\n• Data team: access to analytics services only\n• Billing console access: CFO only\n• Zero shared logins across the company\n• When an engineer leaves: IAM User disabled the same day\n• CloudTrail logs every API call — anomalies investigated the same day they appear",
+      "ren_voice": "Here is how this works at a real company operating at speed. Zepto has over 200 engineers. On their first day, every engineer gets a scoped IAM User — not AdministratorAccess, not a shared login. The mobile backend team has access to the services they touch. The data team has access to the analytics pipeline. Billing information is visible only to the CFO. None of these groups can see each other's resources, because their policies prevent it. When an engineer leaves Zepto, their IAM User is disabled the same day. Within minutes, access is gone. Not next week when someone remembers. Not after IT processes the paperwork. Same day. And CloudTrail logs every API call continuously — anything unusual is flagged and investigated the same day it appears. That is IAM doing its job across 200 engineers, daily, invisibly, in a company where one security failure could mean customer data exposed at scale.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 2:\n\n• IAM controls who gets access to what in your AWS account\n• One IAM User per real human — never share credentials\n• Roles are for services and machines, not humans\n• Policies define exactly what each identity can and cannot do\n• Least privilege: give only what someone actually needs, nothing more\n• Root account = lock it away, enable MFA, never use for daily work\n• When someone leaves: their IAM User gets disabled the same day",
+    "ren_voice": "Here is what matters from today. IAM is the lock on every door in your AWS account. One IAM User per human — never shared. Roles for services — never hardcoded credentials. Policies scoped to exactly what the job requires. The root account goes in a vault after initial setup. And when someone leaves, their access is gone the same day, not next week. Get these habits right from the beginning and IAM becomes invisible infrastructure, doing its job quietly. Get them wrong and IAM becomes the story of how your breach started."
+  },
+  "doubt_session": {
+    "ren_opening": "That is everything for IAM today. Do you have any questions about what we covered — IAM Users, Roles, Policies, or anything else from this lesson?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Good. Tomorrow we go into networking — VPC, subnets, and why your database should never be reachable from the internet. See you then."
+  }
+}

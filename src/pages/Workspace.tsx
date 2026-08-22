@@ -3,20 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDomain } from "@/contexts/DomainContext";
 import DomainNavbar from "@/components/app/DomainNavbar";
-import CloudFresherWorkspace from "@/components/cloud/CloudFresherWorkspace";
+import { useRebonMode } from "@/components/cloud/RebonModeSwitcher";
+import { StudentWorkCatalog } from "@/components/cloud/studentMode/StudentWorkCatalog";
+import { ProfessionalWorkCatalog } from "@/components/cloud/professionalMode/ProfessionalWorkCatalog";
+import { ModePlaceholder } from "@/components/cloud/ModePlaceholder";
 import CommunicationWorkspace from "@/components/workspace/CommunicationWorkspace";
 import { AUTH_REQUIRED } from "@/lib/authGate";
 
 /**
- * Work section router.
- * Engineering → Cloud workspace (phases, tickets, journey map).
- * Communication → communication practice only.
- * Do not mix domains or revive the old "Full Stack Practice" shell here.
+ * Work — same page chrome as Learn (CloudDeskShell inside catalogs).
  */
 const Workspace = () => {
   const { user, loading } = useAuth();
   const { domain, setSection } = useDomain();
   const navigate = useNavigate();
+  const [mode] = useRebonMode();
 
   useEffect(() => {
     setSection("workspace");
@@ -34,21 +35,23 @@ const Workspace = () => {
     );
   }
 
+  const renderCloudWork = () => {
+    if (mode === "student") return <StudentWorkCatalog />;
+    if (mode === "professional") return <ProfessionalWorkCatalog />;
+    return <ModePlaceholder mode="ai_professional" section="work" />;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <DomainNavbar />
       <main
         className={
           domain === "fullstack"
-            ? "w-full pt-28 pb-12"
+            ? "mx-auto w-full max-w-4xl px-4 pt-28 pb-10 md:px-6"
             : "container mx-auto px-4 pt-28 pb-12"
         }
       >
-        {domain === "fullstack" ? (
-          <CloudFresherWorkspace />
-        ) : (
-          <CommunicationWorkspace />
-        )}
+        {domain === "fullstack" ? renderCloudWork() : <CommunicationWorkspace />}
       </main>
     </div>
   );

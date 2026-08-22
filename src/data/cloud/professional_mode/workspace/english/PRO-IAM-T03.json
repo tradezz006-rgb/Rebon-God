@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-IAM-T03",
+  "task_number": 3,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "iam",
+  "session": "PM-1",
+  "source_lesson": "PM-1.1",
+  "approach": "create_from_scratch",
+  "duration_minutes": 15,
+  "title": "Create EC2 deployment role with S3 write to one bucket",
+  "brief": "Create EC2 deployment role with S3 write to one bucket",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

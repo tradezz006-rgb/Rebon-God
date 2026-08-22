@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T09",
+  "task_number": 9,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.3",
+  "approach": "incident_response",
+  "duration_minutes": 30,
+  "title": "Unauthorized EC2 in us-east-1  -  find and terminate",
+  "brief": "Unauthorized EC2 in us-east-1  -  find and terminate",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

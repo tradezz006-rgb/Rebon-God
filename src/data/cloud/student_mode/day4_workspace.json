@@ -1,0 +1,93 @@
+{
+  "day": 4,
+  "language": "english",
+  "items": [
+    {
+      "id": "D4-Q1",
+      "type": "quiz",
+      "question": "In one line each — what are EC2 and S3 for?",
+      "options": [
+        "EC2 runs your code (compute); S3 stores files (object storage)",
+        "EC2 stores files forever; S3 runs your application code",
+        "Both are only for billing reports",
+        "Both replace IAM completely"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "EC2 = computer. S3 = filing cabinet.",
+      "ren_hint_tanglish": "EC2 = code run aagum. S3 = files store aagum.",
+      "explanation": "EC2 is rented virtual compute. S3 is durable object storage. Almost every AWS app uses both."
+    },
+    {
+      "id": "D4-Q2",
+      "type": "quiz",
+      "question": "A developer stores user-uploaded photos on the EC2 instance's local disk. What is the risk?",
+      "options": [
+        "If the instance stops, crashes, or is replaced, the photos can be lost",
+        "S3 automatically deletes them after one hour",
+        "Local disk is more durable than S3 by design",
+        "There is no risk — EC2 disk is permanent forever"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "EC2 local disk is not permanent storage for user files.",
+      "ren_hint_tanglish": "EC2 local disk temporary — photos S3-la store pannunga.",
+      "explanation": "Persist user files in S3. EC2 keeps the URL in the database — not the file bytes on local disk."
+    },
+    {
+      "id": "D4-Q3",
+      "type": "quiz",
+      "question": "A team picks t3.micro for a production database because it is cheapest. Under sustained launch-day traffic, what goes wrong?",
+      "options": [
+        "Burstable CPU credits run out and performance collapses under continuous load",
+        "t3.micro automatically becomes m5.large with no downtime",
+        "S3 Block Public Access turns off by itself",
+        "The VPC deletes the private subnet"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "t3 = burst credits. Production DB needs sustained CPU (e.g. m5 family).",
+      "ren_hint_tanglish": "t3.micro burst credits — sustained production-ku wrong fit.",
+      "explanation": "Choose instance type for steady-state production load, not development price. Burstable types are for light intermittent work."
+    },
+    {
+      "id": "D4-S1",
+      "type": "scenario",
+      "situation": "Food delivery app pieces: (1) Node.js backend API, (2) React static frontend files, (3) customer profile photos.",
+      "question": "Where should each piece live?",
+      "options": [
+        "API on EC2; React files and photos in S3",
+        "Everything only on one EC2 local disk",
+        "Photos on EC2; API and React only in S3 as running processes",
+        "All three must live only inside CloudWatch"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Running code → EC2. Static/user files → S3.",
+      "ren_hint_tanglish": "Running code = EC2. Static files + photos = S3.",
+      "explanation": "Backend processes requests on EC2. Frontend static assets and user photos belong in S3."
+    },
+    {
+      "id": "D4-S2",
+      "type": "scenario",
+      "situation": "You discover an S3 bucket of customer invoices set to Public access.",
+      "question": "What is the first action, and what does it prevent?",
+      "options": [
+        "Enable Block Public Access immediately — stops public downloads even if objects look public",
+        "Leave it public and email customers later",
+        "Delete the AWS account without fixing the bucket",
+        "Move the invoices onto an EC2 local disk instead"
+      ],
+      "correct_index": 0,
+      "ren_hint_english": "Prevent first — Block Public Access is the master switch.",
+      "ren_hint_tanglish": "First Block Public Access enable pannunga — master switch.",
+      "explanation": "Block Public Access overrides public object settings. Then audit access logs and tighten policy so it cannot happen again."
+    },
+    {
+      "id": "D4-A1",
+      "type": "account_id",
+      "situation": "When a user uploads a profile photo, your app receives it on compute, then must store it so it survives any server restart.",
+      "question": "Which service stores that photo long-term? (Type EC2 or S3)",
+      "expected_answer": "S3",
+      "ren_hint_english": "Long-term files → S3. EC2 only receives then hands off.",
+      "ren_hint_tanglish": "Long-term photo storage = S3.",
+      "explanation": "EC2 may receive the upload; S3 stores it. The database holds the S3 URL."
+    }
+  ]
+}

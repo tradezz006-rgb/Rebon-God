@@ -1,0 +1,51 @@
+{
+  "lesson_id": "PM-1.5",
+  "lesson_title": "CloudTrail: The Audit Record",
+  "session_id": "PM-1",
+  "session_name": "IAM  -  Identity and Access Management",
+  "mode": "professional",
+  "language": "tanglish",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "Every API call recorded",
+      "Filter events",
+      "Read event fields",
+      "Find who deleted a SG"
+    ],
+    "ren_navigates": [
+      "CloudTrail → Event History",
+      "Filter by username",
+      "Read CreateUser / DeleteGroup"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

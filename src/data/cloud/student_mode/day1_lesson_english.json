@@ -1,0 +1,126 @@
+{
+  "day": 1,
+  "part": "A",
+  "language": "english",
+  "title": "What Is Cloud Computing",
+  "duration_minutes": 17,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 1",
+      "board_text": "Student Mode · Day 1 of 5\n\nToday's focus:\n• What cloud computing actually is\n• Why companies moved to cloud\n• Regions, the AWS console, and scaling\n\nHow this class works:\n• I teach on the board while I speak\n• After each step, I ask a quick check — answer on your mic\n• At the end: summary + doubt session",
+      "ren_voice": "Welcome. I am Ren, and this is Day 1 of Student Mode. Before we touch IAM, VPCs, or any console tickets, we need a clear mental model of cloud itself — what it is, why it won, and how AWS is organized. Today we will move step by step. I will write on the board as I teach. After each idea, I will pause and ask you a short question — answer on your mic. Ready? Let's start with the foundation.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS CLOUD COMPUTING?",
+      "board_text": "Cloud computing = using the internet to access computers, storage, and software owned and maintained by someone else.\n\nInstead of buying a server and storing it in your office, you rent one from a provider over the internet.\n\nThree major providers:\n• AWS (Amazon Web Services) — largest, ~31% market share\n• Google Cloud\n• Microsoft Azure\n\nYou pay only for what you use.\nYou can scale up or down instantly.\nYou never touch a physical machine.",
+      "ren_voice": "Cloud computing is renting technology infrastructure over the internet, instead of owning it. Here is the clearest way I know to explain it. You do not buy an electricity generator to power your home — you connect to the grid, use what you need, and pay a bill at the end of the month. Cloud computing is that exact same idea for computers. AWS, Google Cloud, and Microsoft Azure own enormous data centers full of servers around the world. You create an account, use what you need, and pay at the end of the month. You never touch a physical machine. You never manage a data center. You just use what is there.",
+      "check_question": {
+        "question": "Before we move on — in your own words, what is the one thing that makes cloud computing different from a company buying its own servers?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — you rent, you do not own. That single difference changes everything: no upfront capital, no hardware to maintain, and you only pay for what you actually use. That is the foundation cloud computing is built on.",
+        "ren_response_if_incorrect": "Think about the word 'rent' versus 'buy.' When you buy a server, it is yours — you paid for it upfront, you maintain it, you own it even when it is sitting idle. Cloud computing removes all of that. You are renting access to someone else's computer, paying only while you are using it. The shift from owning to renting is the core idea."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DO COMPANIES USE CLOUD?",
+      "board_text": "Before cloud computing:\n• Buy servers upfront (crores of rupees, weeks to procure)\n• Rent a data center rack (long-term lease)\n• Hire staff to maintain the hardware\n• Guess how many servers you will need (usually wrong)\n• Pay full cost even during low-traffic periods\n\nWith cloud computing:\n• No upfront hardware cost — start from zero\n• Scale to 10x capacity in minutes, not months\n• Pay only for what you use — idle resources cost nothing\n• No physical maintenance — the cloud provider handles hardware failures",
+      "ren_voice": "Before cloud existed, a startup that wanted to launch a product had to buy servers, rent data center space, hire people to maintain the hardware, and spend months on setup before writing a single line of product code. The upfront cost alone killed ideas that never got to become companies. And the guess problem: you had to predict how many servers you would need six months from now. Too few, your site goes down when traffic spikes. Too many, you are paying for idle capacity forever. Cloud solved both. You start with nothing, you use what you need, and when your demand doubles overnight, you scale in minutes. When traffic drops, you scale back. You never pay for idle capacity.",
+      "check_question": {
+        "question": "If a startup's product suddenly becomes viral and traffic goes 20x overnight — what happens with physical servers versus cloud?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly right — with physical servers, you crash and wait weeks for new hardware to arrive. With cloud, you scale up in minutes and handle the traffic. That responsiveness is not just a technical advantage — it is a business survival advantage.",
+        "ren_response_if_incorrect": "Think about the timeline. With physical servers, you need to order new hardware, wait for delivery, set it up — that is weeks. Meanwhile, your users are hitting a site that is down. With cloud, you call the API, more capacity appears in minutes. The startup that can handle the viral moment survives. The one waiting for hardware does not."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW CLOUD COMPUTING WORKS — THE MENTAL MODEL",
+      "board_text": "AWS has data centers in cities around the world. Each city cluster = a Region.\n\nMumbai = ap-south-1\nSingapore = ap-southeast-1\nVirginia (US) = us-east-1\n\nInside a Region, you create Resources — the things you actually use:\n• Virtual computer → EC2\n• File storage → S3\n• Database → RDS\n\nYou access everything through the AWS Management Console — a website.\nResources start in seconds. AWS bills you by the hour or by the byte.",
+      "ren_voice": "Here is how it actually works. AWS owns massive data centers in cities around the world. Each geographic location is called a Region. Mumbai is ap-south-1 — that is what AWS calls it. Singapore is ap-southeast-1. Virginia is us-east-1. When you create resources in AWS, you choose which Region they live in. Inside a Region, you create the actual things you need. A virtual computer is called EC2. File storage is called S3. A managed database is called RDS. You access all of this through the AWS Management Console, which is just a website — you log in, navigate to a service, configure what you need, and it starts running within seconds. AWS bills you at the end of the month for what you used — by the hour for compute, by the gigabyte for storage. That is the complete loop.",
+      "check_question": {
+        "question": "If FoodQuick wants its servers to be physically close to customers in Mumbai — which AWS Region would you deploy in?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — ap-south-1, the Mumbai region. Proximity to users reduces latency — the time it takes for a request to travel from a user's phone to the server and back. Choosing the right Region is one of the first decisions you make when deploying on AWS.",
+        "ren_response_if_incorrect": "The Mumbai Region in AWS is called ap-south-1. 'ap' stands for Asia Pacific, 'south' for South Asia, and '1' because it was the first region in that area. Deploying in ap-south-1 means the physical servers are in Mumbai — your users in India get the lowest possible latency from servers that are geographically close."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THE AWS CONSOLE LOOKS LIKE",
+      "board_text": "When you log into AWS:\n\n→ Top navigation bar: Services menu, search bar, Region selector, account name\n→ Services menu: grouped by category — Compute, Storage, Database, Networking, Security\n→ Region selector (top right): dropdown showing which Region you are currently working in\n→ Search bar: type any service name (EC2, S3, IAM) — it appears immediately\n→ Home screen: recently visited services, cost overview, news\n\nThe Region selector is critical — every resource you create lives in the Region you have selected.\nCreating something in ap-south-1 is not visible when you switch to us-east-1.",
+      "ren_voice": "Let me describe what you will see when you first open the AWS Management Console. At the top there is a navigation bar. On the left, a Services menu — click it and you see every AWS service grouped by category: Compute, Storage, Database, Networking, Security. In the middle, a search bar — type EC2 and it appears immediately. On the right side, a Region selector — a dropdown that shows which Region you are currently working in. This is one of the most important things to watch. Every resource you create lives in the Region you have selected. If you create an EC2 server in Mumbai but then switch your Region selector to Virginia, that server will appear to be gone — it is not, it is just in a different Region. New engineers get confused by this constantly. Always check your Region selector before doing anything.",
+      "check_question": {
+        "question": "You create an EC2 server in the Mumbai region, then someone tells you it is missing. What is the first thing you check?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — the Region selector. The server is almost certainly there, just not visible because you are looking at a different Region. This is the single most common confusion for engineers new to AWS, and knowing to check the Region first saves a lot of wasted time.",
+        "ren_response_if_incorrect": "The answer is the Region selector at the top right of the console. If someone created the server in ap-south-1 (Mumbai) but you are currently viewing us-east-1 (Virginia), the server is invisible — it exists in a different Region. Switch the Region selector to Mumbai and it will appear. Always check the Region before concluding something is missing."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nA friend is starting a small food delivery business in Chennai.\nThey need:\n• A website for customers to order food\n• A place to store restaurant photos and menus\n• A database to track orders\n\nThey ask you: 'Should we rent a server at a local data center for ₹50,000/month, or use AWS?'\n\nWhat do you tell them, and why?",
+      "ren_voice": "A friend is launching a food delivery business in Chennai and they are deciding between renting a physical server at a local data center for a fixed ₹50,000 per month, or using AWS. They do not know how much traffic they will get in the beginning. They might grow fast, they might grow slowly. What do you tell them?",
+      "check_question": {
+        "question": "Walk me through your recommendation — AWS or the local server, and what are the two strongest reasons for your choice?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Good reasoning — AWS is the right call here. The two most important reasons: first, they do not know their traffic yet, so paying ₹50,000 flat for capacity they may not need is waste. On AWS they pay only for what they use. Second, if they go viral — if the app gets featured somewhere — they can scale in minutes, not weeks. A local fixed server would crash under unexpected load with no fast path to more capacity.",
+        "ren_response_if_incorrect": "Think about two specific risks for a new business. First: what if almost nobody uses it at the start? ₹50,000/month on a server running at 5% capacity is a lot of wasted money. AWS charges for actual usage. Second: what if it gets really popular suddenly? A fixed local server has no way to scale quickly. AWS can handle 10x the traffic in minutes. For an early-stage business with unpredictable demand, cloud is the correct default."
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU IGNORE CLOUD",
+      "board_text": "A real mistake — 2011, Friendster vs Facebook:\n\n• Friendster (peak: 115 million users) owned physical servers in data centers\n• Facebook moved to cloud infrastructure early\n• Friendster's traffic surged — they could not scale their physical servers fast enough\n• Page load time: 40 seconds. Users left.\n• Facebook scaled with traffic using cloud-like infrastructure — page loads stayed fast\n\nFriendster was the larger, more established platform.\nFacebook won because it could scale. Friendster could not.\n\nToday: every serious tech company runs on cloud. Physical server ownership for web applications is largely obsolete.",
+      "ren_voice": "Here is a real story about what happens when you cannot scale. Friendster — if you are not familiar, it was the dominant social network before Facebook. At its peak it had 115 million users. But Friendster owned physical servers. When traffic grew faster than they could procure and install new hardware, page load times hit 40 seconds. Users do not wait 40 seconds. They left. Facebook was smaller at the time but had built infrastructure that could scale with demand. Page loads stayed fast. Users stayed. Friendster went from 115 million users to irrelevance in a few years. Physical infrastructure that cannot scale has ended companies. Cloud infrastructure that can scale in minutes has enabled them. This is not a theoretical concern — it is a documented pattern that has played out repeatedly.",
+      "check_question": {
+        "question": "In the Friendster story, the core technical failure was not their product — it was something else. What was it?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — infrastructure that could not scale. The product had users. The demand was there. But the physical servers could not handle the load, and they could not add capacity fast enough. The lesson: you can have a great product and still fail if your infrastructure cannot keep up with the demand that product generates.",
+        "ren_response_if_incorrect": "The product itself was not the problem — Friendster had 115 million users who wanted to use it. The problem was the physical servers could not handle the load, and adding new physical servers took too long. Infrastructure failure. Cloud computing is specifically designed to solve this — you can add capacity in minutes, not weeks."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A company runs 10 EC2 servers to handle their normal daily traffic.\nOn New Year's Eve, they expect 50x the normal traffic for about 4 hours.\n\nWhat should they do before midnight?\nAnd what should they do after 4am when traffic returns to normal?\n\nThink about what cloud makes possible that physical servers cannot.",
+      "ren_voice": "A company has 10 EC2 servers running normally. Tonight is New Year's Eve. They expect 50 times their normal traffic for roughly four hours starting at midnight. What should they do before midnight, and what should they do when the spike is over at 4am? Think about what cloud actually makes possible here.",
+      "check_question": {
+        "question": "What are your two actions — one before midnight, one after 4am?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — before midnight, scale up. Launch enough additional EC2 servers to handle 50x traffic. They might go from 10 to 100 or more. After 4am, when traffic returns to normal, scale back down. Terminate the extra servers and stop paying for them. You pay for those extra 90 servers for roughly 4 hours, not permanently. That is exactly what cloud enables — temporary capacity with temporary cost.",
+        "ren_response_if_incorrect": "The two moves: before midnight, scale up — use AWS Auto Scaling or manually launch more EC2 instances to handle the 50x traffic. Cloud lets you go from 10 servers to 100 servers in minutes. After 4am, scale back down — terminate the extra servers, stop paying for them. You only paid for a few hours of extra capacity. A company with physical servers would need to have permanently owned and paid for 100 servers all year just to handle 4 hours of peak traffic. Cloud eliminates that waste."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW ZEPTO USED CLOUD TO SCALE",
+      "board_text": "Zepto — Indian 10-minute grocery delivery:\n\n• Launched in 2021 with a small engineering team\n• Reached 10 million+ users within 18 months of launch\n• Could not have scaled that fast with physical server procurement\n• Used AWS to spin up new compute capacity as demand grew — in hours, not months\n• Scaled back during off-peak hours to avoid paying for idle capacity\n• Today: one of India's fastest-growing consumer tech companies\n\nPhysical infrastructure timeline: 6–12 weeks to procure, install, and configure servers\nAWS timeline: minutes\n\nFor a startup moving at Zepto's speed, cloud was not a preference — it was the only viable option.",
+      "ren_voice": "Let me close with a company you likely know. Zepto launched in 2021 — 10-minute grocery delivery. In 18 months they were serving millions of users across India. How do you build the infrastructure for that when you have no idea how big you are going to get or how fast? You cannot do that with physical servers. The procurement timeline alone — 6 to 12 weeks to order, deliver, install, and configure physical servers — means you are always behind the actual demand. What Zepto actually did: they used AWS. As demand grew, they turned on more compute capacity — EC2 instances, in hours. During quiet periods at 3am, they scaled back and stopped paying for that capacity. The infrastructure cost tracked the actual revenue, not an upfront hardware bet. For any company moving at startup speed, in a market that can 10x in a year, cloud is not a preference. It is the only architecture that makes that growth possible.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 1:\n\n• Cloud computing = renting compute, storage, and networking over the internet — no hardware to buy\n• AWS is the largest cloud provider — it owns the servers, you create resources and pay for usage\n• Regions = AWS data centers in specific cities. Mumbai = ap-south-1.\n• Resources start in seconds. Billing starts when they run, stops when you shut them down.\n• Scale up for traffic spikes, scale down when quiet — you never pay for idle capacity\n• The Region selector in the AWS console controls everything — always check it first",
+    "ren_voice": "Here is what you walk away knowing from Day 1. Cloud computing is renting infrastructure — you never touch a physical machine. AWS is where most of that infrastructure lives, organized into Regions — the closest one for Indian users is ap-south-1 in Mumbai. You create resources in the console, they start in seconds, you pay for what you use, and when you are done, you stop paying. Scale up when you need more, scale down when you do not. And that Region selector at the top of the console — always check it before you do anything. Tomorrow we go deeper into who gets access to that cloud account and what they are allowed to do — that is IAM, and it is the foundation everything else is built on."
+  },
+  "doubt_session": {
+    "ren_opening": "That is everything for Day 1. Cloud computing, Regions, the console, and how scaling works. Do you have any questions before we close?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Good. Tomorrow: Identity and Access Management — who gets into the AWS account, and what they are allowed to do. See you then."
+  }
+}

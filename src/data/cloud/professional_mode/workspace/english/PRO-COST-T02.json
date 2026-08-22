@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-COST-T02",
+  "task_number": 2,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "cost",
+  "session": "PM-6",
+  "source_lesson": "PM-6.1",
+  "approach": "read_and_analyse",
+  "duration_minutes": 15,
+  "title": "EC2 +$200 MoM  -  what changed",
+  "brief": "EC2 +$200 MoM  -  what changed",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

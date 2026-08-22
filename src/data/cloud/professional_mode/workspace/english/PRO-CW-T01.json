@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-CW-T01",
+  "task_number": 1,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "cloudwatch",
+  "session": "PM-5",
+  "source_lesson": "PM-5.1",
+  "approach": "build_monitoring",
+  "duration_minutes": 15,
+  "title": "Web app dashboard: CPU, ALB requests/errors, network",
+  "brief": "Web app dashboard: CPU, ALB requests/errors, network",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

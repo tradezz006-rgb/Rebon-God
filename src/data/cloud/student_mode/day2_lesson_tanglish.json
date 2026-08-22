@@ -1,0 +1,126 @@
+{
+  "day": 2,
+  "part": "A",
+  "language": "tanglish",
+  "title": "Identity and Access Management (IAM)",
+  "duration_minutes": 18,
+  "blocks": [
+    {
+      "block": 0,
+      "type": "lesson_intro",
+      "heading": "WELCOME — DAY 2",
+      "board_text": "Student Mode · Day 2 of 5\n\nYesterday: what cloud is and how AWS is organized.\nToday: Identity and Access Management (IAM)\n\nWe will cover:\n• Users, roles, and policies\n• Why root is dangerous for daily work\n• Least privilege and real IAM mistakes",
+      "ren_voice": "Welcome back. Day 2. Netru cloud mental model build pannom — rent, Regions, console. Inniku account-ku ulleye poguvom. Yaaru sign in panna mudiyum? Enna panna allow? Adhu IAM — Identity and Access Management. Secure AWS ellam ithula irundhu start aagum. Same rhythm: teach, board, mic check. Start panrom.",
+      "check_question": null
+    },
+    {
+      "block": 1,
+      "type": "concept_intro",
+      "heading": "WHAT IS IAM?",
+      "board_text": "IAM = Identity and Access Management.\n\nIt controls two things for every AWS account:\n  WHO can get in\n  WHAT they are allowed to do once they're in\n\nThree core pieces:\n• Users — real humans. One per person, never shared.\n• Roles — identities for services and machines (not humans).\n• Policies — documents that define exactly what is Allowed or Denied.\n\nAccount ID = the unique address of your AWS account.\nIAM User ID = who is at that address.",
+      "ren_voice": "IAM-nu Identity and Access Management. Ithula enna irukkunu solnaa, rendu questions-ku answer tharuchu — yaaru ulla varalaam, vandhaa enna panna mudiyum. AWS-la oru human irundha, avangalukku oru IAM User kidaikkum. Oru service or machine AWS-ku call pannanum-nu irundha, adhukkoru IAM Role irukkum. Antha each identity-oda oru Policy attach aagum — enna pannalaam, enna pannakoodaadhu-nu exactly solluchu. Account ID-nu sollraan, adhu antha AWS account-oda address. IAM User ID-nu sollraan, antha address-la irukkavanga yaar-nu. AWS-la yedhaavadhu panna, oru identity venum. Atha IAM define panniduchu.",
+      "check_question": {
+        "question": "In your own words — what is the difference between an IAM User and an IAM Role?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct-a sonna — Users, real humans-ukku, avanga credentials-a login pannuvaanga. Roles, services and machines-ukku — avangalukku password illa, oru service AWS-la yedhaavadhu panna venum-nu irundha temporarily Role-a assume pannuchu. Ithu mukkiyamana difference — appram puriyum.",
+        "ren_response_if_incorrect": "Kocham differently paarunga — oru IAM User-ku credentials irukkum, oru person type panni login pannuvaan. Oru Role-ku antha maathiri credentials illa — oru EC2 server yedhaavadhu panna venum-nu irundha, andha Role-a temporarily assume pannum. Ithai vachhu dippu yosinga."
+      }
+    },
+    {
+      "block": 2,
+      "type": "why_companies",
+      "heading": "WHY DOES EVERY COMPANY NEED IAM?",
+      "board_text": "Without IAM properly set up:\n• Any developer can delete the production database\n• Any intern can see all billing data\n• If one person's credentials are stolen, the attacker has full account access\n• No audit trail — you cannot tell who deleted what\n\nWith IAM properly set up:\n• Each person has only the access their job requires\n• A stolen credential causes limited damage, not total compromise\n• Every action is logged — who did what, when, from which IP address\n\nAt scale: Infosys manages 15,000+ AWS accounts. IAM is the only mechanism that makes that governable.",
+      "ren_voice": "IAM correct-a illaadhappo enna aaguchu-nu sollren. Oru team-la root account password share pannuvaanga — account-oda ellaa doorskum master key. Oru developer accidental-a production-la yedhaavadhu delete pannuvaaan. Illa, oru person leave pannitu credentials vachu poitaa, namba avanga access-a mattum remove panna mudiyaadhu — password change pannaa ellarukkum change aagum. Yaaru enna pannachuu-nu theriyaadhu. IAM-naa ithai govern panna mudiyum. Each person-ku their job-ku mathum venum access. Junior developer EC2 logs mattum paakkanam-nu irundha, policy adhai mattum sollum. Avanga account compromise aanaalum, attacker EC2 logs-mattum paakkuvaan, veyra ondrum illai. Every action — every API call — antha specific identity-ku against log aagum. Andha audit trail-taan investigate panna vazhivaruchu.",
+      "check_question": {
+        "question": "If a company has 50 engineers all sharing one login, what is the single biggest risk they face?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Aamaa, adhoda oru vishayam kooda solli poduren — shared login-la yedhaavadhu destructive-a nadhanthaa, 50-la yaaru pannaanga-nu theriyaadhu. Audit trail useless aagiduum. IAM rendu tharuchu — control-um, accountability-um.",
+        "ren_response_if_incorrect": "Oru vishayam yosinga — yedhaavadhu thappaa nadhantha apporam enna aagum, nadhakkaraappothilai. Shared login-la yaaraavathu production database delete pannaa, yaaru pannaanganu theriyumaa? Theriyaadhu. Adhu-taan real problem — access mattum illai, accountability kooda."
+      }
+    },
+    {
+      "block": 3,
+      "type": "live_build",
+      "heading": "HOW IAM WORKS — THE MENTAL MODEL",
+      "board_text": "Think of your AWS account as a building:\n\n• Account ID = the building's address\n• IAM User = a specific person's keycard\n• Policy = which doors that keycard can open\n• Role = a temporary keycard issued to a visitor or contractor\n• Groups = departments — one policy applies to everyone in the group\n\nThe building's master key (root account) is locked in a vault.\nYou use it for almost nothing. Daily work happens through your IAM User.",
+      "ren_voice": "Oru mental model solli tharren. Namba AWS account-a oru building-nu vachukonga. Account ID, antha building-oda address — AWS-ku which building-nu theriyura vali. Every IAM User, oru specific person-oda keycard. Andha keycard-oda Policy, which doors open aagum, which doors lock-a irukkum-nu determine pannum. Oru junior developer-oda keycard EC2 room-a matter pannum, veyra ondrum illai. Billing room, avan keycard-kku lock-a irukkum. IAM Roles, visitor keycard maathiri — oru contractor-ku specific job-kku issue pannuvaanga, evadhaiyum revoke pannalaam. Groups, departments maathiri — entire data team-a oru group-la pottu, one policy attach pannaa, athula irukkaravanga ellaarukum same permissions. Root account — master key — vault-la irukkanum. Immediately MFA enable pannu, apparam almost nothing-ku use pannadhey. Daily work, IAM User-la nadakkaanum.",
+      "check_question": {
+        "question": "An EC2 server needs to read files from an S3 bucket. Should you create an IAM User with credentials stored on that server, or use something else?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Correct — Role vachu. Services-ku Roles, Users illai. Server-la credentials vaikkakoodaadhu. Server oru Role assume pannum, temporary access kidaikkum, adhu job paanikum. Server compromise aanaalum, andha temporary credentials automatically expire aagum. Adhu-taan Roles-oda purpose.",
+        "ren_response_if_incorrect": "Careful — IAM User-ku long-lived credentials irukkum. Server-la password vaikkanum-nu irukkaa? Server compromise aanaalum enna aagum? Roles exactly ithu-kku design panna — EC2 server, password illaamal, temporary credentials assume pannalaam."
+      }
+    },
+    {
+      "block": 4,
+      "type": "visual_output",
+      "heading": "WHAT THIS LOOKS LIKE IN THE AWS CONSOLE",
+      "board_text": "In the real AWS console:\n\n→ Top nav: Services → Security, Identity & Compliance → IAM\n→ Left sidebar: Users, Groups, Roles, Policies\n→ Click 'Users' → list of every IAM User, their last login, MFA status\n→ Click one user → 'Permissions' tab shows which policies are attached\n→ Click a policy → see the exact rules: which Actions are Allowed, on which Resources\n\nThis is where you will work. Every permission in your account is visible and auditable from these screens.",
+      "ren_voice": "Real AWS console-la enna paappeenga-nu solren. Top-la Services poittu, Security, Identity and Compliance poveenga, IAM click pannuveenga. Left side-la oru sidebar irukkum — Users, Groups, Roles, Policies. Users click pannaa, account-la irukkara every IAM User's list paappeenga — avanga name, last login, MFA enable pannaaangaannu. Oru user click pannaa, Permissions tab-la avangalukku attach aana policies ellam paappeenga. Oru policy click pannaa, actual rules paappeenga — which actions allow, which resources-la. Ellam visible, auditable. Workspace-la indha exact structure-la navigate pannuveengaa. Ippo, idhu irukku, idhu engey irukkunu therinja poruchu.",
+      "check_question": {
+        "question": "If you want to check whether a specific developer has access to S3 — where in the AWS console would you navigate to find that?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exact-a — IAM, then Users, andha developer-a click pannu, Permissions tab check pannu. Andha path correct. Policy side-la irundhu kooda paakkalaam — which users attach aanaanga-nu. Either direction works.",
+        "ren_response_if_incorrect": "Path solren: Services → IAM → Users → developer-a click pannu → Permissions tab. Andha tab-la avangalukku attach aana every policy, enna allow panuchu-nu paappeenga. Andha path-a mentally walk through pannu."
+      }
+    },
+    {
+      "block": 5,
+      "type": "student_try",
+      "heading": "YOUR TURN — WHAT WOULD YOU DO?",
+      "board_text": "Scenario:\nA new developer joins your team tomorrow morning.\nThey are building features for the mobile app backend.\nThey need:\n• Read and write access to one S3 bucket: mobile-app-assets\n• Permission to view EC2 instances in ap-south-1\n• Nothing else\n\nWhat are the three things you set up in IAM before their first day?",
+      "ren_voice": "Real situation paarungaa. Naaliku oru new developer varaanga. Mobile backend team. Oru specific S3 bucket-la read and write, oru region-la EC2 instances view panna venumnu, veyra ondrum venaam. Avanga varaathukku munnaadi, IAM-la enna moonu vishayam create or configure pannuveenga? Yosinga — andha developer login aaka enna venumnu, login aana piragu enna pannalaam-nu ethuvum control panna enna venum?",
+      "check_question": {
+        "question": "Walk me through your three steps — what would you create, in what order, and what goes into each one?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Good — IAM User create pannu, athula credentials. Policy create pannu, antha specific S3 bucket-ku read/write, ap-south-1-la EC2 describe mattum. Policy-a User-ku attach pannu. Others-ku same needs irundha Group vachu podu. Key thing correct-a panneenga — policy scope panna, ellaa S3-ku illai, andha oru bucket-ku mattum.",
+        "ren_response_if_incorrect": "Sequence-a help panren. First, IAM User — athukku credentials kidaikkum. Second, Policy — enna panna mudiyum-nu define pannum. Third, Policy-a User-ku attach pannu. Policy, antha specific S3 bucket-ku mattum, ap-south-1-la EC2 describe actions-ku mattum irukkanum. All S3 illai. All regions illai. Ithai vachhu structure clear-a theriyudaa?"
+      }
+    },
+    {
+      "block": 6,
+      "type": "mistake_simulation",
+      "heading": "WHAT HAPPENS WHEN YOU GET IAM WRONG",
+      "board_text": "The most common IAM mistake:\nGiving a new developer AdministratorAccess 'to make things easy.'\n\nWhat actually happened at one startup:\n• Developer given AdministratorAccess on Day 1 — 'we'll scope it later'\n• 3 months later, doing cleanup work, accidentally deletes the production RDS database\n• CloudTrail confirms it was their credentials\n• No backup was configured\n• 6 hours of customer order records: gone\n\nIAM existed. Policies were not scoped. AdministratorAccess means full control of everything.",
+      "ren_voice": "IAM-la naan most often paakkaara mistake ithu. Oru new developer join aanaalum, team-la yaravadhu solluvaanga — 'adhukku AdministratorAccess kuduthudu, policy scope panna time aadum, later pannalaam.' Moonu months pochu, ellam fine-a irukkumnu thonum. Oru naal, developer cleanup work pannikittu, wrong database select pannitta, production-la delete panniruvaanga. Avangalukku andha permission irundha — policy AdministratorAccess solluchu, account-la ellathuvum full control. Database-ku backup configure pannala. Six hours customer order records: poguttaa. CloudTrail-la their specific IAM User ID right there-a irukkum. Yaaru pannaanganu theriyum. Aana data poguttaa. IAM irundha. User irundha. Policy scope pannala. Never AdministratorAccess-a default-a kudukkaatheenga.",
+      "check_question": {
+        "question": "In that scenario, what single IAM change could have prevented the data loss — even if the developer still made the exact same mistake?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Exactly — policy-la RDS delete permission illaadhappo, API call Access Denied-nu block aagirukum. Developer try panniruppaan, AWS block pannirukum, database still there-a irukkum. Ithan-taan least-privilege — humans-a trust pannala, policy-a trust pannuchu.",
+        "ren_response_if_incorrect": "Developer-a database delete panna stop pannadhu enna — illa, stop pannaadhathunu yosinga. Policy-la RDS delete permission irundha, call succeed aayiruchu. Andha permission policy-la illaadhappo, Access Denied return aagirukum. Mistake harmless-a irukkum. Fix: scope the policy to only what they actually need."
+      }
+    },
+    {
+      "block": 7,
+      "type": "mini_challenge",
+      "heading": "QUICK CHALLENGE",
+      "board_text": "A contractor finished a 3-month project at your company last week.\nTheir IAM User still exists in the account — credentials are still valid.\n\nWhat is the first thing you do in IAM today?\nAnd what is the second thing?",
+      "ren_voice": "Clean scenario oru. Contractor avanga project finish pannittaanga. Poguttaanga. Aana avanga IAM User account-la still irukku — credentials valid-a irukkum. Enna panreenga? Rendu vishayam, oru order-la sollunga.",
+      "check_question": {
+        "question": "What are your two steps — what do you do first, and what do you do second?",
+        "expected_response_type": "open",
+        "ren_response_if_correct": "Right — first, IAM User disable pannu immediately. Access pogum, audit history irukku. Second, credentials rotate or delete pannu. Non-negotiable: engagement end aana naale disable pannu. Oru naal also wait pannakoodaadhu — each day andha user active-a irukkum, risk irukkum.",
+        "ren_response_if_incorrect": "Urgency-a yosinga first. Contractor poguttaanga — ippo login panna mudiyumaa? Mudiyum. So first thing: access immediately cut pannunga — disable pannu, audit trail damage aagathu. Then, credentials rotate or delete. Order: access off first, cleanup second."
+      }
+    },
+    {
+      "block": 8,
+      "type": "real_workflow",
+      "heading": "HOW IAM WORKS AT ZEPTO",
+      "board_text": "Zepto — Indian 10-minute grocery delivery, 200+ engineers:\n\n• Every engineer gets a scoped IAM User on Day 1\n• Mobile team: access to mobile services only\n• Data team: access to analytics services only\n• Billing console access: CFO only\n• Zero shared logins across the company\n• When an engineer leaves: IAM User disabled the same day\n• CloudTrail logs every API call — anomalies investigated the same day they appear",
+      "ren_voice": "Real company-la eppadi work pannuchu-nu paarkalam. Zepto-la 200-ku mela engineers irukkaanga. First day-la, every engineer-ku oru scoped IAM User kidaikkum — AdministratorAccess illai, shared login illai. Mobile backend team-ku avanga touch panna services-ku mattum access. Data team-ku analytics pipeline-ku mattum access. Billing information CFO-ku mattum visible. Antha groups, each other-oda resources paakka mudiyaadhu, policies allow pannala. Oru engineer Zepto-le leave pannaa, same day IAM User disable aagum. Minutes-la access pogum. Next week-la kekkanum, IT HR process panna venum-nu illai — same day. CloudTrail every API call-a continuously log panna — unusual-a yedhaavadhu therinjaa, same day investigate pannuvaanga. 200 engineers-ku, daily, invisibly, Zepto maathiri oru scale-la customer data expose aanaa consequences peruma — IAM andha scale-la adhai govern panniduchu.",
+      "check_question": null
+    }
+  ],
+  "lesson_summary": {
+    "board_text": "What you must know after Day 2:\n\n• IAM controls who gets access to what in your AWS account\n• One IAM User per real human — never share credentials\n• Roles are for services and machines, not humans\n• Policies define exactly what each identity can and cannot do\n• Least privilege: give only what someone actually needs, nothing more\n• Root account = lock it away, enable MFA, never use for daily work\n• When someone leaves: their IAM User gets disabled the same day",
+    "ren_voice": "Innaikku enna matter-nu summary solren. IAM, namba AWS account-la every door-ukku lock. Oru human-ku oru IAM User — share pannakoodaadhu. Services-ku Roles — hardcoded credentials illai. Policies, job-ku venum-na mattum scope pannanum. Root account, initial setup-ku piragu vault-la. yaravadhu leave pannaa, same day disable. Ithai beginning-la-ye correct-a panni vachchaa, IAM invisible-a work pannum. Thappaa panni vachchaa, IAM-taan breach-oda story-oda start aagum."
+  },
+  "doubt_session": {
+    "ren_opening": "Innaikku IAM-ku aavudhu. Namba cover pannathula yedhaavadhu — IAM Users, Roles, Policies, veyra ethuvaavathu — question irukkaanaa?",
+    "wait_for_response": true,
+    "ren_response_template": "Answer the student's question using the concepts taught in this lesson. If the question is outside this lesson's scope, acknowledge it and say it will be covered in a later day.",
+    "ren_closing": "Nalla. Naaliku networking — VPC, subnets, namba database yen internet-la irundhu reach pannakoodaadhu-nu. Paakkalaam."
+  }
+}

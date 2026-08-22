@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-EC2-T10",
+  "task_number": 10,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "ec2",
+  "session": "PM-3",
+  "source_lesson": "PM-3.4",
+  "approach": "incident_response",
+  "duration_minutes": 35,
+  "title": "Cost spike  -  idle EC2 CPU <2%",
+  "brief": "Cost spike  -  idle EC2 CPU <2%",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

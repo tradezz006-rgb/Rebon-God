@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-S3-T04",
+  "task_number": 4,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "easy",
+  "environment": "aws_console",
+  "service": "s3",
+  "session": "PM-4",
+  "source_lesson": "PM-4.2",
+  "approach": "debug_and_security",
+  "duration_minutes": 15,
+  "title": "Public access warning  -  find and fix",
+  "brief": "Public access warning  -  find and fix",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}

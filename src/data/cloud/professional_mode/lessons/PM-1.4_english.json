@@ -1,0 +1,52 @@
+{
+  "lesson_id": "PM-1.4",
+  "lesson_title": "Debugging Access Denied",
+  "session_id": "PM-1",
+  "session_name": "IAM  -  Identity and Access Management",
+  "mode": "professional",
+  "language": "english",
+  "duration_minutes": 20,
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "outline": {
+    "teaching_points": [
+      "Four reasons for Access Denied",
+      "Reading the error",
+      "Policy Simulator",
+      "Access Advisor unused perms"
+    ],
+    "ren_navigates": [
+      "Trigger Access Denied",
+      "Identify missing policy",
+      "Add scoped permission",
+      "Verify"
+    ],
+    "notes": "Fill whiteboard_intro, console_segments, and closing from Claude schema/data pass."
+  },
+  "company": {
+    "name": "Finova Technologies",
+    "description": "PLACEHOLDER  -  replace with authored company context",
+    "your_role": "Cloud Infrastructure Engineer",
+    "aws_accounts": [
+      "finova-prod",
+      "finova-staging",
+      "finova-dev"
+    ],
+    "current_account": "finova-dev",
+    "manager": "Arjun Mehta (Infrastructure Lead)"
+  },
+  "whiteboard_intro": {
+    "duration_seconds": 0,
+    "board_text": "",
+    "ren_voice": ""
+  },
+  "console_segments": [],
+  "closing": {
+    "ren_voice": "",
+    "free_ask": {
+      "prompt": "",
+      "ren_response_template": "",
+      "ren_closing": ""
+    }
+  }
+}

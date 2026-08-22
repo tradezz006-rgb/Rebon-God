@@ -1,0 +1,22 @@
+{
+  "task_id": "PRO-VPC-T14",
+  "task_number": 14,
+  "type": "ops_console",
+  "status": "stub",
+  "content_status": "awaiting_author_data",
+  "difficulty": "hard",
+  "environment": "aws_console",
+  "service": "vpc",
+  "session": "PM-2",
+  "source_lesson": "PM-2.4",
+  "approach": "real_ticket",
+  "duration_minutes": 40,
+  "title": "Full network audit before launch",
+  "brief": "Full network audit before launch",
+  "language": "english",
+  "ticket": null,
+  "account_gate": null,
+  "console_seed": null,
+  "success_criteria": null,
+  "notes": "Fill ticket, account_gate, seed state, and success_criteria after Claude schema/data pass."
+}
