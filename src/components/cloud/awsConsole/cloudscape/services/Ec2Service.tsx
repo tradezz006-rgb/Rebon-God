@@ -10,19 +10,28 @@ import Input from "@cloudscape-design/components/input";
 import Select from "@cloudscape-design/components/select";
 import Container from "@cloudscape-design/components/container";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
-import Tabs from "@cloudscape-design/components/tabs";
 import Box from "@cloudscape-design/components/box";
 import Badge from "@cloudscape-design/components/badge";
 import Modal from "@cloudscape-design/components/modal";
 import Alert from "@cloudscape-design/components/alert";
+import Checkbox from "@cloudscape-design/components/checkbox";
+import RadioGroup from "@cloudscape-design/components/radio-group";
+import Tabs from "@cloudscape-design/components/tabs";
 import { useAccountStore } from "../store";
-import type { Ec2Instance } from "../types";
+import type { Ec2Instance, SgRule } from "../types";
 
 function stateIndicator(state: Ec2Instance["state"]) {
-  if (state === "running") return <StatusIndicator type="success">running</StatusIndicator>;
-  if (state === "stopped") return <StatusIndicator type="error">stopped</StatusIndicator>;
-  if (state === "pending") return <StatusIndicator type="pending">pending</StatusIndicator>;
-  return <StatusIndicator type="stopped">terminated</StatusIndicator>;
+  if (state === "running")
+    return <StatusIndicator type="success">Running</StatusIndicator>;
+  if (state === "pending")
+    return <StatusIndicator type="pending">Pending</StatusIndicator>;
+  if (state === "stopping")
+    return <StatusIndicator type="in-progress">Stopping</StatusIndicator>;
+  if (state === "shutting-down")
+    return <StatusIndicator type="in-progress">Shutting-down</StatusIndicator>;
+  if (state === "stopped")
+    return <StatusIndicator type="stopped">Stopped</StatusIndicator>;
+  return <StatusIndicator type="stopped">Terminated</StatusIndicator>;
 }
 
 export function Ec2Service() {
@@ -31,7 +40,35 @@ export function Ec2Service() {
   if (page === "launch") return <LaunchInstance />;
   if (page === "asg") return <AsgList />;
   if (page === "load-balancers") return <LbList />;
+  if (page === "security-groups") return <Ec2SecurityGroups />;
+  if (page === "key-pairs") return <Ec2Stub title="Key pairs" />;
+  if (page === "elastic-ips") return <Ec2Stub title="Elastic IPs" />;
+  if (page === "placement-groups") return <Ec2Stub title="Placement groups" />;
+  if (page === "network-interfaces") return <Ec2Stub title="Network interfaces" />;
+  if (page === "launch-templates") return <Ec2Stub title="Launch templates" />;
+  if (page === "spot-requests") return <Ec2Stub title="Spot Requests" />;
+  if (page === "reserved-instances") return <Ec2Stub title="Reserved Instances" />;
+  if (page === "target-groups") return <Ec2Stub title="Target Groups" />;
+  if (page === "launch-configurations") return <Ec2Stub title="Launch Configurations" />;
   return <InstancesList />;
+}
+
+function Ec2Stub({ title }: { title: string }) {
+  return (
+    <Box padding="l">
+      <Header variant="h1">{title}</Header>
+      <Box color="text-body-secondary" padding={{ top: "m" }}>
+        Daily-use {title.toLowerCase()} UI ships next — focus is Instances, Launch, and
+        Security groups.
+      </Box>
+    </Box>
+  );
+}
+
+function publicDnsFor(i: Ec2Instance) {
+  if (i.public_dns) return i.public_dns;
+  if (!i.public_ip) return "—";
+  return `ec2-${i.public_ip.replace(/\./g, "-")}.${i.region}.compute.amazonaws.com`;
 }
 
 /** Lightweight EC2 list for Ren screen-share — avoids Cloudscape Table update loops. */
@@ -110,7 +147,9 @@ function InteractiveInstancesList() {
   const interactive = useAccountStore((s) => s.interactive);
   const markClick = useAccountStore((s) => s.markClick);
   const [selected, setSelected] = useState<Ec2Instance[]>([]);
+  const [filter, setFilter] = useState("");
   const [connectTarget, setConnectTarget] = useState<Ec2Instance | null>(null);
+  const [tick, setTick] = useState(0);
 
   const onSelectionChange = useCallback(
     ({ detail }: { detail: { selectedItems: Ec2Instance[] } }) => {
@@ -127,6 +166,21 @@ function InteractiveInstancesList() {
     },
     []
   );
+
+  const filtered = useMemo(
+    () =>
+      instances.filter(
+        (i) =>
+          !filter ||
+          i.id.toLowerCase().includes(filter.toLowerCase()) ||
+          i.name.toLowerCase().includes(filter.toLowerCase()) ||
+          i.type.toLowerCase().includes(filter.toLowerCase())
+      ),
+    [instances, filter, tick]
+  );
+
+  const oneRunning =
+    selected.length === 1 && selected[0]?.state === "running";
 
   const emptySlot = useMemo(
     () => (
@@ -146,38 +200,82 @@ function InteractiveInstancesList() {
   return (
     <div data-console-target="ec2-instances-list" className="ec2-instances-shell">
       <Table
-        variant="embedded"
-        stickyHeader={false}
+        variant="full-page"
+        stickyHeader
         selectionType="multi"
         selectedItems={selected}
         onSelectionChange={onSelectionChange}
+        filter={
+          <SpaceBetween direction="horizontal" size="xs">
+            <Input
+              value={filter}
+              onChange={({ detail }) => setFilter(detail.value)}
+              placeholder="Find Instance by ID or Tags"
+              type="search"
+              ariaLabel="Filter instances"
+            />
+            <Button
+              iconName="refresh"
+              ariaLabel="Refresh"
+              onClick={() => setTick((n) => n + 1)}
+            />
+          </SpaceBetween>
+        }
         header={
           <Header
-            variant="h1"
+            variant="awsui-h1-sticky"
             counter={`(${instances.length})`}
-            description={`Instances · ${region}. Changing Region hides instances in other Regions — they are not deleted.`}
+            description={`Amazon EC2 · ${region}. Changing Region hides instances in other Regions — they are not deleted.`}
             actions={
               <SpaceBetween direction="horizontal" size="xs">
+                <Button
+                  disabled={!interactive || !oneRunning}
+                  onClick={() => {
+                    if (selected[0]) setConnectTarget(selected[0]);
+                  }}
+                >
+                  Connect
+                </Button>
                 <ButtonDropdown
+                  data-action-id="HIGHLIGHT:ec2-instance-state-dropdown"
                   disabled={!interactive || selected.length !== 1}
                   items={[
                     { id: "start", text: "Start instance" },
                     { id: "stop", text: "Stop instance" },
+                    { id: "reboot", text: "Reboot instance" },
+                    { id: "hibernate", text: "Hibernate instance", disabled: true },
                     { id: "terminate", text: "Terminate instance" },
-                    { id: "connect", text: "Connect" },
                   ]}
                   onItemClick={({ detail }) => {
                     const inst = selected[0];
                     if (!inst) return;
                     if (detail.id === "start") setInstanceState(inst.id, "running");
                     if (detail.id === "stop") setInstanceState(inst.id, "stopped");
-                    if (detail.id === "terminate") setInstanceState(inst.id, "terminated");
-                    if (detail.id === "connect") setConnectTarget(inst);
+                    if (detail.id === "reboot") setInstanceState(inst.id, "reboot");
+                    if (detail.id === "terminate")
+                      setInstanceState(inst.id, "terminated");
                   }}
                 >
                   Instance state
                 </ButtonDropdown>
-                <span data-console-target="launch-instance">
+                <ButtonDropdown
+                  disabled={!interactive || selected.length === 0}
+                  items={[
+                    {
+                      id: "monitor",
+                      text: "Monitor and troubleshoot",
+                      items: [{ id: "cw", text: "View monitoring charts" }],
+                    },
+                    { id: "image", text: "Image and templates", disabled: true },
+                  ]}
+                  onItemClick={() => undefined}
+                >
+                  Actions
+                </ButtonDropdown>
+                <span
+                  data-console-target="launch-instance"
+                  data-action-id="HIGHLIGHT:btn-launch-instance"
+                >
                   <Button
                     variant="primary"
                     disabled={!interactive}
@@ -196,9 +294,29 @@ function InteractiveInstancesList() {
           </Header>
         }
         columnDefinitions={[
-          { id: "id", header: "Instance ID", cell: (i) => i.id },
-          { id: "name", header: "Name", cell: (i) => i.name },
-          { id: "state", header: "Instance state", cell: (i) => stateIndicator(i.state) },
+          {
+            id: "name",
+            header: "Name",
+            cell: (i) => (
+              <Button variant="inline-link" disabled={!interactive}>
+                {i.name || "—"}
+              </Button>
+            ),
+          },
+          {
+            id: "id",
+            header: "Instance ID",
+            cell: (i) => (
+              <Button variant="inline-link" disabled={!interactive}>
+                {i.id}
+              </Button>
+            ),
+          },
+          {
+            id: "state",
+            header: "Instance state",
+            cell: (i) => stateIndicator(i.state),
+          },
           { id: "type", header: "Instance type", cell: (i) => i.type },
           {
             id: "check",
@@ -207,14 +325,27 @@ function InteractiveInstancesList() {
               i.status_check === "ok" ? (
                 <StatusIndicator type="success">2/2 checks passed</StatusIndicator>
               ) : (
-                <StatusIndicator type="pending">Initializing</StatusIndicator>
+                <StatusIndicator type="pending">Initial</StatusIndicator>
               ),
           },
+          {
+            id: "alarm",
+            header: "Alarm status",
+            cell: (i) => i.alarm_status || "No alarms",
+          },
           { id: "az", header: "Availability Zone", cell: (i) => i.az },
-          { id: "pub", header: "Public IPv4", cell: (i) => i.public_ip || "—" },
-          { id: "priv", header: "Private IPv4", cell: (i) => i.private_ip },
+          {
+            id: "dns",
+            header: "Public IPv4 DNS",
+            cell: (i) => publicDnsFor(i),
+          },
+          {
+            id: "pub",
+            header: "Public IPv4 address",
+            cell: (i) => i.public_ip || "—",
+          },
         ]}
-        items={instances}
+        items={filtered}
         empty={emptySlot}
       />
       <Modal
@@ -238,15 +369,14 @@ function InteractiveInstancesList() {
             <Box variant="h3">EC2 Instance Connect / SSH</Box>
             <Box>
               <code>
-                ssh -i &quot;freshbite-prod-key.pem&quot; ec2-user@
+                ssh -i &quot;my-key.pem&quot; ec2-user@
                 {connectTarget.public_ip || connectTarget.private_ip}
               </code>
             </Box>
             <Box variant="h3">Session Manager</Box>
             <Box color="text-body-secondary">
               Open AWS Systems Manager → Session Manager → Start session, then select{" "}
-              {connectTarget.id}. Ensure the instance profile allows{" "}
-              <code>ssm:StartSession</code>.
+              {connectTarget.id}.
             </Box>
           </SpaceBetween>
         )}
@@ -318,6 +448,7 @@ function Ec2Dashboard() {
 function LaunchInstance() {
   const navigate = useAccountStore((s) => s.navigate);
   const launchInstance = useAccountStore((s) => s.launchInstance);
+  const createSecurityGroup = useAccountStore((s) => s.createSecurityGroup);
   const interactive = useAccountStore((s) => s.interactive);
   const markClick = useAccountStore((s) => s.markClick);
   const vpcs = useAccountStore((s) => s.vpcs);
@@ -328,118 +459,698 @@ function LaunchInstance() {
   const [name, setName] = useState("");
   const [ami, setAmi] = useState("Amazon Linux");
   const [type, setType] = useState("t2.micro");
-  const [key, setKey] = useState("freshbite-prod-key");
+  const [key, setKey] = useState("my-key-pair");
+  const [keys, setKeys] = useState(["my-key-pair"]);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [keyFormat, setKeyFormat] = useState(".pem");
   const [vpc, setVpc] = useState(vpcs[0]?.id || "");
-  const [subnet, setSubnet] = useState(subnets[0]?.id || "");
+  const [subnet, setSubnet] = useState("");
+  const [sgMode, setSgMode] = useState("create");
   const [sg, setSg] = useState(sgs[0]?.id || "");
+  const [allowSsh, setAllowSsh] = useState(true);
+  const [allowHttps, setAllowHttps] = useState(false);
+  const [allowHttp, setAllowHttp] = useState(false);
+  const [autoPublicIp, setAutoPublicIp] = useState(true);
+  const [networkEdit, setNetworkEdit] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [userData, setUserData] = useState("");
   const [storage, setStorage] = useState("8");
+  const [count, setCount] = useState("1");
+  const [launching, setLaunching] = useState(false);
+
+  const amiOptions = ["Amazon Linux", "macOS", "Ubuntu", "Windows", "Red Hat"];
+
+  const doLaunch = async () => {
+    if (!name.trim() || launching) return;
+    markClick("launch-instance-submit");
+    setLaunching(true);
+    await new Promise((r) => setTimeout(r, 800));
+    if (sgMode === "create") {
+      const inbound = [];
+      if (allowSsh)
+        inbound.push({
+          type: "SSH",
+          protocol: "TCP",
+          port: "22",
+          source: "0.0.0.0/0",
+          description: "SSH",
+        });
+      if (allowHttp)
+        inbound.push({
+          type: "HTTP",
+          protocol: "TCP",
+          port: "80",
+          source: "0.0.0.0/0",
+          description: "HTTP",
+        });
+      if (allowHttps)
+        inbound.push({
+          type: "HTTPS",
+          protocol: "TCP",
+          port: "443",
+          source: "0.0.0.0/0",
+          description: "HTTPS",
+        });
+      createSecurityGroup(
+        `launch-wizard-${Math.floor(1 + Math.random() * 9)}`,
+        vpc || vpcs[0]?.id || "vpc-default",
+        `Security group for ${name.trim()}`,
+        { stayOnPage: true }
+      );
+      const created = useAccountStore.getState().security_groups.slice(-1)[0];
+      if (created && inbound.length) {
+        useAccountStore.getState().setSgInboundRules(created.id, inbound);
+      }
+    }
+    const n = Math.max(1, Math.min(10, Number(count) || 1));
+    for (let i = 0; i < n; i += 1) {
+      launchInstance(
+        n > 1 ? `${name.trim()}-${i + 1}` : name.trim(),
+        type,
+        subnet || undefined
+      );
+    }
+    setLaunching(false);
+  };
 
   return (
-    <ColumnLayout columns={2} variant="text-grid">
-      <SpaceBetween size="l">
-        <Header variant="h1">Launch an instance</Header>
+    <div className="aws-ec2-launch-layout">
+      <SpaceBetween size="l" className="aws-ec2-launch-form">
+        <Header variant="h1" description={`Launch an Amazon EC2 instance in ${region}`}>
+          Launch an instance
+        </Header>
         <Container header={<Header variant="h2">Name and tags</Header>}>
           <FormField label="Name">
-            <span data-console-target="instance-name-input">
+            <span data-console-target="instance-name-input" data-action-id="FILL:ec2-instance-name">
               <Input
                 value={name}
-                disabled={!interactive}
-                onChange={({ detail }) => setName(detail.value)}
-                placeholder="freshbite-prod-api-02"
+                disabled={!interactive || launching}
+                onChange={({ detail }) => {
+                  setName(detail.value);
+                  useAccountStore.getState().setActionDraft({
+                    "ec2-instance-name": detail.value,
+                  });
+                }}
+                placeholder="e.g. My Web Server"
               />
             </span>
           </FormField>
         </Container>
-        <Container header={<Header variant="h2">Application and OS Images (Amazon Machine Image)</Header>}>
-          <Tabs
-            activeTabId={ami}
-            onChange={({ detail }) => setAmi(detail.activeTabId)}
-            tabs={["Amazon Linux", "macOS", "Ubuntu", "Windows", "RHEL"].map((t) => ({
-              id: t,
-              label: t,
-              content: (
-                <Box>
-                  Quick Start · {t} {t === "Amazon Linux" ? "2023 AMI · 64-bit (x86)" : "AMI"}
-                </Box>
-              ),
-            }))}
-          />
+        <Container
+          header={<Header variant="h2">Application and OS Images (Amazon Machine Image)</Header>}
+        >
+          <Box padding={{ bottom: "s" }} color="text-body-secondary">
+            Quick Start · My AMIs · AWS Marketplace
+          </Box>
+          <div className="aws-ami-quickstart" data-action-id="SELECT:ec2-ami-amazon-linux">
+            {amiOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className={`aws-ami-card${ami === opt ? " is-selected" : ""}`}
+                disabled={!interactive || launching}
+                onClick={() => setAmi(opt)}
+              >
+                <strong>{opt}</strong>
+                <span>
+                  {opt === "Amazon Linux"
+                    ? "Amazon Linux 2023 AMI · Free tier eligible"
+                    : `${opt} AMI`}
+                </span>
+              </button>
+            ))}
+          </div>
+          <Box padding={{ top: "s" }}>
+            AMI:{" "}
+            {ami === "Amazon Linux"
+              ? "Amazon Linux 2023 AMI 64-bit (x86_64) - Free tier eligible"
+              : `${ami} AMI`}
+          </Box>
         </Container>
         <Container header={<Header variant="h2">Instance type</Header>}>
-          <Select
-            selectedOption={{ label: type, value: type }}
-            options={["t2.micro", "t3.micro", "t3.small", "t3.medium"].map((t) => ({
-              label: t,
-              value: t,
-            }))}
-            onChange={({ detail }) => setType(detail.selectedOption.value || "t2.micro")}
-          />
+          <span data-action-id="SELECT:ec2-instance-type-t2-micro">
+            <Select
+              selectedOption={{
+                label:
+                  type === "t2.micro"
+                    ? "t2.micro (1 vCPU, 1 GiB Memory) - Free tier eligible"
+                    : type === "t3.micro"
+                      ? "t3.micro (2 vCPU, 1 GiB Memory)"
+                      : type,
+                value: type,
+              }}
+              options={[
+                {
+                  label: "t2.micro (1 vCPU, 1 GiB Memory) - Free tier eligible",
+                  value: "t2.micro",
+                },
+                { label: "t3.micro (2 vCPU, 1 GiB Memory)", value: "t3.micro" },
+                { label: "t3.small", value: "t3.small" },
+                { label: "t3.medium", value: "t3.medium" },
+              ]}
+              onChange={({ detail }) => setType(detail.selectedOption.value || "t2.micro")}
+            />
+          </span>
         </Container>
         <Container header={<Header variant="h2">Key pair (login)</Header>}>
-          <Select
-            selectedOption={{ label: key, value: key }}
-            options={[
-              { label: "freshbite-prod-key", value: "freshbite-prod-key" },
-              { label: "Proceed without a key pair", value: "none" },
-            ]}
-            onChange={({ detail }) => setKey(detail.selectedOption.value || key)}
-          />
-        </Container>
-        <Container header={<Header variant="h2">Network settings</Header>}>
-          <SpaceBetween size="m">
-            <FormField label="VPC">
-              <Select
-                selectedOption={{ label: vpc, value: vpc }}
-                options={vpcs.map((v) => ({ label: `${v.name} (${v.id})`, value: v.id }))}
-                onChange={({ detail }) => setVpc(detail.selectedOption.value || vpc)}
-              />
-            </FormField>
-            <FormField label="Subnet">
-              <Select
-                selectedOption={{ label: subnet, value: subnet }}
-                options={subnets.map((s) => ({ label: `${s.name} (${s.az})`, value: s.id }))}
-                onChange={({ detail }) => setSubnet(detail.selectedOption.value || subnet)}
-              />
-            </FormField>
-            <FormField label="Security group">
-              <Select
-                selectedOption={{ label: sg, value: sg }}
-                options={sgs.map((g) => ({ label: `${g.name} (${g.id})`, value: g.id }))}
-                onChange={({ detail }) => setSg(detail.selectedOption.value || sg)}
-              />
-            </FormField>
+          <SpaceBetween size="s">
+            <Select
+              selectedOption={{ label: key, value: key }}
+              options={[
+                ...keys.map((k) => ({ label: k, value: k })),
+                { label: "Proceed without a key pair (Not recommended)", value: "none" },
+              ]}
+              onChange={({ detail }) => setKey(detail.selectedOption.value || key)}
+            />
+            <Button variant="inline-link" onClick={() => setShowKeyModal(true)}>
+              Create new key pair
+            </Button>
           </SpaceBetween>
         </Container>
+        <Container
+          header={
+            <Header
+              variant="h2"
+              actions={
+                <Button variant="inline-link" onClick={() => setNetworkEdit((v) => !v)}>
+                  {networkEdit ? "Close" : "Edit"}
+                </Button>
+              }
+            >
+              Network settings
+            </Header>
+          }
+        >
+          {!networkEdit ? (
+            <Box color="text-body-secondary">
+              VPC {vpc || "default"} · Auto-assign public IP {autoPublicIp ? "Enable" : "Disable"} ·{" "}
+              {sgMode === "create" ? "Create security group" : "Existing SG"}
+            </Box>
+          ) : (
+            <SpaceBetween size="m">
+              <FormField label="VPC">
+                <Select
+                  selectedOption={{ label: vpc, value: vpc }}
+                  options={
+                    vpcs.length
+                      ? vpcs.map((v) => ({ label: `${v.name} (${v.id})`, value: v.id }))
+                      : [{ label: "vpc-default (default)", value: "vpc-default" }]
+                  }
+                  onChange={({ detail }) => setVpc(detail.selectedOption.value || vpc)}
+                />
+              </FormField>
+              <FormField label="Subnet">
+                <Select
+                  selectedOption={{
+                    label: subnet || "No preference",
+                    value: subnet || "none",
+                  }}
+                  options={[
+                    {
+                      label: "No preference (default subnet in any availability zone)",
+                      value: "none",
+                    },
+                    ...subnets.map((s) => ({
+                      label: `${s.name} (${s.az})`,
+                      value: s.id,
+                    })),
+                  ]}
+                  onChange={({ detail }) =>
+                    setSubnet(
+                      detail.selectedOption.value === "none"
+                        ? ""
+                        : detail.selectedOption.value || subnet
+                    )
+                  }
+                />
+              </FormField>
+              <FormField label="Auto-assign public IP">
+                <Select
+                  selectedOption={{
+                    label: autoPublicIp ? "Enable" : "Disable",
+                    value: autoPublicIp ? "enable" : "disable",
+                  }}
+                  options={[
+                    { label: "Enable", value: "enable" },
+                    { label: "Disable", value: "disable" },
+                  ]}
+                  onChange={({ detail }) =>
+                    setAutoPublicIp(detail.selectedOption.value === "enable")
+                  }
+                />
+              </FormField>
+              <FormField label="Firewall (security groups)">
+                <RadioGroup
+                  value={sgMode}
+                  onChange={({ detail }) => setSgMode(detail.value)}
+                  items={[
+                    { value: "create", label: "Create security group" },
+                    { value: "existing", label: "Select existing security group" },
+                  ]}
+                />
+              </FormField>
+              {sgMode === "create" ? (
+                <SpaceBetween size="xs">
+                  <Checkbox
+                    checked={allowSsh}
+                    onChange={({ detail }) => setAllowSsh(detail.checked)}
+                  >
+                    Allow SSH traffic from Anywhere (0.0.0.0/0)
+                  </Checkbox>
+                  <Checkbox
+                    checked={allowHttps}
+                    onChange={({ detail }) => setAllowHttps(detail.checked)}
+                  >
+                    Allow HTTPS traffic from the internet
+                  </Checkbox>
+                  <Checkbox
+                    checked={allowHttp}
+                    onChange={({ detail }) => setAllowHttp(detail.checked)}
+                  >
+                    Allow HTTP traffic from the internet
+                  </Checkbox>
+                </SpaceBetween>
+              ) : (
+                <Select
+                  selectedOption={{ label: sg, value: sg }}
+                  options={sgs.map((g) => ({
+                    label: `${g.name} (${g.id})`,
+                    value: g.id,
+                  }))}
+                  onChange={({ detail }) => setSg(detail.selectedOption.value || sg)}
+                />
+              )}
+            </SpaceBetween>
+          )}
+        </Container>
         <Container header={<Header variant="h2">Configure storage</Header>}>
-          <FormField label="Root volume (gp3) GiB">
+          <FormField label="1x Root volume · gp3 · GiB">
             <Input value={storage} onChange={({ detail }) => setStorage(detail.value)} />
           </FormField>
+          <Box color="text-body-secondary" padding={{ top: "xs" }}>
+            AWS Launch Wizard recommends an 8 GiB gp3 root volume for this deployment.
+          </Box>
         </Container>
-        <span data-console-target="launch-instance-submit">
-          <Button
-            variant="primary"
-            disabled={!interactive || !name.trim()}
-            onClick={() => {
-              markClick("launch-instance-submit");
-              launchInstance(name.trim(), type, subnet);
-            }}
-          >
-            Launch instance
-          </Button>
-        </span>
-        <Button onClick={() => navigate("ec2", "instances")}>Cancel</Button>
+        <Container
+          header={
+            <Header
+              variant="h2"
+              actions={
+                <Button variant="inline-link" onClick={() => setAdvancedOpen((v) => !v)}>
+                  {advancedOpen ? "Collapse" : "Expand"}
+                </Button>
+              }
+            >
+              Advanced details
+            </Header>
+          }
+        >
+          {advancedOpen ? (
+            <FormField
+              label="User data - optional"
+              description="Bootstrap script runs at first boot (cloud-init)."
+            >
+              <textarea
+                className="aws-userdata"
+                value={userData}
+                onChange={(e) => setUserData(e.target.value)}
+                placeholder={"#!/bin/bash\nyum install httpd -y\nsystemctl start httpd"}
+                rows={8}
+              />
+            </FormField>
+          ) : (
+            <Box color="text-body-secondary">
+              Expand to configure IAM instance profile, user data, and metadata options.
+            </Box>
+          )}
+        </Container>
+        <Button onClick={() => navigate("ec2", "instances")} disabled={launching}>
+          Cancel
+        </Button>
       </SpaceBetween>
-      <Container header={<Header variant="h2">Summary</Header>}>
+
+      <aside className="aws-ec2-launch-summary" data-console-target="ec2-launch-summary">
+        <Header variant="h2">Summary</Header>
         <SpaceBetween size="s">
-          <Box>Number of instances: 1</Box>
-          <Box>AMI: {ami}</Box>
-          <Box>Instance type: {type}</Box>
-          <Box>Region: {region}</Box>
-          <Box>Storage: {storage} GiB gp3</Box>
-          <Box variant="strong">Estimated cost: ~$0.012 / hour (On-Demand)</Box>
+          <FormField label="Number of instances">
+            <Input value={count} onChange={({ detail }) => setCount(detail.value)} />
+          </FormField>
+          <Box>
+            Software Image (AMI):{" "}
+            {ami === "Amazon Linux" ? "Amazon Linux 2023 AMI" : ami}
+          </Box>
+          <Box>Virtual server type (Instance type): {type}</Box>
+          <Box>
+            Firewall (Security group):{" "}
+            {sgMode === "create" ? "New security group" : sg || "Existing"}
+          </Box>
+          <Box>Storage (Volumes): 1 volume(s) - {storage} GiB</Box>
+          <span
+            data-console-target="launch-instance-submit"
+            data-action-id="CLICK:btn-launch-instance-submit"
+          >
+            <Button
+              variant="primary"
+              fullWidth
+              loading={launching}
+              disabled={!interactive || !name.trim() || launching}
+              onClick={() => void doLaunch()}
+            >
+              {launching ? "Launching…" : "Launch instance"}
+            </Button>
+          </span>
         </SpaceBetween>
-      </Container>
-    </ColumnLayout>
+      </aside>
+
+      <Modal
+        visible={showKeyModal}
+        onDismiss={() => setShowKeyModal(false)}
+        header="Create key pair"
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button onClick={() => setShowKeyModal(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                disabled={!newKeyName.trim()}
+                onClick={() => {
+                  const k = newKeyName.trim();
+                  setKeys((prev) => [...prev, k]);
+                  setKey(k);
+                  const blob = new Blob(
+                    [`-----BEGIN ${keyFormat.toUpperCase()} PRIVATE KEY-----\nSIMULATED\n-----END KEY-----`],
+                    { type: "application/x-pem-file" }
+                  );
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${k}${keyFormat}`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  setShowKeyModal(false);
+                  setNewKeyName("");
+                }}
+              >
+                Create key pair
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        <SpaceBetween size="m">
+          <FormField label="Key pair name">
+            <Input
+              value={newKeyName}
+              onChange={({ detail }) => setNewKeyName(detail.value)}
+            />
+          </FormField>
+          <FormField label="Private key file format">
+            <RadioGroup
+              value={keyFormat}
+              onChange={({ detail }) => setKeyFormat(detail.value)}
+              items={[
+                { value: ".pem", label: ".pem" },
+                { value: ".ppk", label: ".ppk (for use with PuTTY)" },
+              ]}
+            />
+          </FormField>
+        </SpaceBetween>
+      </Modal>
+    </div>
+  );
+}
+
+function Ec2SecurityGroups() {
+  const groups = useAccountStore((s) => s.security_groups);
+  const setSgInboundRules = useAccountStore((s) => s.setSgInboundRules);
+  const interactive = useAccountStore((s) => s.interactive);
+  const [selected, setSelected] = useState<(typeof groups)[0][]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [draft, setDraft] = useState<SgRule[]>([]);
+  const [filter, setFilter] = useState("");
+
+  const active = selected[0] || null;
+  const items = groups.filter(
+    (g) =>
+      !filter ||
+      g.name.toLowerCase().includes(filter.toLowerCase()) ||
+      g.id.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const openEdit = () => {
+    if (!active) return;
+    setDraft(active.inbound.map((r) => ({ ...r })));
+    setEditOpen(true);
+  };
+
+  return (
+    <SpaceBetween size="l">
+      <Table
+        variant="full-page"
+        stickyHeader
+        selectionType="single"
+        selectedItems={selected}
+        onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
+        filter={
+          <Input
+            value={filter}
+            onChange={({ detail }) => setFilter(detail.value)}
+            placeholder="Filter security groups"
+            type="search"
+          />
+        }
+        header={
+          <Header variant="awsui-h1-sticky" counter={`(${groups.length})`}>
+            Security Groups
+          </Header>
+        }
+        columnDefinitions={[
+          { id: "name", header: "Security group name", cell: (g) => g.name },
+          {
+            id: "id",
+            header: "Security group ID",
+            cell: (g) => (
+              <Button variant="inline-link" disabled={!interactive}>
+                {g.id}
+              </Button>
+            ),
+          },
+          { id: "vpc", header: "VPC ID", cell: (g) => g.vpc },
+          { id: "desc", header: "Description", cell: (g) => g.description },
+        ]}
+        items={items}
+        empty={
+          <Box textAlign="center" padding="l">
+            No security groups
+          </Box>
+        }
+      />
+
+      {active && (
+        <Container
+          header={
+            <Header
+              variant="h2"
+              description={active.id}
+              actions={
+                <Button disabled={!interactive} onClick={openEdit}>
+                  Edit inbound rules
+                </Button>
+              }
+            >
+              {active.name}
+            </Header>
+          }
+        >
+          <Tabs
+            tabs={[
+              {
+                id: "details",
+                label: "Details",
+                content: (
+                  <ColumnLayout columns={2} variant="text-grid">
+                    <div>
+                      <Box variant="awsui-key-label">Security group name</Box>
+                      <Box>{active.name}</Box>
+                    </div>
+                    <div>
+                      <Box variant="awsui-key-label">Security group ID</Box>
+                      <Box>{active.id}</Box>
+                    </div>
+                    <div>
+                      <Box variant="awsui-key-label">VPC ID</Box>
+                      <Box>{active.vpc}</Box>
+                    </div>
+                    <div>
+                      <Box variant="awsui-key-label">Description</Box>
+                      <Box>{active.description}</Box>
+                    </div>
+                  </ColumnLayout>
+                ),
+              },
+              {
+                id: "inbound",
+                label: "Inbound rules",
+                content: (
+                  <SpaceBetween size="s">
+                    <Table
+                      columnDefinitions={[
+                        { id: "type", header: "Type", cell: (r) => r.type },
+                        { id: "proto", header: "Protocol", cell: (r) => r.protocol },
+                        { id: "port", header: "Port range", cell: (r) => r.port },
+                        { id: "source", header: "Source", cell: (r) => r.source },
+                        {
+                          id: "desc",
+                          header: "Description",
+                          cell: (r) => r.description || "—",
+                        },
+                      ]}
+                      items={active.inbound}
+                      empty={<Box padding="s">No inbound rules</Box>}
+                    />
+                    <Button variant="primary" disabled={!interactive} onClick={openEdit}>
+                      Edit inbound rules
+                    </Button>
+                  </SpaceBetween>
+                ),
+              },
+              {
+                id: "outbound",
+                label: "Outbound rules",
+                content: (
+                  <Table
+                    columnDefinitions={[
+                      { id: "type", header: "Type", cell: (r) => r.type },
+                      { id: "proto", header: "Protocol", cell: (r) => r.protocol },
+                      { id: "port", header: "Port range", cell: (r) => r.port },
+                      { id: "source", header: "Destination", cell: (r) => r.source },
+                    ]}
+                    items={active.outbound}
+                  />
+                ),
+              },
+              {
+                id: "tags",
+                label: "Tags",
+                content: (
+                  <Box color="text-body-secondary">No tags associated with this resource.</Box>
+                ),
+              },
+            ]}
+          />
+        </Container>
+      )}
+
+      <Modal
+        visible={editOpen}
+        size="large"
+        onDismiss={() => setEditOpen(false)}
+        header="Edit inbound rules"
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                disabled={!active}
+                onClick={() => {
+                  if (!active) return;
+                  setSgInboundRules(active.id, draft);
+                  setEditOpen(false);
+                }}
+              >
+                Save rules
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        <SpaceBetween size="m">
+          {draft.map((rule, idx) => (
+            <SpaceBetween key={idx} direction="horizontal" size="xs">
+              <FormField label="Type">
+                <Select
+                  selectedOption={{ label: rule.type, value: rule.type }}
+                  options={["SSH", "HTTP", "HTTPS", "Custom TCP", "All traffic"].map(
+                    (t) => ({ label: t, value: t })
+                  )}
+                  onChange={({ detail }) => {
+                    const t = detail.selectedOption.value || rule.type;
+                    const next = [...draft];
+                    next[idx] = {
+                      ...rule,
+                      type: t,
+                      protocol: t === "All traffic" ? "All" : "TCP",
+                      port:
+                        t === "SSH"
+                          ? "22"
+                          : t === "HTTP"
+                            ? "80"
+                            : t === "HTTPS"
+                              ? "443"
+                              : rule.port,
+                    };
+                    setDraft(next);
+                  }}
+                />
+              </FormField>
+              <FormField label="Protocol">
+                <Input
+                  value={rule.protocol}
+                  onChange={({ detail }) => {
+                    const next = [...draft];
+                    next[idx] = { ...rule, protocol: detail.value };
+                    setDraft(next);
+                  }}
+                />
+              </FormField>
+              <FormField label="Port range">
+                <Input
+                  value={rule.port}
+                  onChange={({ detail }) => {
+                    const next = [...draft];
+                    next[idx] = { ...rule, port: detail.value };
+                    setDraft(next);
+                  }}
+                />
+              </FormField>
+              <FormField label="Source">
+                <Input
+                  value={rule.source}
+                  onChange={({ detail }) => {
+                    const next = [...draft];
+                    next[idx] = { ...rule, source: detail.value };
+                    setDraft(next);
+                  }}
+                />
+              </FormField>
+              <Button
+                onClick={() => setDraft((d) => d.filter((_, i) => i !== idx))}
+              >
+                Delete
+              </Button>
+            </SpaceBetween>
+          ))}
+          <Button
+            onClick={() =>
+              setDraft((d) => [
+                ...d,
+                {
+                  type: "Custom TCP",
+                  protocol: "TCP",
+                  port: "8080",
+                  source: "0.0.0.0/0",
+                  description: "",
+                },
+              ])
+            }
+          >
+            Add rule
+          </Button>
+        </SpaceBetween>
+      </Modal>
+    </SpaceBetween>
   );
 }
 

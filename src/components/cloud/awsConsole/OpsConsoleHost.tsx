@@ -44,11 +44,17 @@ export function OpsConsoleHost({
   }
 
   return (
-    <div className="space-y-4">
+    <div
+      className={
+        unlockState.unlocked
+          ? "flex h-full min-h-0 flex-1 flex-col"
+          : "space-y-4"
+      }
+    >
       {!unlockState.unlocked ? (
         <AccountIdGate gate={gate} onUnlocked={handleUnlock} />
       ) : (
-        <div className="h-[min(78vh,820px)] min-h-[640px] overflow-hidden rounded-lg border border-[#d5dbdb] bg-white">
+        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white">
           <TeachableAwsConsole
             key={`${unlockState.accountId}-${task.task_id || task.id}`}
             accountId={unlockState.accountId}

@@ -610,14 +610,29 @@ export default function FreshBiteOpsCenter({
         </aside>
 
         {/* Main AWS console workspace */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <AwsConsoleChrome
-            activeService={activeService}
-            accountLabel={chromeAccountLabel}
-          />
+        <main className="flex min-h-0 flex-1 flex-col min-w-0 overflow-hidden">
+          {!isOpsConsole && (
+            <AwsConsoleChrome
+              activeService={activeService}
+              accountLabel={chromeAccountLabel}
+            />
+          )}
 
-          <div className="flex-1 overflow-y-auto p-3 md:p-5 bg-[#0f1115]">
-            <div className={`mx-auto ${isOpsConsole ? "max-w-5xl" : "max-w-3xl"}`}>
+          <div
+            className={
+              isOpsConsole
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f2f3f3]"
+                : "flex-1 overflow-y-auto p-3 md:p-5 bg-[#0f1115]"
+            }
+          >
+            <div
+              className={
+                isOpsConsole
+                  ? "flex min-h-0 flex-1 flex-col"
+                  : "mx-auto max-w-3xl"
+              }
+            >
+              {!isOpsConsole && (
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div>
                   <p className="text-[10px] font-mono text-[#ff9900] uppercase tracking-widest">
@@ -633,9 +648,16 @@ export default function FreshBiteOpsCenter({
                   </span>
                 </div>
               </div>
+              )}
 
               {/* Console content panel */}
-              <section className={`rounded-lg border border-slate-700 overflow-hidden shadow-xl ${isOpsConsole ? "bg-transparent border-0 shadow-none" : "bg-[#161b22]"}`}>
+              <section
+                className={
+                  isOpsConsole
+                    ? "flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent"
+                    : "rounded-lg border border-slate-700 overflow-hidden shadow-xl bg-[#161b22]"
+                }
+              >
                 {!isOpsConsole && (
                 <div className="px-4 py-3 border-b border-slate-700 flex items-center gap-2 bg-[#232f3e]/50">
                   {task.type.includes("cost") || task.task_id.startsWith("C1.4") ? (
@@ -650,10 +672,23 @@ export default function FreshBiteOpsCenter({
                 </div>
                 )}
 
-                <div className={isOpsConsole ? "" : "p-5 md:p-6"}>
+                <div
+                  className={
+                    isOpsConsole
+                      ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                      : "p-5 md:p-6"
+                  }
+                >
                   {usesEnvHost ? (
                     <>
-                      <WorkspaceEnvironmentHost
+                      <div
+                        className={
+                          isOpsConsole
+                            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                            : undefined
+                        }
+                      >
+                        <WorkspaceEnvironmentHost
                         task={task}
                         review={
                           review === "correct"
@@ -670,6 +705,7 @@ export default function FreshBiteOpsCenter({
                         onOpsUnlock={setOpsUnlock}
                         onOpsActions={setIamActions}
                       />
+                      </div>
                       {review === "revealed" && !isOpsConsole && (
                         <WorkspaceCompareReveal task={task} />
                       )}

@@ -1,11 +1,36 @@
 /* Isolate Cloudscape + custom chrome from Rebon Tailwind */
 .aws-console-root {
+  /* Gemini master design tokens */
+  --nav-bg: #232f3e;
+  --nav-bg-hover: #161e2d;
+  --app-bg: #f2f3f3;
+  --card-bg: #ffffff;
+  --card-border: #eaeded;
+  --text-primary: #16191f;
+  --text-secondary: #545b64;
+  --text-link: #0073bb;
+  --btn-primary: #ec7211;
+  --btn-primary-hover: #eb5f07;
+  --btn-primary-active: #dd5402;
+  --btn-secondary-border: #545b64;
+  --status-green-bg: #f2f8f0;
+  --status-green-border: #037f0c;
+  --status-green-text: #1d8102;
+  --status-blue-bg: #f0fbff;
+  --status-blue-border: #006ce0;
+  --status-blue-text: #0972d3;
+  --status-red-bg: #fff5f5;
+  --status-red-border: #db0000;
+  --status-red-text: #d13212;
+  --warning-alert-bg: #fdf3c7;
+  --warning-alert-border: #9d6904;
+
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #f2f3f3;
-  color: #16191f;
+  background: var(--app-bg);
+  color: var(--text-primary);
   font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
 }
 
@@ -38,11 +63,23 @@
   overflow: visible;
 }
 
+/* IAM / service side nav — active item orange rail (2026 console) */
+.aws-console-root [class*="awsui_link-active"],
+.aws-console-root [aria-current="page"] {
+  box-shadow: inset 4px 0 0 #ec7211 !important;
+  background: #f2f3f3 !important;
+}
+
+.aws-console-root[data-theme="dark"] [class*="awsui_link-active"],
+.aws-console-root[data-theme="dark"] [aria-current="page"] {
+  background: #232f3e !important;
+}
+
 /* ── Universal navigation bar (real AWS chrome) ── */
 .aws-topnav {
   height: 48px;
   min-height: 48px;
-  background: #232f3e;
+  background: var(--nav-bg, #232f3e);
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -86,6 +123,11 @@
   opacity: 0.7;
 }
 
+.aws-topnav-btn.is-locked {
+  opacity: 0.95;
+  cursor: default;
+}
+
 .aws-topnav-logo {
   display: inline-flex;
   align-items: center;
@@ -95,25 +137,39 @@
   border: none;
   cursor: pointer;
   border-radius: 2px;
+  color: #ffffff;
+  flex-shrink: 0;
 }
 
 .aws-topnav-logo:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.aws-wordmark {
+  display: block;
+  color: #ffffff;
+}
+
 .aws-topnav-search {
   flex: 1;
-  max-width: 520px;
+  max-width: 640px;
   margin: 0 12px 0 8px;
   position: relative;
   min-width: 180px;
+  display: flex;
+  align-items: center;
+  background: #16191f;
+  border: 1px solid #545b64;
+  border-radius: 4px;
+  height: 32px;
+  padding-right: 4px;
 }
 
 .aws-topnav-search input {
   width: 100%;
-  height: 32px;
-  background: #16191f;
-  border: 1px solid #545b64;
+  height: 30px;
+  background: transparent;
+  border: none;
   border-radius: 2px;
   color: #ffffff;
   padding: 0 72px 0 32px;
@@ -266,61 +322,585 @@
   gap: 4px 24px;
 }
 
-/* ── Console Home ── */
+/* ── Console Home (2026 widget dashboard) ── */
 .aws-home {
-  padding: 20px 24px 40px;
-  max-width: 1280px;
+  padding: 12px 20px 48px;
+  width: 100%;
+  max-width: none;
+  position: relative;
+}
+
+.aws-home-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.aws-home-hamburger {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  color: #16191f;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.aws-home-hamburger:hover {
+  background: #e9ebed;
+}
+
+.aws-home-title-row {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .aws-home-title {
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 700;
   color: #16191f;
-  margin: 0 0 4px;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
-.aws-home-sub {
+.aws-home-info-link {
+  border: none;
+  background: none;
+  color: #0073bb;
   font-size: 13px;
-  color: #545b64;
-  margin: 0 0 20px;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 400;
 }
 
-.aws-home-search {
+.aws-home-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.aws-home-btn-secondary {
+  height: 32px;
+  padding: 0 14px;
+  border: 2px solid #0972d3;
+  background: #fff;
+  color: #0972d3;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aws-home-btn-primary {
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  background: #ff9900;
+  color: #16191f;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aws-home-btn-primary:hover {
+  background: #ec7211;
+  color: #fff;
+}
+
+.aws-home-add-wrap {
   position: relative;
-  max-width: 640px;
-  margin-bottom: 24px;
 }
 
-.aws-home-search input {
+.aws-home-add-menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  padding: 8px;
+}
+
+.aws-home-add-menu button {
+  display: block;
   width: 100%;
-  height: 40px;
-  border: 1px solid #7d8998;
-  border-radius: 2px;
-  padding: 0 12px 0 36px;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.aws-home-add-menu button:hover {
+  background: #f2f8fd;
+}
+
+.aws-home-side {
+  position: absolute;
+  left: 0;
+  top: 56px;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 0 8px 8px 0;
+  padding: 8px;
+  z-index: 15;
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aws-home-side button {
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: #16191f;
+}
+
+.aws-home-side button:hover,
+.aws-home-side button.is-active {
+  background: #f2f8fd;
+  color: #0972d3;
+}
+
+.aws-home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.aws-home-grid.with-side {
+  margin-left: 228px;
+}
+
+@media (max-width: 1100px) {
+  .aws-home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .aws-home-grid,
+  .aws-home-grid.with-side {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+  }
+}
+
+.aws-home-widget {
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.aws-home-widget-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid #eaeded;
+}
+
+.aws-home-widget-drag {
+  color: #7d8998;
+  cursor: grab;
+  font-size: 12px;
+  letter-spacing: -2px;
+  user-select: none;
+}
+
+.aws-home-widget-head h2 {
+  margin: 0;
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  color: #16191f;
+}
+
+.aws-home-widget-kebab {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: #545b64;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.aws-home-widget-kebab:hover {
+  background: #f2f3f3;
+}
+
+.aws-home-widget-menu-wrap {
+  position: relative;
+}
+
+.aws-home-widget-menu {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 5;
+  min-width: 140px;
+  padding: 4px;
+}
+
+.aws-home-widget-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+  border-radius: 4px;
+}
+
+.aws-home-widget-menu button:hover {
+  background: #f2f8fd;
+}
+
+.aws-home-widget-body {
+  padding: 12px 16px 16px;
+  flex: 1;
+}
+
+.aws-home-widget-foot {
+  padding: 10px 16px;
+  border-top: 1px solid #eaeded;
+}
+
+.aws-link-btn {
+  border: none;
+  background: none;
+  color: #0073bb;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.aws-link-btn:hover {
+  text-decoration: underline;
+}
+
+.aws-home-empty {
+  text-align: center;
+  color: #545b64;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aws-home-cube {
+  width: 64px;
+  height: 64px;
+  margin: 8px auto 12px;
+  background: linear-gradient(135deg, #d5dbdb 0%, #eaeded 40%, #fff 42%, #d5dbdb 100%);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  opacity: 0.85;
+}
+
+.aws-welcome-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.aws-welcome-list li {
+  display: flex;
+  gap: 10px;
+}
+
+.aws-welcome-list strong {
+  display: block;
   font-size: 14px;
   color: #16191f;
-  background: #fff;
 }
 
-.aws-home-search svg {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  opacity: 0.55;
+.aws-welcome-list p {
+  margin: 2px 0 4px;
+  font-size: 12px;
+  color: #545b64;
 }
 
-.aws-home-section {
-  background: #ffffff;
-  border: 1px solid #d5dbdb;
-  border-radius: 2px;
-  padding: 16px 20px 20px;
-  margin-bottom: 16px;
+.aws-welcome-ico {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.aws-home-section h2 {
-  margin: 0 0 14px;
-  font-size: 18px;
+.aws-health-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.aws-health-table th {
+  text-align: right;
+  color: #545b64;
   font-weight: 400;
+  padding-bottom: 8px;
+}
+
+.aws-health-table td {
+  padding: 8px 0;
+  border-top: 1px solid #eaeded;
+}
+
+.aws-health-table td:last-child {
+  text-align: right;
+  font-size: 22px;
+  font-weight: 400;
+  color: #16191f;
+}
+
+.aws-health-table td.is-bad {
+  color: #d13212;
+}
+
+.aws-cost-widget {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.aws-widget-stat {
+  font-size: 22px;
+  font-weight: 400;
+  color: #16191f;
+}
+
+.aws-widget-label {
+  font-size: 12px;
+  color: #545b64;
+  margin-bottom: 4px;
+}
+
+.aws-cost-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aws-cost-bar-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.aws-cost-bar-track {
+  height: 8px;
+  background: #eaeded;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.aws-cost-bar-track i {
+  display: block;
+  height: 100%;
+  background: #0972d3;
+}
+
+.aws-cost-bar-row em {
+  font-style: normal;
+  text-align: right;
+  color: #545b64;
+}
+
+.aws-solutions-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid #eaeded;
+  margin-bottom: 12px;
+}
+
+.aws-solutions-tabs button {
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  white-space: nowrap;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  color: #545b64;
+  border-bottom: 2px solid transparent;
+}
+
+.aws-solutions-tabs button.is-active {
+  color: #0972d3;
+  border-bottom-color: #0972d3;
+  font-weight: 700;
+}
+
+.aws-solutions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.aws-solutions-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eaeded;
+}
+
+.aws-solutions-list a {
+  color: #0073bb;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.aws-solutions-list a:hover {
+  text-decoration: underline;
+}
+
+.aws-solutions-time {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #d13212;
+}
+
+.aws-explore-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #545b64;
+  margin-bottom: 10px;
+}
+
+.aws-explore-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.aws-explore-table th,
+.aws-explore-table td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #eaeded;
+}
+
+.aws-security-empty {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.aws-security-shield {
+  width: 56px;
+  height: 64px;
+  margin: 0 auto 12px;
+  background: radial-gradient(circle at 50% 40%, #d5dbdb, #7d8998);
+  clip-path: polygon(50% 0, 100% 18%, 100% 55%, 50% 100%, 0 55%, 0 18%);
+  opacity: 0.7;
+}
+
+.aws-security-empty strong {
+  display: block;
+  margin: 8px 0 4px;
+}
+
+.aws-security-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: #545b64;
+}
+
+.aws-home-crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.aws-home-crumb button {
+  border: none;
+  background: none;
+  color: #0073bb;
+  cursor: pointer;
+  font: inherit;
+}
+
+.aws-allsvc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1000px) {
+  .aws-allsvc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.aws-allsvc-col h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.aws-allsvc-col h3 i {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.aws-allsvc-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.aws-allsvc-col li {
+  margin: 0 0 8px;
+}
+
+.aws-allsvc-stub {
+  color: #545b64;
+  font-size: 13px;
 }
 
 .aws-recent-row {
@@ -348,50 +928,424 @@
   border-color: #0073bb;
 }
 
-.aws-svc-cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-@media (max-width: 900px) {
-  .aws-svc-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-.aws-svc-card {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  text-align: left;
-  padding: 14px;
-  border: 1px solid #d5dbdb;
-  border-radius: 2px;
-  background: #fff;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
-  width: 100%;
-}
-
-.aws-svc-card:hover {
-  border-color: #0073bb;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
 .aws-svc-icon {
   width: 36px;
   height: 36px;
   border-radius: 4px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   color: #fff;
   font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.aws-console-footer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 40px;
+  padding: 8px 16px;
+  background: #232f3e;
+  color: #d5dbdb;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.aws-console-footer-left,
+.aws-console-footer-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.aws-console-footer button,
+.aws-console-footer a {
+  background: none;
+  border: none;
+  color: #d5dbdb;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+  padding: 0;
+}
+
+.aws-console-footer button:hover,
+.aws-console-footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.aws-console-q-fab {
+  position: absolute;
+  right: 12px;
+  bottom: 48px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #a855f7, #3b82f6, #22d3ee);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 40;
+}
+
+/* Topnav extras from 2026 console */
+.aws-topnav-askq {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 14px;
+  background: #3b4553;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.aws-topnav-askq:hover {
+  background: #545b64;
+}
+
+.aws-topnav-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: #16191f;
+  font-size: 10px;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.aws-topnav-account {
+  display: inline-flex;
+  align-items: center;
+}
+
+.aws-topnav-iconbtn.is-open {
+  background: #161e2d;
+}
+
+.aws-services-mega {
+  display: grid !important;
+  grid-template-columns: 220px 1fr;
+  width: min(920px, calc(100vw - 24px)) !important;
+  max-height: min(70vh, 560px);
+  left: 8px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.aws-services-mega-left {
+  background: #1b232d;
+  padding: 12px 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid #3b4553;
+}
+
+.aws-services-mega-left button {
+  text-align: left;
+  border: none;
+  background: none;
+  color: #d5dbdb;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.aws-services-mega-left button:hover,
+.aws-services-mega-left button.is-active {
+  background: #232f3e;
+  color: #539fe5;
+}
+
+.aws-services-mega-left hr {
+  border: none;
+  border-top: 1px solid #3b4553;
+  margin: 8px 4px;
+}
+
+.aws-services-mega-right {
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+.aws-services-alpha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #aab7b8;
+}
+
+.aws-services-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.aws-search-mega {
+  display: grid !important;
+  grid-template-columns: 180px 1fr;
+  width: min(720px, calc(100vw - 48px)) !important;
+  max-height: min(60vh, 480px);
+  left: 120px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.aws-search-cats {
+  background: #1b232d;
+  padding: 12px 8px;
+  border-right: 1px solid #3b4553;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aws-search-cats button {
+  text-align: left;
+  border: none;
+  background: none;
+  color: #d5dbdb;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+}
+
+.aws-search-cats button.is-active {
+  background: #232f3e;
+  border-left-color: #539fe5;
+  color: #fff;
+}
+
+.aws-search-results {
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+.aws-search-results h3 {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #aab7b8;
+  font-weight: 400;
+}
+
+.aws-search-results h3 span {
+  color: #539fe5;
+  cursor: pointer;
+}
+
+.aws-search-empty {
+  color: #aab7b8;
+  font-size: 13px;
+}
+
+.aws-search-feedback {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #3b4553;
+  font-size: 12px;
+  color: #aab7b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aws-search-feedback button {
+  border: 1px solid #539fe5;
+  background: transparent;
+  color: #539fe5;
+  border-radius: 14px;
+  padding: 2px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.aws-region-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.aws-region-tabs button {
+  border: none;
+  background: #3b4553;
+  color: #fff;
+  border-radius: 14px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.aws-region-tabs button.is-active {
+  background: #539fe5;
+  color: #16191f;
+  font-weight: 700;
+}
+
+.aws-region-loading {
+  padding: 24px;
+  text-align: center;
+  color: #aab7b8;
+  font-size: 13px;
+}
+
+.aws-region-manage {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #3b4553;
+}
+
+.aws-region-manage button {
+  border: none;
+  background: none;
+  color: #539fe5;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.aws-q-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+}
+
+.aws-q-modal-card {
+  width: min(480px, calc(100vw - 32px));
+  background: #232f3e;
+  color: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.aws-q-modal-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.aws-q-modal-card header button {
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.aws-q-modal-card p {
+  margin: 0 0 12px;
+  color: #d5dbdb;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.aws-q-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aws-q-suggestions button {
+  border: 1px solid #545b64;
+  background: #161e2d;
+  color: #fff;
+  border-radius: 16px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.aws-q-suggestions button:hover {
+  border-color: #539fe5;
+}
+
+.aws-cloudshell-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aws-cloudshell-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aws-cloudshell-actions-btn {
+  border: 1px solid #539fe5;
+  background: transparent;
+  color: #539fe5;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.aws-cloudshell-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  border-bottom: 1px solid #3b4553;
+}
+
+.aws-cloudshell-tabs button {
+  border: none;
+  background: none;
+  color: #aab7b8;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+}
+
+.aws-cloudshell-tabs button.is-active {
+  color: #539fe5;
+  border-bottom-color: #539fe5;
 }
 
 .aws-svc-card strong {
@@ -740,4 +1694,930 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.aws-flash-strip {
+  flex-shrink: 0;
+  padding: 8px 16px 0;
+  background: #f2f3f3;
+}
+
+.aws-s3-bpa-warning {
+  background: var(--warning-alert-bg, #fdf3c7);
+  border-left: 4px solid var(--warning-alert-border, #9d6904);
+  padding: 12px 14px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aws-s3-ren-hooks {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.aws-cw-ren-hooks {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.aws-cw-canvas {
+  min-height: 420px;
+  background: #f2f3f3;
+  background-image: radial-gradient(#d5dbdb 1px, transparent 1px);
+  background-size: 16px 16px;
+  border: 1px solid #eaeded;
+  padding: 16px;
+}
+
+.aws-cw-canvas-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+
+.aws-cw-widget {
+  background: #fff;
+  border: 1px solid #d5dbdb;
+  padding: 12px;
+  min-height: 160px;
+}
+
+.aws-cw-widget-types {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.aws-cw-widget-type {
+  border: 1px solid #d5dbdb;
+  background: #fff;
+  padding: 18px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.aws-cw-widget-type.is-selected {
+  border-color: #ec7211;
+  box-shadow: inset 0 0 0 1px #ec7211;
+}
+
+.aws-vpc-provision {
+  max-width: 520px;
+  margin: 48px auto;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #eaeded;
+}
+
+.aws-vpc-provision-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.aws-vpc-provision-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eaeded;
+  color: #545b64;
+  font-size: 14px;
+}
+
+.aws-vpc-provision-list li.is-done {
+  color: #16191f;
+}
+
+.aws-vpc-provision-tick {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaeded;
+  color: #545b64;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.aws-vpc-provision-list li.is-done .aws-vpc-provision-tick {
+  background: #037f0c;
+  color: #fff;
+}
+
+.aws-cost-explorer-layout {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.aws-cost-explorer-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aws-cost-explorer-filters {
+  background: #fff;
+  border: 1px solid #eaeded;
+  padding: 16px;
+  position: sticky;
+  top: 8px;
+}
+
+.aws-budget-progress {
+  min-width: 140px;
+}
+
+.aws-billing-ren-hooks {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 900px) {
+  .aws-cost-explorer-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aws-action-map-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  width: min(420px, calc(100vw - 24px));
+  max-height: 45vh;
+  overflow: auto;
+  background: #16191f;
+  color: #fff;
+  border: 1px solid #545b64;
+  border-radius: 6px;
+  font: 12px/1.4 ui-monospace, Consolas, monospace;
+  padding: 10px;
+}
+
+.aws-action-map-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.aws-action-map-panel-head button,
+.aws-action-map-panel-codes button {
+  background: #ec7211;
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.aws-action-map-panel-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.aws-action-map-panel-codes button {
+  background: #232f3e;
+  border: 1px solid #545b64;
+  font-size: 10px;
+}
+
+.aws-action-map-panel-log {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* EC2 launch — sticky summary (Gemini 280px) */
+.aws-ec2-launch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+.aws-ec2-launch-summary {
+  position: sticky;
+  top: 12px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #eaeded);
+  padding: 16px;
+}
+
+.aws-userdata {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 10px;
+  border: 1px solid #879596;
+  border-radius: 2px;
+  resize: vertical;
+  background: #fff;
+  color: #16191f;
+}
+
+.aws-console-root[data-theme="dark"] .aws-userdata {
+  background: #161d26;
+  border-color: #545b64;
+  color: #f1f3f3;
+}
+
+.aws-ami-quickstart {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.aws-ami-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid var(--card-border, #eaeded);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-primary, #16191f);
+}
+
+.aws-ami-card span {
+  font-size: 11px;
+  color: var(--text-secondary, #545b64);
+}
+
+.aws-ami-card.is-selected {
+  border-color: var(--text-link, #0073bb);
+  box-shadow: inset 0 0 0 1px var(--text-link, #0073bb);
+}
+
+.aws-s3-upload-drop {
+  border: 2px dashed var(--card-border, #eaeded);
+  background: #fafafa;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--text-secondary, #545b64);
+}
+
+@media (max-width: 960px) {
+  .aws-ec2-launch-layout {
+    grid-template-columns: 1fr;
+  }
+  .aws-ec2-launch-summary {
+    position: static;
+  }
+}
+
+/* Primary button token nudge for custom chrome */
+.aws-console-root .aws-topnav-btn.is-primary,
+.aws-console-root button.aws-primary {
+  background: #ec7211;
+  color: #fff;
+}
+
+.aws-console-root button.aws-primary:hover {
+  background: #eb5f07;
+}
+
+/* ── AWS account signup (workspace sandbox) ── */
+.aws-signup-root {
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  color: #16191f;
+  font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
+}
+
+.aws-signup-header {
+  background: #232f3e;
+  color: #fff;
+  border-bottom: 1px solid #1a242f;
+}
+
+.aws-signup-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.aws-signup-logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  color: #fff;
+}
+
+.aws-signup-back {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.aws-signup-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.aws-signup-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 20px 64px;
+}
+
+.aws-signup-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border: 1px solid #eaeded;
+  border-radius: 4px;
+  padding: 32px 36px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.aws-signup-card h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.aws-signup-lead {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #545b64;
+}
+
+.aws-signup-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #eaeded;
+  margin-bottom: 24px;
+}
+
+.aws-signup-tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545b64;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.aws-signup-tabs button.is-active {
+  color: #16191f;
+  border-bottom-color: #ec7211;
+}
+
+.aws-signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aws-signup-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aws-signup-form label span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #16191f;
+}
+
+.aws-signup-form input {
+  height: 36px;
+  border: 1px solid #879596;
+  border-radius: 2px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.aws-signup-form input:focus {
+  outline: 2px solid #0073bb;
+  outline-offset: 1px;
+  border-color: #0073bb;
+}
+
+.aws-signup-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 2px;
+  background: #fff5f5;
+  border: 1px solid #db0000;
+  color: #d13212;
+  font-size: 13px;
+}
+
+.aws-signup-submit {
+  margin-top: 4px;
+  height: 40px;
+  border: none;
+  border-radius: 2px;
+  background: #ec7211;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aws-signup-submit:hover:not(:disabled) {
+  background: #eb5f07;
+}
+
+.aws-signup-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.aws-signup-footnote {
+  margin: 20px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #545b64;
+}
+
+.aws-signup-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #0073bb;
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+.aws-signup-footer {
+  padding: 16px 20px 24px;
+  text-align: center;
+  font-size: 11px;
+  color: #687078;
+  border-top: 1px solid #eaeded;
+  background: #fff;
+}
+
+/* Theme toggle in Settings */
+.aws-theme-row {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aws-theme-toggle {
+  display: inline-flex;
+  border: 1px solid #545b64;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.aws-theme-toggle button {
+  border: none;
+  background: transparent;
+  color: #d5dbdb;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.aws-theme-toggle button.is-active {
+  background: #ec7211;
+  color: #fff;
+}
+
+.aws-theme-toggle button:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Dark visual mode — custom chrome (Cloudscape Mode.Dark handles service pages) */
+.aws-console-root[data-theme="dark"] {
+  --app-bg: #0f1419;
+  --card-bg: #161d26;
+  --card-border: #2a3441;
+  --text-primary: #f1f3f3;
+  --text-secondary: #aab7b8;
+  --text-link: #44b9d6;
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-widget {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--text-primary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-title,
+.aws-console-root[data-theme="dark"] .aws-home-widget-head h2 {
+  color: var(--text-primary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-btn-secondary {
+  background: #232f3e;
+  border-color: #545b64;
+  color: #f1f3f3;
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-hamburger {
+  color: #f1f3f3;
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-hamburger:hover {
+  background: #232f3e;
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-side {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-side button {
+  color: var(--text-secondary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-side button:hover,
+.aws-console-root[data-theme="dark"] .aws-home-side button.is-active {
+  background: #232f3e;
+  color: var(--text-primary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-console-footer {
+  background: #161d26;
+  border-top-color: #2a3441;
+  color: #aab7b8;
+}
+
+.aws-console-root[data-theme="dark"] .aws-console-footer a,
+.aws-console-root[data-theme="dark"] .aws-console-footer button {
+  color: #aab7b8;
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-empty,
+.aws-console-root[data-theme="dark"] .aws-home-widget-body {
+  color: var(--text-secondary);
+}
+
+.aws-console-root[data-theme="dark"] .aws-home-info-link {
+  color: var(--text-link);
+}
+
+/* Home & global overlays � 2026 interactive */
+.aws-svc-fav-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  position: relative;
+}
+.aws-svc-fav-row .aws-topnav-row {
+  flex: 1;
+}
+.aws-fav-star {
+  opacity: 0;
+  border: none;
+  background: transparent;
+  color: #879596;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 6px;
+}
+.aws-svc-fav-row:hover .aws-fav-star,
+.aws-fav-star.is-on {
+  opacity: 1;
+}
+.aws-fav-star.is-on {
+  color: #f0c14b;
+}
+.aws-search-spotlight-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding-top: 72px;
+}
+.aws-search-spotlight-backdrop .aws-search-mega {
+  position: relative;
+  top: 0;
+  width: min(720px, 92vw);
+  max-height: 70vh;
+}
+.aws-region-filter {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border: 1px solid #aab7b8;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+.aws-account-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f2f3f3;
+  margin-bottom: 4px;
+}
+.aws-account-card strong {
+  display: block;
+  font-size: 12px;
+}
+.aws-account-card span {
+  font-size: 13px;
+}
+.aws-menu-hr {
+  border: none;
+  border-top: 1px solid #eaeded;
+  margin: 6px 0;
+}
+.aws-notif-panel {
+  width: 360px;
+}
+.aws-notif-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.aws-notif-tabs button {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 6px 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.aws-notif-tabs button.is-active {
+  background: #f2f3f3;
+  box-shadow: inset 3px 0 0 #ec7211;
+  font-weight: 700;
+}
+.aws-notif-footer {
+  display: block;
+  margin-top: 10px;
+  padding: 8px;
+}
+.aws-settings-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.aws-settings-modal-card {
+  width: min(720px, 94vw);
+  background: #fff;
+  border: 1px solid #232f3e;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.aws-settings-modal-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eaeded;
+}
+.aws-settings-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 280px;
+}
+.aws-settings-body aside {
+  background: #f2f3f3;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.aws-settings-body aside button {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+.aws-settings-body aside button.is-active {
+  background: #fff;
+  box-shadow: inset 3px 0 0 #ec7211;
+  font-weight: 700;
+}
+.aws-settings-body section {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.aws-settings-body label,
+.aws-settings-check,
+.aws-settings-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.aws-settings-check,
+.aws-settings-radio {
+  flex-direction: row;
+  align-items: center;
+}
+.aws-settings-body select {
+  padding: 6px 8px;
+  border: 1px solid #aab7b8;
+}
+.aws-settings-modal-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #eaeded;
+}
+.aws-btn-primary {
+  background: #ec7211;
+  color: #fff;
+  border: 1px solid #ec7211;
+  padding: 6px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+.aws-cloudshell.is-max {
+  height: calc(100vh - 48px) !important;
+}
+.aws-cloudshell-prompt {
+  color: #38bdf8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  padding-left: 8px;
+}
+.aws-home-add-drawer {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  background: #fff;
+  border-left: 1px solid #d5dbdb;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  padding: 16px;
+  overflow: auto;
+}
+.aws-home-drawer-backdrop {
+  position: fixed;
+  inset: 48px 0 0 0;
+  background: rgba(0, 0, 0, 0.28);
+  z-index: 29;
+}
+.aws-topnav-row.is-kb-focus {
+  outline: 2px solid #0073bb;
+  outline-offset: -2px;
+  background: #f1faff;
+}
+.aws-cloudshell.is-min {
+  height: 40px !important;
+}
+.aws-cloudshell.is-min .aws-cloudshell-out,
+.aws-cloudshell.is-min .aws-cloudshell-form,
+.aws-cloudshell.is-min .aws-cloudshell-tabs {
+  display: none;
+}
+.aws-welcome-greet {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.aws-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aws-recent-list .aws-recent-chip {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.aws-recent-list em {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: #545b64;
+  font-weight: 400;
+}
+.aws-health-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: #879596;
+}
+.aws-health-dot.is-ok {
+  background: #1d8102;
+}
+.aws-health-dot.is-warn {
+  background: #ff9900;
+}
+.aws-health-dot.is-bad {
+  background: #d13212;
+}
+.aws-trusted-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.aws-trusted-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.aws-trusted-list strong {
+  display: block;
+}
+.aws-trusted-list span {
+  color: #545b64;
+  font-size: 12px;
+}
+.aws-svc-fav-row .aws-topnav-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.aws-home-cost-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 80px;
+  margin: 12px 0;
+}
+.aws-home-cost-bars span {
+  flex: 1;
+  background: #0073bb;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  padding-top: 4px;
+  border-radius: 2px 2px 0 0;
+}
+.aws-svc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
 }

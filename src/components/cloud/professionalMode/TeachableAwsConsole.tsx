@@ -34,6 +34,9 @@ type Props = {
   initialPage?: string;
   onActionsChange?: (actions: IamConsoleAction[]) => void;
   mode?: ConsoleMode;
+  fresh?: boolean;
+  iamUsername?: string;
+  onExitToWorkspace?: () => void;
   ticket?: {
     from?: string;
     subject?: string;
@@ -77,6 +80,9 @@ export const TeachableAwsConsole = forwardRef<TeachableConsoleHandle, Props>(
       initialPage,
       onActionsChange,
       mode = "learn",
+      fresh = false,
+      iamUsername,
+      onExitToWorkspace,
       ticket = null,
     },
     ref
@@ -93,11 +99,16 @@ export const TeachableAwsConsole = forwardRef<TeachableConsoleHandle, Props>(
         iamSeed,
         initialService: asService(initialView),
         initialPage,
+        fresh,
+        iamUsername,
       });
-    }, [accountId, accountName, region, iamSeed, initialView, initialPage]);
+    }, [accountId, accountName, region, iamSeed, initialView, initialPage, fresh, iamUsername]);
 
     useEffect(() => {
-      useAccountStore.setState({ interactive: mode === "work" || studentControl });
+      useAccountStore.setState({
+        interactive: mode === "work" || studentControl,
+        consoleMode: mode,
+      });
     }, [mode, studentControl]);
 
     useEffect(() => {
@@ -345,15 +356,21 @@ export const TeachableAwsConsole = forwardRef<TeachableConsoleHandle, Props>(
             iamSeed,
             initialService: asService(initialView),
             initialPage,
+            fresh,
+            iamUsername,
           });
         },
       }),
-      [resolveTarget, performAction, accountId, accountName, region, iamSeed, initialView, initialPage]
+      [resolveTarget, performAction, accountId, accountName, region, iamSeed, initialView, initialPage, fresh, iamUsername]
     );
 
     return (
       <div ref={rootRef} className="h-full min-h-0">
-        <AwsConsole mode={mode} ticket={ticket} />
+        <AwsConsole
+          mode={mode}
+          ticket={ticket}
+          onExitToWorkspace={onExitToWorkspace}
+        />
       </div>
     );
   }

@@ -15,6 +15,7 @@ export type IamPage =
   | "dashboard"
   | "users"
   | "create-user"
+  | "create-user-success"
   | "user-detail"
   | "groups"
   | "roles"
@@ -29,7 +30,24 @@ export type Ec2Page =
   | "asg"
   | "load-balancers";
 
-export type S3Page = "buckets" | "create-bucket" | "bucket-detail";
+export type S3Page =
+  | "buckets"
+  | "create-bucket"
+  | "bucket-detail"
+  | "access-points"
+  | "object-lambda"
+  | "mrap"
+  | "batch"
+  | "access-analyzer"
+  | "account-bpa";
+
+export type S3ObjectItem = {
+  key: string;
+  size: number;
+  type: string;
+  lastModified: string;
+  storageClass: string;
+};
 
 export type VpcPage =
   | "dashboard"
@@ -47,11 +65,31 @@ export type CwPage =
   | "dashboards"
   | "dashboard-view"
   | "alarms"
+  | "alarms-in-alarm"
+  | "alarms-billing"
   | "create-alarm"
   | "log-groups"
-  | "logs-insights";
+  | "logs-insights"
+  | "metrics-all"
+  | "metrics-explorer"
+  | "events-rules";
 
-export type BillingPage = "cost-explorer" | "budgets" | "create-budget";
+export type BillingPage =
+  | "dashboard"
+  | "bills"
+  | "cost-explorer"
+  | "budgets"
+  | "create-budget"
+  | "cost-allocation-tags"
+  | "savings-plans"
+  | "billing-preferences"
+  | "payment-methods";
+
+export type MonthlyCostData = {
+  month: string;
+  services: Record<string, number>;
+  total: number;
+};
 
 export type IamUser = {
   username: string;
@@ -61,6 +99,7 @@ export type IamUser = {
   policies: string[];
   groups: string[];
   last_activity: string;
+  password_age: string;
   access_keys: { id: string; status: "Active" | "Inactive"; created: string }[];
   password: string | null;
 };
@@ -76,6 +115,8 @@ export type IamRole = {
   trusted: string;
   last_activity: string;
   policies: string[];
+  description?: string;
+  max_session_duration?: string;
 };
 
 export type IamPolicy = {
@@ -85,16 +126,32 @@ export type IamPolicy = {
   created: string;
 };
 
+export type Ec2InstanceState =
+  | "pending"
+  | "running"
+  | "stopping"
+  | "stopped"
+  | "shutting-down"
+  | "terminated";
+
 export type Ec2Instance = {
   id: string;
   name: string;
-  state: "running" | "stopped" | "pending" | "terminated";
+  state: Ec2InstanceState;
   type: string;
   status_check: "ok" | "impaired" | "initializing";
+  alarm_status: "No alarms" | "In alarm" | "Insufficient data";
   az: string;
   region: string;
   public_ip: string | null;
   private_ip: string;
+  public_dns?: string | null;
+  security_groups?: string[];
+};
+
+export type FlashMessage = {
+  type: "success" | "error" | "info" | "warning";
+  content: string;
 };
 
 export type AutoScalingGroup = {
@@ -120,7 +177,9 @@ export type S3Bucket = {
   region: string;
   public: boolean;
   objects: number;
+  /** Legacy key list; prefer object_items when present. */
   object_keys: string[];
+  object_items?: S3ObjectItem[];
   created: string;
   encryption: string;
   versioning: "Enabled" | "Suspended" | "Disabled";
@@ -142,6 +201,7 @@ export type Vpc = {
   ipv6: string | null;
   dhcp: string;
   main_route_table: string;
+  main_network_acl?: string;
 };
 
 export type Subnet = {
@@ -152,6 +212,8 @@ export type Subnet = {
   cidr: string;
   az: string;
   public_ip_on_launch: boolean;
+  available_ips?: number;
+  subnet_type?: "public" | "private";
 };
 
 export type SecurityGroup = {
@@ -183,19 +245,44 @@ export type RouteTable = {
   name: string;
   vpc: string;
   main: boolean;
-  routes: { destination: string; target: string; status: string }[];
+  routes: { destination: string; target: string; status: string; propagated?: boolean }[];
+  associated_subnet_ids?: string[];
+};
+
+export type CwWidget = {
+  id: string;
+  type: "line" | "number" | "stacked" | "bar" | "pie" | "text";
+  metricName?: string;
+  title?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 export type CwDashboard = {
   name: string;
-  widgets: number;
+  widgets: CwWidget[];
+  lastModified: string;
 };
 
 export type CwAlarm = {
+  id: string;
   name: string;
+  description?: string;
   state: "OK" | "ALARM" | "INSUFFICIENT_DATA";
   condition: string;
+  metric?: string;
+  namespace?: string;
+  statistic?: "Average" | "Sum" | "Minimum" | "Maximum";
+  threshold?: number;
+  comparisonOperator?:
+    | "GreaterThanOrEqualToThreshold"
+    | "GreaterThanThreshold"
+    | "LessThanOrEqualToThreshold"
+    | "LessThanThreshold";
   actions: number;
+  actionTarget?: string;
   period: string;
 };
 
@@ -207,11 +294,14 @@ export type LogGroup = {
 };
 
 export type Budget = {
+  id: string;
   name: string;
+  period: "Daily" | "Monthly" | "Quarterly" | "Annually";
   budgeted: number;
   current: number;
   forecasted: number;
   alert_threshold: number;
+  threshold_type: "Actual" | "Forecasted";
   email: string;
 };
 
@@ -266,6 +356,23 @@ export type AccountSnapshot = {
   cost_rows: CostRow[];
 };
 
+export type VisualMode = "light" | "dark" | "system";
+
+export type HomeWidgetId =
+  | "welcome"
+  | "cost"
+  | "recent"
+  | "health"
+  | "favorites"
+  | "trusted"
+  | "explore";
+
+export type HomeLayoutState = {
+  widgets: HomeWidgetId[];
+  showFavIcon: boolean;
+  showFavName: boolean;
+};
+
 export type OverlayState = {
   services_open: boolean;
   search_open: boolean;
@@ -277,6 +384,8 @@ export type OverlayState = {
   support_open: boolean;
   cloudshell_open: boolean;
   recentlyVisited: ServiceId[];
+  favorites: ServiceId[];
+  homeLayout: HomeLayoutState;
 };
 
 export type GradingAction = IamConsoleAction;

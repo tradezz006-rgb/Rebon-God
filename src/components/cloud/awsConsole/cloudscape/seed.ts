@@ -1,4 +1,4 @@
-import type { AccountSnapshot, S3Bucket } from "./types";
+import type { AccountSnapshot, S3Bucket, S3ObjectItem } from "./types";
 
 const bpaOn = {
   block_acls: true,
@@ -7,23 +7,43 @@ const bpaOn = {
   restrict_buckets: true,
 };
 
+function objectItem(key: string, size = 12_288): S3ObjectItem {
+  const type = key.includes(".") ? key.split(".").pop() || "bin" : "folder";
+  return {
+    key,
+    size,
+    type,
+    lastModified: "August 26, 2026, 14:30:00 (UTC+05:30)",
+    storageClass: "Standard",
+  };
+}
+
 function bucket(
   name: string,
   extra?: Partial<S3Bucket>
 ): S3Bucket {
+  const keys =
+    extra?.object_items?.map((o) => o.key) ??
+    extra?.object_keys ??
+    ["index.html", "assets/logo.png", "data/menu.json"];
+  const object_items =
+    extra?.object_items ??
+    keys.map((k, i) => objectItem(k, [46285, 18432, 9021][i] ?? 4096));
+  const { object_keys: _k, object_items: _i, objects: _o, ...rest } = extra || {};
   return {
     name,
     region: "ap-south-1",
     public: false,
-    objects: 128,
-    object_keys: ["index.html", "assets/logo.png", "data/menu.json"],
-    created: "2024-06-12",
+    created: "August 26, 2026, 14:30:00 (UTC+05:30)",
     encryption: "SSE-S3",
     versioning: "Enabled",
     block_public_access: { ...bpaOn },
     policy: "",
     lifecycle_rules: [],
-    ...extra,
+    ...rest,
+    object_keys: object_items.map((o) => o.key),
+    object_items,
+    objects: object_items.length,
   };
 }
 
@@ -40,6 +60,45 @@ export const AWS_MANAGED_POLICIES = [
   "AmazonVPCFullAccess",
   "AWSBillingReadOnlyAccess",
 ];
+
+export function createEmptyAccountSeed(
+  accountId: string,
+  accountName: string,
+  iamUsername = "root"
+): AccountSnapshot {
+  return {
+    identity: {
+      account_id: accountId,
+      account_name: accountName,
+      iam_username: iamUsername,
+      region: "us-east-1",
+    },
+    users: [],
+    groups: [],
+    roles: [],
+    policies: AWS_MANAGED_POLICIES.map((name) => ({
+      name,
+      type: "AWS managed" as const,
+      attached: 0,
+      created: "2015-02-06",
+    })),
+    available_policies: [...AWS_MANAGED_POLICIES],
+    instances: [],
+    asgs: [],
+    load_balancers: [],
+    buckets: [],
+    vpcs: [],
+    subnets: [],
+    security_groups: [],
+    igws: [],
+    route_tables: [],
+    dashboards: [],
+    alarms: [],
+    log_groups: [],
+    budgets: [],
+    cost_rows: [],
+  };
+}
 
 export function createFreshBiteSeed(
   accountId = "847291635028",
@@ -61,6 +120,7 @@ export function createFreshBiteSeed(
         policies: ["AmazonS3ReadOnlyAccess"],
         groups: ["developers"],
         last_activity: "2 hours ago",
+        password_age: "90 days",
         access_keys: [
           { id: "AKIAIOSFODNN7EXAMPLE", status: "Active", created: "2024-01-16" },
         ],
@@ -74,6 +134,7 @@ export function createFreshBiteSeed(
         policies: ["AmazonEC2FullAccess"],
         groups: ["ops"],
         last_activity: "Yesterday",
+        password_age: "45 days",
         access_keys: [],
         password: null,
       },
@@ -85,6 +146,7 @@ export function createFreshBiteSeed(
         policies: ["AmazonS3ReadOnlyAccess", "CloudWatchReadOnlyAccess"],
         groups: ["data"],
         last_activity: "5 days ago",
+        password_age: "None",
         access_keys: [
           { id: "AKIAI44QH8DHBEXAMPLE", status: "Active", created: "2024-03-21" },
           { id: "AKIAIOSFODEX2AMPLE", status: "Inactive", created: "2024-11-02" },
@@ -103,12 +165,16 @@ export function createFreshBiteSeed(
         trusted: "ec2.amazonaws.com",
         last_activity: "18 minutes ago",
         policies: ["AmazonS3ReadOnlyAccess", "CloudWatchAgentServerPolicy"],
+        description: "EC2 app role for S3 read + CloudWatch agent",
+        max_session_duration: "1 hour",
       },
       {
         name: "FreshBiteLambdaIngest",
         trusted: "lambda.amazonaws.com",
         last_activity: "3 hours ago",
         policies: ["AWSLambdaBasicExecutionRole"],
+        description: "Lambda ingest execution role",
+        max_session_duration: "1 hour",
       },
     ],
     policies: AWS_MANAGED_POLICIES.map((name) => ({
@@ -132,9 +198,11 @@ export function createFreshBiteSeed(
         state: "running",
         type: "t3.medium",
         status_check: "ok",
+        alarm_status: "No alarms",
         az: "ap-south-1a",
         region: "ap-south-1",
         public_ip: "13.232.41.90",
+        public_dns: "ec2-13-232-41-90.ap-south-1.compute.amazonaws.com",
         private_ip: "10.0.1.24",
       },
       {
@@ -143,9 +211,11 @@ export function createFreshBiteSeed(
         state: "running",
         type: "t3.small",
         status_check: "ok",
+        alarm_status: "No alarms",
         az: "ap-south-1b",
         region: "ap-south-1",
         public_ip: null,
+        public_dns: null,
         private_ip: "10.0.2.18",
       },
       {
@@ -154,9 +224,11 @@ export function createFreshBiteSeed(
         state: "stopped",
         type: "t3.micro",
         status_check: "ok",
+        alarm_status: "No alarms",
         az: "ap-south-1a",
         region: "ap-south-1",
         public_ip: null,
+        public_dns: null,
         private_ip: "10.0.1.10",
       },
     ],
@@ -202,6 +274,7 @@ export function createFreshBiteSeed(
         ipv6: null,
         dhcp: "dopt-0aa11bb22cc33dd44",
         main_route_table: "rtb-0aa11bb22cc33dd01",
+        main_network_acl: "acl-0aa11bb22cc33dd01",
       },
     ],
     subnets: [
@@ -213,6 +286,8 @@ export function createFreshBiteSeed(
         cidr: "10.0.1.0/24",
         az: "ap-south-1a",
         public_ip_on_launch: true,
+        available_ips: 251,
+        subnet_type: "public",
       },
       {
         id: "subnet-0b22c33d44e55f66a",
@@ -222,6 +297,8 @@ export function createFreshBiteSeed(
         cidr: "10.0.2.0/24",
         az: "ap-south-1b",
         public_ip_on_launch: false,
+        available_ips: 251,
+        subnet_type: "private",
       },
     ],
     security_groups: [
@@ -271,9 +348,20 @@ export function createFreshBiteSeed(
         name: "freshbite-prod-public-rt",
         vpc: "vpc-0f1a2b3c4d5e6f789",
         main: true,
+        associated_subnet_ids: ["subnet-0a11b22c33d44e55f"],
         routes: [
-          { destination: "10.0.0.0/16", target: "local", status: "active" },
-          { destination: "0.0.0.0/0", target: "igw-0cc33dd44ee55ff66", status: "active" },
+          {
+            destination: "10.0.0.0/16",
+            target: "local",
+            status: "active",
+            propagated: false,
+          },
+          {
+            destination: "0.0.0.0/0",
+            target: "igw-0cc33dd44ee55ff66",
+            status: "active",
+            propagated: false,
+          },
         ],
       },
       {
@@ -281,26 +369,90 @@ export function createFreshBiteSeed(
         name: "freshbite-prod-private-rt",
         vpc: "vpc-0f1a2b3c4d5e6f789",
         main: false,
-        routes: [{ destination: "10.0.0.0/16", target: "local", status: "active" }],
+        associated_subnet_ids: ["subnet-0b22c33d44e55f66a"],
+        routes: [
+          {
+            destination: "10.0.0.0/16",
+            target: "local",
+            status: "active",
+            propagated: false,
+          },
+        ],
       },
     ],
     dashboards: [
-      { name: "FreshBite-Prod-API", widgets: 6 },
-      { name: "FreshBite-Infra", widgets: 4 },
+      {
+        name: "FreshBite-Prod-API",
+        lastModified: "August 20, 2026, 11:12:00 (UTC+05:30)",
+        widgets: [
+          {
+            id: "w1",
+            type: "line",
+            metricName: "CPUUtilization",
+            title: "CPUUtilization",
+            x: 0,
+            y: 0,
+            width: 6,
+            height: 4,
+          },
+          {
+            id: "w2",
+            type: "number",
+            metricName: "HTTPCode_Target_5XX_Count",
+            title: "5XX count",
+            x: 6,
+            y: 0,
+            width: 3,
+            height: 2,
+          },
+        ],
+      },
+      {
+        name: "FreshBite-Infra",
+        lastModified: "August 18, 2026, 09:40:00 (UTC+05:30)",
+        widgets: [
+          {
+            id: "w1",
+            type: "line",
+            metricName: "NetworkIn",
+            title: "NetworkIn",
+            x: 0,
+            y: 0,
+            width: 6,
+            height: 4,
+          },
+        ],
+      },
     ],
     alarms: [
       {
+        id: "alarm-freshbite-api-5xx",
         name: "freshbite-api-5xx",
+        description: "ALB 5xx spike",
         state: "ALARM",
         condition: "HTTPCode_Target_5XX_Count >= 10 for 1 datapoints within 5 minutes",
+        metric: "HTTPCode_Target_5XX_Count",
+        namespace: "AWS/ApplicationELB",
+        statistic: "Sum",
+        threshold: 10,
+        comparisonOperator: "GreaterThanOrEqualToThreshold",
         actions: 1,
+        actionTarget: "SNS: rebon-alerts",
         period: "5 minutes",
       },
       {
+        id: "alarm-freshbite-cpu-high",
         name: "freshbite-cpu-high",
+        description: "EC2 CPU high",
         state: "OK",
-        condition: "CPUUtilization > 80 for 2 datapoints within 10 minutes",
+        condition: "CPUUtilization >= 80 for 1 datapoints within 5 minutes",
+        metric: "CPUUtilization",
+        namespace: "AWS/EC2",
+        statistic: "Average",
+        threshold: 80,
+        comparisonOperator: "GreaterThanOrEqualToThreshold",
         actions: 1,
+        actionTarget: "SNS: rebon-dev-alerts",
         period: "5 minutes",
       },
     ],
@@ -310,19 +462,25 @@ export function createFreshBiteSeed(
     ],
     budgets: [
       {
+        id: "budget-freshbite-monthly-prod",
         name: "freshbite-monthly-prod",
+        period: "Monthly",
         budgeted: 2400,
         current: 1875.4,
         forecasted: 2510,
         alert_threshold: 80,
+        threshold_type: "Forecasted",
         email: "finops@freshbite.example",
       },
       {
+        id: "budget-freshbite-s3-monthly",
         name: "freshbite-s3-monthly",
+        period: "Monthly",
         budgeted: 180,
         current: 92.1,
         forecasted: 110,
         alert_threshold: 90,
+        threshold_type: "Actual",
         email: "finops@freshbite.example",
       },
     ],
