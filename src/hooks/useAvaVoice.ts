@@ -1,9 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { safeFetchJson } from '@/lib/safeFetch';
+import { logger } from '@/lib/logger';
 
 // ─── Sarvam AI Config ───────────────────────────────────────────────────────
 // Calls go to /api/sarvam-tts → Vite dev server middleware → api.sarvam.ai
 // (Node.js server-side call, no CORS issues ever)
 const SARVAM_PROXY_ENDPOINT = '/api/sarvam-tts';
+
+type SarvamTtsResponse = {
+  audios?: string[];
+};
 
 /**
  * Sanitize text before sending to Sarvam:
@@ -21,6 +27,7 @@ function sanitizeForSarvam(text: string): string {
 /**
  * Call Sarvam AI Bulbul V3 via the Vite dev server middleware.
  * Returns a data:audio/wav;base64,... URL ready for Audio() playback.
+ * Uses timeout + one retry + safe JSON parse via safeFetchJson.
  */
 async function callSarvamTTS(rawText: string): Promise<string> {
   const text = sanitizeForSarvam(rawText);
@@ -50,7 +57,7 @@ async function callSarvamTTS(rawText: string): Promise<string> {
   // Generate audio for all chunks and return first (most content fits in one chunk)
   const base64Parts: string[] = [];
   for (const chunk of chunks) {
-    const res = await fetch(SARVAM_PROXY_ENDPOINT, {
+    const result = await safeFetchJson<SarvamTtsResponse>(SARVAM_PROXY_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -61,15 +68,15 @@ async function callSarvamTTS(rawText: string): Promise<string> {
         speech_sample_rate: 22050,
         enable_preprocessing: true,
       }),
+      timeoutMs: 20_000,
+      retryOnce: true,
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Sarvam API ${res.status}: ${errText}`);
+    if (!result.ok) {
+      throw new Error(result.error.message);
     }
 
-    const data = await res.json();
-    const audio = data.audios?.[0];
+    const audio = result.data?.audios?.[0];
     if (!audio) throw new Error('Sarvam returned no audio data');
     base64Parts.push(audio);
   }
@@ -182,7 +189,7 @@ export const useAvaVoice = () => {
           : 0;
       opts?.onStart?.(durationMs);
       audio.play().catch((err) => {
-        console.warn('⚠️ Audio.play() was blocked (autoplay policy):', err);
+        logger.warn('useAvaVoice', 'Audio.play() blocked (autoplay policy)', err);
         setIsSpeaking(false);
         activeAudioRef.current = null;
         opts?.onEnd?.();
@@ -195,7 +202,7 @@ export const useAvaVoice = () => {
       if (!cancelledRef.current) opts?.onEnd?.();
     };
     audio.onerror = (e) => {
-      console.error('🔇 Audio playback error:', e);
+      logger.error('useAvaVoice', 'Audio playback error', e);
       setIsSpeaking(false);
       activeAudioRef.current = null;
       if (!cancelledRef.current) opts?.onEnd?.();
@@ -230,7 +237,7 @@ export const useAvaVoice = () => {
       if (!cancelledRef.current) opts?.onEnd?.();
     };
     window.speechSynthesis.speak(u);
-    console.warn('⚠️ Using Chrome TTS fallback (Sarvam not available)');
+    logger.warn('useAvaVoice', 'Using Chrome TTS fallback (Sarvam not available)');
   }, [activeVoice]);
 
   type SpeakOptions = {
@@ -259,23 +266,24 @@ export const useAvaVoice = () => {
       text.endsWith('.mp3') ||
       text.includes('/audio/lessons/')
     ) {
-      console.log('▶️ Playing pre-generated audio (Pillar 1 cache hit)');
+      logger.info('useAvaVoice', 'Playing pre-generated audio (Pillar 1 cache hit)');
       playAudioUrl(text, opts);
       return;
     }
 
     const preview = text.substring(0, 60).replace(/\n/g, ' ');
-    console.log(`🎙️ [Sarvam] Generating Priya voice for: "${preview}..."`);
+    logger.info('useAvaVoice', `Generating Sarvam voice for: "${preview}..."`);
 
     callSarvamTTS(text)
       .then(dataUrl => {
         if (cancelledRef.current) return;
-        console.log('✅ [Sarvam] Audio ready — playing Priya voice');
+        logger.info('useAvaVoice', 'Sarvam audio ready — playing');
         playAudioUrl(dataUrl, opts);
       })
       .catch(err => {
         if (cancelledRef.current) return;
-        console.error('❌ [Sarvam] TTS failed — using Chrome TTS as fallback:', err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error('useAvaVoice', 'Sarvam TTS failed — Chrome TTS fallback', message);
         chromeTTSFallback(text, opts);
       });
 

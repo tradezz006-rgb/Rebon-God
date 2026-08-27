@@ -8,6 +8,7 @@ import { DomainProvider } from "@/contexts/DomainContext";
 import { AvaProvider } from "@/contexts/AvaContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { UniverseGateProvider } from "@/components/landing/UniverseGate";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Learning from "./pages/Learning";
@@ -32,10 +33,38 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/learning" element={<Learning />} />
-                    <Route path="/lesson/:id" element={<LessonRouter />} />
-                    <Route path="/workspace" element={<Workspace />} />
-                    <Route path="/profile" element={<Profile />} />
+                    <Route
+                      path="/learning"
+                      element={
+                        <RequireAuth>
+                          <Learning />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/lesson/:id"
+                      element={
+                        <RequireAuth>
+                          <LessonRouter />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/workspace"
+                      element={
+                        <RequireAuth>
+                          <Workspace />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <RequireAuth>
+                          <Profile />
+                        </RequireAuth>
+                      }
+                    />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </UniverseGateProvider>

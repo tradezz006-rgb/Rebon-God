@@ -6,10 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Environment variables
-const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY') || Deno.env.get('VITE_GROQ_API_KEY') || '';
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('VITE_GEMINI_API_KEY') || '';
-const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY') || 'sk_ilxzhypm_NiVrvhKEqiZPTHwZIZU9noUn';
+// Environment variables — secrets must come from Deno env only (never hardcode, never VITE_*).
+const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY') || '';
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || '';
+const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY') || '';
 
 // R2 Configuration
 const R2_ACCESS_KEY = Deno.env.get('CLOUDFLARE_R2_ACCESS_KEY') || '';
@@ -119,6 +119,15 @@ serve(async (req) => {
 
       console.log(`🔊 Calling Sarvam Bulbul V3 for dynamic synthesis of: "${cleanedText.substring(0, 40)}..."`);
       let base64Audio = "";
+      if (!SARVAM_API_KEY) {
+        console.error("SARVAM_API_KEY is not configured in the edge function environment");
+        return new Response(JSON.stringify({
+          error: "Voice synthesis is not configured. Set SARVAM_API_KEY on the server.",
+        }), {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       try {
         const sarvamResponse = await fetch("https://api.sarvam.ai/text-to-speech", {
           method: "POST",
@@ -433,33 +442,37 @@ Respond STRICTLY in JSON format:
       // B. Call Sarvam Bulbul V3 API
       console.log(`🔊 Calling Sarvam Bulbul V3 for audio synthesis...`);
       let base64Audio = "";
-      
-      try {
-        const sarvamResponse = await fetch("https://api.sarvam.ai/text-to-speech", {
-          method: "POST",
-          headers: {
-            "api-subscription-key": SARVAM_API_KEY,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            inputs: [spokenAnswer],
-            target_language_code: "ta-IN",
-            speaker: "Priya",
-            model: "bulbul:v3",
-            speech_sample_rate: 22050,
-            enable_preprocessing: true
-          })
-        });
 
-        if (sarvamResponse.ok) {
-          const sarvamData = await sarvamResponse.json();
-          base64Audio = sarvamData.audios?.[0] || "";
-        } else {
-          const errMsg = await sarvamResponse.text();
-          console.error(`Sarvam API failed with status ${sarvamResponse.status}:`, errMsg);
+      if (!SARVAM_API_KEY) {
+        console.error("SARVAM_API_KEY is not configured in the edge function environment");
+      } else {
+        try {
+          const sarvamResponse = await fetch("https://api.sarvam.ai/text-to-speech", {
+            method: "POST",
+            headers: {
+              "api-subscription-key": SARVAM_API_KEY,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              inputs: [spokenAnswer],
+              target_language_code: "ta-IN",
+              speaker: "Priya",
+              model: "bulbul:v3",
+              speech_sample_rate: 22050,
+              enable_preprocessing: true
+            })
+          });
+
+          if (sarvamResponse.ok) {
+            const sarvamData = await sarvamResponse.json();
+            base64Audio = sarvamData.audios?.[0] || "";
+          } else {
+            const errMsg = await sarvamResponse.text();
+            console.error(`Sarvam API failed with status ${sarvamResponse.status}:`, errMsg);
+          }
+        } catch (sarvamErr) {
+          console.error("Sarvam API request exception:", sarvamErr);
         }
-      } catch (sarvamErr) {
-        console.error("Sarvam API request exception:", sarvamErr);
       }
 
       // Prepare keys and pathnames

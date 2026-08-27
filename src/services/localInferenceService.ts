@@ -1,6 +1,8 @@
 import { StudentLesson, ProfessionalScenario } from "@/types/database";
 import masterDatas from "@/data/master_datas.json";
 import { supabase } from "@/integrations/supabase/client";
+import { groqChatJson } from "@/lib/groqClient";
+import { logger } from "@/lib/logger";
 
 /**
  * REBON V3: Intelligence Engine
@@ -44,29 +46,16 @@ async function translateTextsToTanglish(texts: string[]): Promise<string[]> {
       ]
     }`;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", 
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify({ texts }) }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2
-      })
+    const parsed = await groqChatJson<{ translations?: string[] }>({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: JSON.stringify({ texts }) },
+      ],
+      temperature: 0.2,
     });
-
-    if (!response.ok) throw new Error("Translation failed");
-    const data = await response.json();
-    const parsed = JSON.parse(data.choices[0].message.content);
     return parsed.translations || texts;
   } catch (e) {
-    console.error("Tanglish translation failed, falling back to English:", e);
+    logger.error("localInference", "Tanglish translation failed, falling back to English", e);
     return texts;
   }
 }
@@ -859,27 +848,21 @@ export async function evaluateAnswerWithLocalModel(
     Respond STRICTLY in JSON:
     { "spokenFeedback": "...", "whiteboardFeedback": "...", "isCorrect": true/false, "correction": "..." }`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", 
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Student's answer: "${studentAnswer}". Evaluate this in JSON format.` }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3
-      })
+    const result = await groqChatJson<{
+      spokenFeedback?: string;
+      whiteboardFeedback?: string;
+      isCorrect?: boolean;
+      correction?: string;
+    }>({
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Student's answer: "${studentAnswer}". Evaluate this in JSON format.`,
+        },
+      ],
+      temperature: 0.3,
     });
-
-    if (!response.ok) throw new Error("API Error");
-
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
 
     // STORE UNVERIFIED KNOWLEDGE FOR QUESTION ANSWERS
     const unverifiedRecord = {
@@ -937,29 +920,19 @@ export async function generateSmartHintWithLocalModel(
     
     Keep the hint warm, friendly, and maximum 1-2 sentences.`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", 
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Question: "${questionText}". Provide a helpful hint in JSON format with a single key "hint".` }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.5
-      })
+    const result = await groqChatJson<{ hint?: string }>({
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Question: "${questionText}". Provide a helpful hint in JSON format with a single key "hint".`,
+        },
+      ],
+      temperature: 0.5,
     });
-
-    if (!response.ok) throw new Error("API Error");
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
     return result.hint || "Think about the key concept we discussed.";
   } catch (error) {
-    console.error("Smart Hint Error:", error);
+    logger.error("localInference", "Smart Hint Error", error);
     return isTanglish
       ? "naam ippoo peesina main core concept-ai paththi konjam yoosissu paarungka."
       : "Think about the main core concept we just covered.";
@@ -985,29 +958,19 @@ export async function reExplainTopicAndQuestionWithLocalModel(
     
     Keep your re-explanation clear, encouraging, and maximum 2-3 sentences.`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", 
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Question: "${questionText}". Re-explain the topic and the question in JSON format with a single key "explanation".` }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.5
-      })
+    const result = await groqChatJson<{ explanation?: string }>({
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Question: "${questionText}". Re-explain the topic and the question in JSON format with a single key "explanation".`,
+        },
+      ],
+      temperature: 0.5,
     });
-
-    if (!response.ok) throw new Error("API Error");
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
     return result.explanation || `Let's look at this concept again. Think about how we use this in real engineering. The question asks: ${questionText}`;
   } catch (error) {
-    console.error("Re-explain Error:", error);
+    logger.error("localInference", "Re-explain Error", error);
     return isTanglish
       ? `vaangka, ithai simple-aa purinjukkaalaam. ithoota core concept ennannaa, naam eppati robust systems build panrathungkirathu thaan. intha question-ai innoru vithamaa keekkureen: ${questionText}`
       : `Let's break this down. The core concept is about how we build robust systems. Let me ask the question in another way: ${questionText}`;

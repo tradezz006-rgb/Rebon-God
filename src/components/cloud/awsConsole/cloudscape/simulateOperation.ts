@@ -95,7 +95,40 @@ export type SimulateOpts = {
   signal?: AbortSignal;
 };
 
-/** Promise delay with optional progress ticks (0→1). */
+/** Per-instance AbortControllers for EC2 state transition timers. */
+const ec2TransitionControllers = new Map<string, AbortController>();
+
+/** Start (or restart) a transition for an instance; returns its AbortSignal. */
+export function beginEc2Transition(instanceId: string): AbortSignal {
+  cancelEc2Transition(instanceId);
+  const controller = new AbortController();
+  ec2TransitionControllers.set(instanceId, controller);
+  return controller.signal;
+}
+
+/** Abort pending timers for one instance (e.g. terminate while pending). */
+export function cancelEc2Transition(instanceId: string): void {
+  const controller = ec2TransitionControllers.get(instanceId);
+  if (!controller) return;
+  controller.abort();
+  ec2TransitionControllers.delete(instanceId);
+}
+
+/** Abort all EC2 transition timers (hydrate, leave console, tab reset). */
+export function cancelAllEc2Transitions(): void {
+  for (const id of [...ec2TransitionControllers.keys()]) {
+    cancelEc2Transition(id);
+  }
+}
+
+export function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof DOMException && err.name === "AbortError") ||
+    (err instanceof Error && err.name === "AbortError")
+  );
+}
+
+/** Promise delay with optional progress ticks (0→1). Honors AbortSignal. */
 export function simulateOperation(opts: SimulateOpts): Promise<void> {
   const { durationMs, ticks = 1, onTick, signal } = opts;
   if (durationMs <= 0) {
@@ -114,16 +147,24 @@ export function simulateOperation(opts: SimulateOpts): Promise<void> {
 
     const onAbort = () => {
       if (timer != null) window.clearTimeout(timer);
+      timer = null;
       reject(new DOMException("Aborted", "AbortError"));
     };
     signal?.addEventListener("abort", onAbort, { once: true });
 
     const tick = () => {
+      if (signal?.aborted) return;
       i += 1;
       const progress = Math.min(1, i / n);
       onTick?.(progress, i - 1);
       if (i >= n) {
         signal?.removeEventListener("abort", onAbort);
+        if (signal) {
+          // Drop finished controller entries keyed by matching signal
+          for (const [id, c] of ec2TransitionControllers) {
+            if (c.signal === signal) ec2TransitionControllers.delete(id);
+          }
+        }
         resolve();
         return;
       }

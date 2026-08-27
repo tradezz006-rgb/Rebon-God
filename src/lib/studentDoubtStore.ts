@@ -1,7 +1,12 @@
 /**
  * Save Student Mode doubt Q&A into master_datas.json (dev server API)
  * with both English and Tanglish fields.
+ *
+ * Groq calls go through POST /api/student-doubt (server holds GROQ_API_KEY).
  */
+import { safeFetchJson } from "@/lib/safeFetch";
+import { sanitizePlainText } from "@/lib/sanitize";
+
 export type MasterDoubtRecord = {
   lesson_id: string;
   source_language: "english" | "tanglish";
@@ -14,99 +19,97 @@ export type MasterDoubtRecord = {
   context: "student_mode_doubt" | "student_mode_mid_doubt";
 };
 
-export async function saveDoubtToMasterDatas(
-  record: MasterDoubtRecord
-): Promise<boolean> {
-  try {
-    const res = await fetch("/api/save-master-datas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(record),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-/** Ask Groq for bilingual doubt answer. */
-export async function answerDoubtWithGroq(opts: {
-  question: string;
-  lessonTitle: string;
-  lessonContext: string;
-  language: "english" | "tanglish";
-}): Promise<{
+export type DoubtAnswerResult = {
   answer_english: string;
   answer_tanglish: string;
   question_english: string;
   question_tanglish: string;
   whiteboard_summary: string;
-}> {
-  const key = import.meta.env.VITE_GROQ_API_KEY;
-  if (!key) {
-    const fallback =
-      opts.language === "tanglish"
-        ? "Indha concept paththi clear-aa solreen. Konjam rephrase panni keelungka — naan answer panreen."
-        : "I can clarify this concept. Please rephrase your doubt and I will answer.";
-    return {
-      answer_english: fallback,
-      answer_tanglish: fallback,
-      question_english: opts.question,
-      question_tanglish: opts.question,
-      whiteboard_summary: "- Doubt noted\n- Rephrase if needed",
-    };
+};
+
+type StudentDoubtApiResponse = DoubtAnswerResult & {
+  error?: string;
+};
+
+type SaveMasterDatasResponse = {
+  ok?: boolean;
+  error?: string;
+};
+
+function doubtFallback(
+  question: string,
+  language: "english" | "tanglish"
+): DoubtAnswerResult {
+  const fallback =
+    language === "tanglish"
+      ? "Indha concept paththi clear-aa solreen. Konjam rephrase panni keelungka — naan answer panreen."
+      : "I can clarify this concept. Please rephrase your doubt and I will answer.";
+  return {
+    answer_english: fallback,
+    answer_tanglish: fallback,
+    question_english: question,
+    question_tanglish: question,
+    whiteboard_summary: "- Doubt noted\n- Rephrase if needed",
+  };
+}
+
+export async function saveDoubtToMasterDatas(
+  record: MasterDoubtRecord
+): Promise<boolean> {
+  const result = await safeFetchJson<SaveMasterDatasResponse>("/api/save-master-datas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(record),
+    timeoutMs: 12_000,
+    retryOnce: true,
+  });
+  return result.ok;
+}
+
+/** Ask Groq via server proxy. Never throws — returns a safe fallback on failure. */
+export async function answerDoubtWithGroq(opts: {
+  question: string;
+  lessonTitle: string;
+  lessonContext: string;
+  language: "english" | "tanglish";
+}): Promise<DoubtAnswerResult> {
+  const result = await safeFetchJson<StudentDoubtApiResponse>("/api/student-doubt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question: opts.question,
+      lessonTitle: opts.lessonTitle,
+      lessonContext: opts.lessonContext,
+      language: opts.language,
+    }),
+    timeoutMs: 25_000,
+    retryOnce: true,
+  });
+
+  if (!result.ok) {
+    return doubtFallback(opts.question, opts.language);
   }
 
-  const system = `You are Ren, a live classroom cloud tutor for Rebon Student Mode.
-Lesson: ${opts.lessonTitle}
-Lesson / board context:\n${opts.lessonContext.slice(0, 3500)}
-
-The student may interrupt mid-lesson ("re-explain this", "why this not that", "tell me about X") or ask at the end. Answer like a real teacher: clear, short, spoken aloud — not a long essay.
-
-Reply as JSON only:
-{
-  "question_english": "student question in clear English",
-  "question_tanglish": "same question in Tanglish (Tamil words in Latin script + English)",
-  "answer_english": "2-5 sentence spoken English answer",
-  "answer_tanglish": "same answer in Tanglish",
-  "whiteboard_summary": "2-4 short bullet lines for the board"
-}
-Be accurate. Prefer AWS fundamentals. No markdown fences.`;
-
-  const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: system },
-          {
-            role: "user",
-            content: `Student language preference: ${opts.language}. Doubt: "${opts.question}"`,
-          },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.35,
-      }),
-    }
-  );
-
-  if (!response.ok) throw new Error(`Groq ${response.status}`);
-  const data = await response.json();
-  const parsed = JSON.parse(data.choices[0].message.content);
+  const data = result.data;
+  if (
+    !data ||
+    typeof data.answer_english !== "string" ||
+    typeof data.answer_tanglish !== "string"
+  ) {
+    return doubtFallback(opts.question, opts.language);
+  }
 
   return {
-    answer_english: String(parsed.answer_english || ""),
-    answer_tanglish: String(parsed.answer_tanglish || ""),
-    question_english: String(parsed.question_english || opts.question),
-    question_tanglish: String(parsed.question_tanglish || opts.question),
-    whiteboard_summary: String(
-      parsed.whiteboard_summary || "- Doubt answered"
-    ),
+    answer_english: sanitizePlainText(data.answer_english, { maxLength: 4000 }),
+    answer_tanglish: sanitizePlainText(data.answer_tanglish, { maxLength: 4000 }),
+    question_english: sanitizePlainText(data.question_english || opts.question, {
+      maxLength: 2000,
+    }),
+    question_tanglish: sanitizePlainText(data.question_tanglish || opts.question, {
+      maxLength: 2000,
+    }),
+    whiteboard_summary: sanitizePlainText(data.whiteboard_summary || "- Doubt answered", {
+      maxLength: 1000,
+    }),
   };
 }

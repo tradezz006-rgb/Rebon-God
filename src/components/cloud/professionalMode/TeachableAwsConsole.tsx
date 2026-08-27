@@ -10,7 +10,9 @@ import type { IamSimState } from "@/types/cloudLesson";
 import type { IamConsoleAction } from "@/components/cloud/awsConsole/iamActions";
 import { AwsConsole } from "@/components/cloud/awsConsole/cloudscape/AwsConsole";
 import { useAccountStore } from "@/components/cloud/awsConsole/cloudscape/store";
+import { cancelAllEc2Transitions } from "@/components/cloud/awsConsole/cloudscape/simulateOperation";
 import type { ConsoleMode, ServiceId } from "@/components/cloud/awsConsole/cloudscape/types";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export type TeachableConsoleHandle = {
   resolveTarget: (id: string) => HTMLElement | null;
@@ -102,6 +104,9 @@ export const TeachableAwsConsole = forwardRef<TeachableConsoleHandle, Props>(
         fresh,
         iamUsername,
       });
+      return () => {
+        cancelAllEc2Transitions();
+      };
     }, [accountId, accountName, region, iamSeed, initialView, initialPage, fresh, iamUsername]);
 
     useEffect(() => {
@@ -366,11 +371,35 @@ export const TeachableAwsConsole = forwardRef<TeachableConsoleHandle, Props>(
 
     return (
       <div ref={rootRef} className="h-full min-h-0">
-        <AwsConsole
-          mode={mode}
-          ticket={ticket}
-          onExitToWorkspace={onExitToWorkspace}
-        />
+        <ErrorBoundary
+          label="AWS Console"
+          fallback={
+            <div
+              role="alert"
+              className="flex h-full min-h-[240px] flex-col items-center justify-center gap-3 bg-[#f2f3f3] p-6 text-center"
+            >
+              <h2 className="text-lg font-semibold text-[#16191f]">
+                Something went wrong in the AWS Console
+              </h2>
+              <p className="max-w-md text-sm text-[#545b64]">
+                The rest of Rebon is still available. Refresh this view or return to the workspace.
+              </p>
+              <button
+                type="button"
+                className="rounded bg-[#ec7211] px-4 py-2 text-sm font-bold text-white"
+                onClick={() => window.location.reload()}
+              >
+                Refresh page
+              </button>
+            </div>
+          }
+        >
+          <AwsConsole
+            mode={mode}
+            ticket={ticket}
+            onExitToWorkspace={onExitToWorkspace}
+          />
+        </ErrorBoundary>
       </div>
     );
   }

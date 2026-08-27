@@ -1,7 +1,15 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 import type { IamSimState } from "@/types/cloudLesson";
 import { createFreshBiteSeed, createEmptyAccountSeed } from "./seed";
-import { awsId, scaledMs, simulateOperation, SIM_MS } from "./simulateOperation";
+import { awsId, scaledMs, simulateOperation, SIM_MS, beginEc2Transition, cancelAllEc2Transitions, isAbortError } from "./simulateOperation";
+import {
+  rememberGoodResources,
+  repairAccountResources,
+  validateBucketName,
+  validateEc2LaunchInput,
+  validateIamUsername,
+} from "./storeIntegrity";
 import type {
   AccountSnapshot,
   ActionLogEntry,
@@ -387,7 +395,9 @@ const emptyDrafts: ActionDrafts = {
   showPolicyViewer: null,
 };
 
-export const useAccountStore = create<AccountStore>((set, get) => ({
+export const useAccountStore = create<AccountStore>()(
+  devtools(
+    (set, get) => ({
   ...createFreshBiteSeed(),
   ...emptyOverlay,
   route: { service: "home", page: "home", selectedId: null },
@@ -491,6 +501,8 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       vpcProvision: null,
       actionDrafts: { ...emptyDrafts },
     });
+    cancelAllEc2Transitions();
+    rememberGoodResources(useAccountStore.getState());
   },
 
   log: (action_type, resource_type, resource_id, params = {}) => {
@@ -590,16 +602,31 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   },
 
   createUser: async (user) => {
+    const username = validateIamUsername(user?.username);
+    if (!username) {
+      set({ flash: errFlash("Enter a valid IAM user name before creating the user.") });
+      return;
+    }
+    if (get().users.some((u) => u.username === username)) {
+      set({ flash: errFlash(`User ${username} already exists.`) });
+      return;
+    }
+    const policies = Array.isArray(user.policies)
+      ? user.policies.filter((p): p is string => typeof p === "string" && p.length > 0)
+      : [];
+    const groups = Array.isArray(user.groups)
+      ? user.groups.filter((g): g is string => typeof g === "string" && g.length > 0)
+      : [];
     await simulateOperation({
       durationMs: scaledMs("iamCreateUser", get().consoleMode),
     });
     const created: IamUser = {
-      username: user.username,
+      username,
       created: new Date().toISOString().slice(0, 10),
       mfa: false,
-      console_access: user.console_access,
-      policies: user.policies,
-      groups: user.groups,
+      console_access: Boolean(user.console_access),
+      policies,
+      groups,
       last_activity: "None",
       password_age: user.console_access ? "0 days" : "None",
       access_keys: [],
@@ -610,25 +637,25 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     set((s) => ({
       users: [...s.users, created],
       groups: s.groups.map((g) =>
-        user.groups.includes(g.name)
-          ? { ...g, members: [...new Set([...g.members, user.username])] }
+        groups.includes(g.name)
+          ? { ...g, members: [...new Set([...g.members, username])] }
           : g
       ),
       route: {
         service: "iam",
         page: "create-user-success",
-        selectedId: user.username,
+        selectedId: username,
       },
-      flash: okFlash(`Successfully created IAM user ${user.username}.`),
+      flash: okFlash(`Successfully created IAM user ${username}.`),
     }));
-    get().log("create_user", "iam_user", user.username, {
-      console_access: user.console_access,
+    get().log("create_user", "iam_user", username, {
+      console_access: Boolean(user.console_access),
     });
-    for (const policy of user.policies) {
-      get().log("attach_policy", "iam_user", user.username, { policy });
+    for (const policy of policies) {
+      get().log("attach_policy", "iam_user", username, { policy });
     }
-    for (const group of user.groups) {
-      get().log("add_to_group", "iam_user", user.username, { group });
+    for (const group of groups) {
+      get().log("add_to_group", "iam_user", username, { group });
     }
   },
 
@@ -777,6 +804,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     const mode = get().consoleMode;
     const current = get().instances.find((i) => i.id === id);
     if (!current) return;
+    const signal = beginEc2Transition(id);
 
     if (target === "reboot") {
       set((s) => ({
@@ -788,15 +816,19 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         flash: okFlash(`Successfully initiated reboot of instance ${id}`),
       }));
       get().log("reboot_instance", "ec2", id, { state: "pending" });
-      void simulateOperation({ durationMs: scaledMs("ec2Reboot", mode) }).then(() => {
-        set((s) => ({
-          instances: s.instances.map((i) =>
-            i.id === id
-              ? { ...i, state: "running", status_check: "ok", alarm_status: i.alarm_status || "No alarms" }
-              : i
-          ),
-        }));
-      });
+      void simulateOperation({ durationMs: scaledMs("ec2Reboot", mode), signal })
+        .then(() => {
+          set((s) => ({
+            instances: s.instances.map((i) =>
+              i.id === id
+                ? { ...i, state: "running", status_check: "ok", alarm_status: i.alarm_status || "No alarms" }
+                : i
+            ),
+          }));
+        })
+        .catch((err) => {
+          if (!isAbortError(err)) throw err;
+        });
       return;
     }
 
@@ -808,21 +840,25 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         flash: okFlash(`Successfully initiated stop of instance ${id}`),
       }));
       get().log("stop_instance", "ec2", id, { state: "stopping" });
-      void simulateOperation({ durationMs: scaledMs("ec2Stop", mode) }).then(() => {
-        set((s) => ({
-          instances: s.instances.map((i) =>
-            i.id === id
-              ? {
-                  ...i,
-                  state: "stopped",
-                  status_check: "ok",
-                  public_ip: null,
-                  public_dns: null,
-                }
-              : i
-          ),
-        }));
-      });
+      void simulateOperation({ durationMs: scaledMs("ec2Stop", mode), signal })
+        .then(() => {
+          set((s) => ({
+            instances: s.instances.map((i) =>
+              i.id === id
+                ? {
+                    ...i,
+                    state: "stopped",
+                    status_check: "ok",
+                    public_ip: null,
+                    public_dns: null,
+                  }
+                : i
+            ),
+          }));
+        })
+        .catch((err) => {
+          if (!isAbortError(err)) throw err;
+        });
       return;
     }
 
@@ -834,20 +870,24 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         flash: okFlash(`Successfully initiated terminate of instance ${id}`),
       }));
       get().log("terminate_instance", "ec2", id, { state: "shutting-down" });
-      void simulateOperation({ durationMs: scaledMs("ec2Terminate", mode) }).then(() => {
-        set((s) => ({
-          instances: s.instances.map((i) =>
-            i.id === id
-              ? {
-                  ...i,
-                  state: "terminated" as Ec2InstanceState,
-                  public_ip: null,
-                  public_dns: null,
-                }
-              : i
-          ),
-        }));
-      });
+      void simulateOperation({ durationMs: scaledMs("ec2Terminate", mode), signal })
+        .then(() => {
+          set((s) => ({
+            instances: s.instances.map((i) =>
+              i.id === id
+                ? {
+                    ...i,
+                    state: "terminated" as Ec2InstanceState,
+                    public_ip: null,
+                    public_dns: null,
+                  }
+                : i
+            ),
+          }));
+        })
+        .catch((err) => {
+          if (!isAbortError(err)) throw err;
+        });
       return;
     }
 
@@ -861,42 +901,57 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       flash: okFlash(`Successfully initiated start of instance ${id}`),
     }));
     get().log("start_instance", "ec2", id, { state: "pending" });
-    void simulateOperation({ durationMs: scaledMs("ec2Start", mode) }).then(() => {
-      const ip = `13.233.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`;
-      const region = get().identity.region;
-      set((s) => ({
-        instances: s.instances.map((i) =>
-          i.id === id
-            ? {
-                ...i,
-                state: "running",
-                status_check: "initializing",
-                public_ip: i.public_ip || ip,
-                public_dns:
-                  i.public_dns ||
-                  `ec2-${(i.public_ip || ip).replace(/\./g, "-")}.${region}.compute.amazonaws.com`,
-              }
-            : i
-        ),
-      }));
-      void simulateOperation({ durationMs: scaledMs("ec2StatusChecks", mode) }).then(() => {
+    void simulateOperation({ durationMs: scaledMs("ec2Start", mode), signal })
+      .then(() => {
+        const ip = `13.233.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`;
+        const region = get().identity.region;
+        set((s) => ({
+          instances: s.instances.map((i) =>
+            i.id === id
+              ? {
+                  ...i,
+                  state: "running",
+                  status_check: "initializing",
+                  public_ip: i.public_ip || ip,
+                  public_dns:
+                    i.public_dns ||
+                    `ec2-${(i.public_ip || ip).replace(/\./g, "-")}.${region}.compute.amazonaws.com`,
+                }
+              : i
+          ),
+        }));
+        return simulateOperation({
+          durationMs: scaledMs("ec2StatusChecks", mode),
+          signal,
+        });
+      })
+      .then(() => {
         set((s) => ({
           instances: s.instances.map((i) =>
             i.id === id ? { ...i, status_check: "ok" } : i
           ),
         }));
+      })
+      .catch((err) => {
+        if (!isAbortError(err)) throw err;
       });
-    });
   },
 
   launchInstance: (name, type, subnet) => {
+    const validated = validateEc2LaunchInput(name, type);
+    if (!validated) {
+      set({
+        flash: errFlash("Enter a valid instance name and type before launching."),
+      });
+      return;
+    }
     const region = get().identity.region;
     const mode = get().consoleMode;
     const inst = {
       id: awsId("i"),
-      name,
+      name: validated.name,
       state: "pending" as Ec2InstanceState,
-      type,
+      type: validated.type,
       status_check: "initializing" as const,
       alarm_status: "No alarms" as const,
       az: `${region}a`,
@@ -913,40 +968,65 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       ),
     }));
     get().log("launch_instance", "ec2", inst.id, {
-      name,
-      type,
-      subnet: subnet || "",
+      name: validated.name,
+      type: validated.type,
+      subnet: typeof subnet === "string" ? subnet : "",
     });
+    const signal = beginEc2Transition(inst.id);
     void simulateOperation({
       durationMs: scaledMs("ec2PendingToRunning", mode),
-    }).then(() => {
-      const ip = `13.233.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`;
-      set((s) => ({
-        instances: s.instances.map((i) =>
-          i.id === inst.id
-            ? {
-                ...i,
-                state: "running",
-                status_check: "initializing",
-                public_ip: ip,
-                public_dns: `ec2-${ip.replace(/\./g, "-")}.${region}.compute.amazonaws.com`,
-              }
-            : i
-        ),
-      }));
-      void simulateOperation({
-        durationMs: scaledMs("ec2StatusChecks", mode),
-      }).then(() => {
+      signal,
+    })
+      .then(() => {
+        const ip = `13.233.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`;
+        set((s) => ({
+          instances: s.instances.map((i) =>
+            i.id === inst.id
+              ? {
+                  ...i,
+                  state: "running",
+                  status_check: "initializing",
+                  public_ip: ip,
+                  public_dns: `ec2-${ip.replace(/\./g, "-")}.${region}.compute.amazonaws.com`,
+                }
+              : i
+          ),
+        }));
+        return simulateOperation({
+          durationMs: scaledMs("ec2StatusChecks", mode),
+          signal,
+        });
+      })
+      .then(() => {
         set((s) => ({
           instances: s.instances.map((i) =>
             i.id === inst.id ? { ...i, status_check: "ok" } : i
           ),
         }));
+      })
+      .catch((err) => {
+        if (!isAbortError(err)) throw err;
       });
-    });
   },
 
   createBucket: async ({ name, region, versioning, block_public_access }) => {
+    const bucketName = validateBucketName(name);
+    if (!bucketName) {
+      set({
+        flash: errFlash(
+          "Enter a valid S3 bucket name (3–63 chars, lowercase letters, numbers, dots, hyphens)."
+        ),
+      });
+      return;
+    }
+    if (get().buckets.some((b) => b.name === bucketName)) {
+      set({ flash: errFlash(`Bucket ${bucketName} already exists.`) });
+      return;
+    }
+    const resolvedRegion =
+      typeof region === "string" && region.trim()
+        ? region.trim()
+        : get().identity.region || "ap-south-1";
     await simulateOperation({
       durationMs: scaledMs("s3CreateBucket", get().consoleMode),
     });
@@ -960,22 +1040,23 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       second: "2-digit",
       hour12: false,
     });
+    const bpa = Boolean(block_public_access);
     set((s) => ({
       buckets: [
         ...s.buckets,
         {
-          name,
-          region,
-          public: !block_public_access,
+          name: bucketName,
+          region: resolvedRegion,
+          public: !bpa,
           objects: 0,
           created: `${created} (UTC+05:30)`,
           encryption: "SSE-S3",
           versioning: versioning ? ("Enabled" as const) : ("Disabled" as const),
           block_public_access: {
-            block_acls: block_public_access,
-            ignore_acls: block_public_access,
-            block_policy: block_public_access,
-            restrict_buckets: block_public_access,
+            block_acls: bpa,
+            ignore_acls: bpa,
+            block_policy: bpa,
+            restrict_buckets: bpa,
           },
           policy: "",
           object_keys: [],
@@ -984,12 +1065,12 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         },
       ],
       route: { service: "s3", page: "buckets", selectedId: null },
-      flash: okFlash(`Successfully created bucket: ${name}`),
+      flash: okFlash(`Successfully created bucket: ${bucketName}`),
     }));
-    get().log("create_bucket", "s3", name, {
-      region,
-      versioning,
-      block_public_access,
+    get().log("create_bucket", "s3", bucketName, {
+      region: resolvedRegion,
+      versioning: Boolean(versioning),
+      block_public_access: bpa,
     });
   },
 
@@ -1021,15 +1102,49 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   },
 
   uploadObject: (bucket, key, meta) => {
+    const bucketName = typeof bucket === "string" ? bucket.trim() : "";
+    const objectKey = typeof key === "string" ? key.trim() : "";
+    if (!bucketName) {
+      set({ flash: errFlash("Choose a bucket before uploading an object.") });
+      return;
+    }
+    if (!objectKey || objectKey.includes("//") || objectKey.startsWith("/")) {
+      set({
+        flash: errFlash(
+          "Enter a valid object key (no leading slash or empty path segments)."
+        ),
+      });
+      return;
+    }
+    if (!get().buckets.some((b) => b.name === bucketName)) {
+      set({ flash: errFlash(`Bucket ${bucketName} was not found.`) });
+      return;
+    }
+    const existing = get().buckets.find((b) => b.name === bucketName);
+    if (
+      existing?.object_keys?.includes(objectKey) ||
+      existing?.object_items?.some((o) => o.key === objectKey)
+    ) {
+      set({
+        flash: errFlash(
+          `Object ${objectKey} already exists in ${bucketName}. Choose a different key.`
+        ),
+      });
+      return;
+    }
+    const size =
+      typeof meta?.size === "number" && Number.isFinite(meta.size) && meta.size >= 0
+        ? meta.size
+        : Math.floor(Math.random() * 40_000) + 2_048;
     const type =
-      meta?.type ||
-      (key.includes(".") ? key.split(".").pop() || "bin" : "folder");
+      (typeof meta?.type === "string" && meta.type) ||
+      (objectKey.includes(".") ? objectKey.split(".").pop() || "bin" : "folder");
     const item: S3ObjectItem = {
-      key,
-      size: meta?.size ?? Math.floor(Math.random() * 40_000) + 2_048,
+      key: objectKey,
+      size,
       type,
       lastModified:
-        meta?.lastModified ||
+        (typeof meta?.lastModified === "string" && meta.lastModified) ||
         `${new Date().toLocaleString("en-US", {
           timeZone: "Asia/Kolkata",
           year: "numeric",
@@ -1040,22 +1155,23 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
           second: "2-digit",
           hour12: false,
         })} (UTC+05:30)`,
-      storageClass: meta?.storageClass || "Standard",
+      storageClass:
+        (typeof meta?.storageClass === "string" && meta.storageClass) || "Standard",
     };
     set((s) => ({
       buckets: s.buckets.map((b) =>
-        b.name === bucket
+        b.name === bucketName
           ? {
               ...b,
-              object_keys: [...(b.object_keys || []), key],
+              object_keys: [...(b.object_keys || []), objectKey],
               object_items: [...(b.object_items || []), item],
               objects: (b.objects || 0) + 1,
             }
           : b
       ),
-      flash: okFlash(`Successfully uploaded ${key} to ${bucket}.`),
+      flash: okFlash(`Successfully uploaded ${objectKey} to ${bucketName}.`),
     }));
-    get().log("upload_object", "s3", bucket, { key });
+    get().log("upload_object", "s3", bucketName, { key: objectKey });
   },
 
   uploadS3Object: (bucket, key, meta) => get().uploadObject(bucket, key, meta),
@@ -1210,21 +1326,65 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   },
 
   createVpc: async (opts) => {
+    const name = typeof opts?.name === "string" ? opts.name.trim() : "";
+    const cidr = typeof opts?.cidr === "string" ? opts.cidr.trim() : "";
+    const cidrOk = /^(\d{1,3}\.){3}\d{1,3}\/(8|16|20|24|28)$/.test(cidr);
+    const octets = cidr.split("/")[0]?.split(".").map(Number) ?? [];
+    const octetsOk =
+      octets.length === 4 &&
+      octets.every((n) => Number.isInteger(n) && n >= 0 && n <= 255);
+    if (!name) {
+      set({ flash: errFlash("Enter a VPC name tag before creating the VPC.") });
+      return;
+    }
+    if (!cidrOk || !octetsOk) {
+      set({
+        flash: errFlash(
+          "Enter a valid IPv4 CIDR (e.g. 10.0.0.0/16). Supported masks: /8, /16, /20, /24, /28."
+        ),
+      });
+      return;
+    }
+    const azCount = opts.azCount;
+    if (azCount !== 1 && azCount !== 2 && azCount !== 3) {
+      set({ flash: errFlash("Availability Zone count must be 1, 2, or 3.") });
+      return;
+    }
+    const nat = opts.nat;
+    if (nat !== "none" && nat !== "one" && nat !== "per-az") {
+      set({ flash: errFlash("Choose a valid NAT gateway option.") });
+      return;
+    }
+    const publicPerAz =
+      typeof opts.publicPerAz === "number" && opts.publicPerAz >= 0
+        ? opts.publicPerAz
+        : 0;
+    const privatePerAz =
+      typeof opts.privatePerAz === "number" && opts.privatePerAz >= 0
+        ? opts.privatePerAz
+        : 0;
+    if (get().vpcProvision) {
+      set({
+        flash: errFlash(
+          "A VPC is already being provisioned. Wait for it to finish."
+        ),
+      });
+      return;
+    }
+
     const region = get().identity.region;
     const mode = get().consoleMode;
-    const azLetters = ["a", "b", "c"].slice(0, opts.azCount);
+    const azLetters = ["a", "b", "c"].slice(0, azCount);
     const vpcId = awsId("vpc");
     const mainRtId = awsId("rtb");
     const dhcp = awsId("dopt");
     const withMore =
-      (opts.publicSubnets ?? opts.azCount * opts.publicPerAz) > 0 ||
-      (opts.privateSubnets ?? opts.azCount * opts.privatePerAz) > 0 ||
-      opts.nat !== "none";
+      (opts.publicSubnets ?? azCount * publicPerAz) > 0 ||
+      (opts.privateSubnets ?? azCount * privatePerAz) > 0 ||
+      nat !== "none";
     const wantEndpoint = withMore && opts.s3Endpoint !== false;
-    const publicTarget =
-      opts.publicSubnets ?? opts.azCount * opts.publicPerAz;
-    const privateTarget =
-      opts.privateSubnets ?? opts.azCount * opts.privatePerAz;
+    const publicTarget = opts.publicSubnets ?? azCount * publicPerAz;
+    const privateTarget = opts.privateSubnets ?? azCount * privatePerAz;
     const igwId = withMore ? awsId("igw") : null;
     const privateRtId = withMore && privateTarget > 0 ? awsId("rtb") : null;
     const endpointId = wantEndpoint ? awsId("vpce") : null;
@@ -1235,7 +1395,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
           { id: "vpc", label: `Creating VPC ${vpcId}`, delayKey: null },
           {
             id: "subnets",
-            label: `Creating subnets (${publicTarget + privateTarget} subnets across ${opts.azCount} AZs)`,
+            label: `Creating subnets (${publicTarget + privateTarget} subnets across ${azCount} AZs)`,
             delayKey: "vpcStepSubnet",
           },
           {
@@ -1253,7 +1413,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
             label: "Creating route tables and subnet associations",
             delayKey: "vpcStepRoute",
           },
-          ...(opts.nat !== "none"
+          ...(nat !== "none"
             ? [{ id: "nat", label: "Creating NAT gateways…", delayKey: "vpcStepEndpoint" as const }]
             : []),
           ...(wantEndpoint && endpointId
@@ -1290,17 +1450,17 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     const naclId = `acl-${vpcId.replace("vpc-", "").slice(0, 17)}`;
     const publicCidrOffsets = [0, 16, 32];
     const privateCidrOffsets = [128, 144, 160];
-    const [a, b] = opts.cidr
+    const [a, b] = cidr
       .split("/")[0]
       .split(".")
       .map(Number);
     const newSubnets: AccountSnapshot["subnets"] = [];
     for (let i = 0; i < publicTarget; i++) {
-      const az = azLetters[i % opts.azCount];
+      const az = azLetters[i % azCount];
       const off = publicCidrOffsets[Math.min(i, publicCidrOffsets.length - 1)];
       newSubnets.push({
         id: awsId("subnet"),
-        name: `${opts.name}-subnet-public${i + 1}-${region}${az}`,
+        name: `${name}-subnet-public${i + 1}-${region}${az}`,
         state: "available",
         vpc: vpcId,
         cidr: `${a}.${b}.${off}.0/20`,
@@ -1311,11 +1471,11 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       });
     }
     for (let i = 0; i < privateTarget; i++) {
-      const az = azLetters[i % opts.azCount];
+      const az = azLetters[i % azCount];
       const off = privateCidrOffsets[Math.min(i, privateCidrOffsets.length - 1)];
       newSubnets.push({
         id: awsId("subnet"),
-        name: `${opts.name}-subnet-private${i + 1}-${region}${az}`,
+        name: `${name}-subnet-private${i + 1}-${region}${az}`,
         state: "available",
         vpc: vpcId,
         cidr: `${a}.${b}.${off}.0/20`,
@@ -1335,7 +1495,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
 
     const mainRoutes = [
       {
-        destination: opts.cidr,
+        destination: cidr,
         target: "local",
         status: "active",
         propagated: false,
@@ -1353,12 +1513,12 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     ];
     const privateRoutes = [
       {
-        destination: opts.cidr,
+        destination: cidr,
         target: "local",
         status: "active",
         propagated: false,
       },
-      ...(opts.nat !== "none"
+      ...(nat !== "none"
         ? [
             {
               destination: "0.0.0.0/0",
@@ -1383,9 +1543,9 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         ...st.vpcs,
         {
           id: vpcId,
-          name: opts.name,
+          name,
           state: "available" as const,
-          cidr: opts.cidr,
+          cidr,
           ipv6: null,
           dhcp,
           main_route_table: mainRtId,
@@ -1398,7 +1558,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
             ...st.igws,
             {
               id: igwId,
-              name: `${opts.name}-igw`,
+              name: `${name}-igw`,
               state: "attached" as const,
               vpc: vpcId,
             },
@@ -1408,7 +1568,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         ...st.route_tables,
         {
           id: mainRtId,
-          name: withMore ? `${opts.name}-rtb-public` : `${opts.name}-rtb-main`,
+          name: withMore ? `${name}-rtb-public` : `${name}-rtb-main`,
           vpc: vpcId,
           main: true,
           routes: mainRoutes,
@@ -1418,7 +1578,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
           ? [
               {
                 id: privateRtId,
-                name: `${opts.name}-rtb-private`,
+                name: `${name}-rtb-private`,
                 vpc: vpcId,
                 main: false,
                 routes: privateRoutes,
@@ -1434,11 +1594,11 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
       ),
     }));
     get().log("create_vpc", "vpc", vpcId, {
-      name: opts.name,
-      cidr: opts.cidr,
-      azCount: opts.azCount,
-      nat: opts.nat,
-      tenancy: opts.tenancy,
+      name,
+      cidr,
+      azCount,
+      nat,
+      tenancy: opts.tenancy === "dedicated" ? "dedicated" : "default",
       s3Endpoint: wantEndpoint,
     });
   },
@@ -1481,10 +1641,32 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   editRoutes: (rtId, routes) => get().setRoutes(rtId, routes),
 
   createAlarm: async (opts) => {
+    const name =
+      typeof opts?.name === "string" ? opts.name.trim() : "";
+    const condition =
+      typeof opts?.condition === "string" ? opts.condition.trim() : "";
+    if (!name || name.length > 255) {
+      set({
+        flash: errFlash("Enter a valid CloudWatch alarm name (1–255 characters)."),
+      });
+      return;
+    }
+    if (!condition) {
+      set({ flash: errFlash("Set an alarm condition before creating the alarm.") });
+      return;
+    }
+    if (get().alarms.some((a) => a.name === name)) {
+      set({ flash: errFlash(`Alarm ${name} already exists.`) });
+      return;
+    }
+    const threshold =
+      typeof opts.threshold === "number" && Number.isFinite(opts.threshold)
+        ? opts.threshold
+        : undefined;
     await simulateOperation({
       durationMs: scaledMs("cwCreateAlarm", get().consoleMode),
     });
-    const id = `alarm-${opts.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()
+    const id = `alarm-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()
       .toString(36)
       .slice(-4)}`;
     set((s) => ({
@@ -1492,26 +1674,33 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         ...s.alarms,
         {
           id,
-          name: opts.name,
-          description: opts.description || "",
+          name,
+          description:
+            typeof opts.description === "string" ? opts.description : "",
           state: "INSUFFICIENT_DATA" as const,
-          condition: opts.condition,
-          metric: opts.metric || opts.condition.split(" ")[0],
-          namespace: opts.namespace || "AWS/EC2",
+          condition,
+          metric:
+            (typeof opts.metric === "string" && opts.metric) ||
+            condition.split(" ")[0],
+          namespace:
+            (typeof opts.namespace === "string" && opts.namespace) || "AWS/EC2",
           statistic: opts.statistic || "Average",
-          threshold: opts.threshold,
+          threshold,
           comparisonOperator: opts.comparisonOperator,
           actions: 1,
-          actionTarget: opts.actionTarget || "SNS: rebon-dev-alerts",
-          period: opts.period || "5 minutes",
+          actionTarget:
+            (typeof opts.actionTarget === "string" && opts.actionTarget) ||
+            "SNS: rebon-dev-alerts",
+          period:
+            (typeof opts.period === "string" && opts.period) || "5 minutes",
         },
       ],
       route: { service: "cloudwatch", page: "alarms", selectedId: null },
-      flash: okFlash(`Successfully created alarm: ${opts.name}`),
+      flash: okFlash(`Successfully created alarm: ${name}`),
     }));
-    get().log("create_alarm", "cloudwatch", opts.name, {
-      condition: opts.condition,
-      metric: opts.metric || "",
+    get().log("create_alarm", "cloudwatch", name, {
+      condition,
+      metric: (typeof opts.metric === "string" && opts.metric) || "",
     });
   },
 
@@ -1611,35 +1800,80 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   },
 
   createBudget: async (opts) => {
+    const name = typeof opts?.name === "string" ? opts.name.trim() : "";
+    if (!name || name.length > 100) {
+      set({
+        flash: errFlash("Enter a valid budget name (1–100 characters)."),
+      });
+      return;
+    }
+    if (get().budgets.some((b) => b.name === name)) {
+      set({ flash: errFlash(`Budget ${name} already exists.`) });
+      return;
+    }
+    const amount =
+      typeof opts.amount === "number" && Number.isFinite(opts.amount) && opts.amount > 0
+        ? opts.amount
+        : NaN;
+    if (!Number.isFinite(amount)) {
+      set({ flash: errFlash("Enter a budget amount greater than 0.") });
+      return;
+    }
+    const threshold =
+      typeof opts.threshold === "number" &&
+      Number.isFinite(opts.threshold) &&
+      opts.threshold > 0 &&
+      opts.threshold <= 1000
+        ? opts.threshold
+        : NaN;
+    if (!Number.isFinite(threshold)) {
+      set({
+        flash: errFlash("Enter a valid alert threshold percentage (greater than 0)."),
+      });
+      return;
+    }
+    const email = typeof opts.email === "string" ? opts.email.trim() : "";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      set({ flash: errFlash("Enter a valid email address for budget alerts.") });
+      return;
+    }
+    const period =
+      opts.period === "Daily" ||
+      opts.period === "Quarterly" ||
+      opts.period === "Annually"
+        ? opts.period
+        : "Monthly";
+    const thresholdType =
+      opts.thresholdType === "Actual" ? "Actual" : "Forecasted";
+
     await simulateOperation({
       durationMs: scaledMs("billingCreateBudget", get().consoleMode),
     });
-    const id = `budget-${opts.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()
+    const id = `budget-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()
       .toString(36)
       .slice(-4)}`;
-    const amount = opts.amount;
     set((s) => ({
       budgets: [
         ...s.budgets,
         {
           id,
-          name: opts.name,
-          period: opts.period || "Monthly",
+          name,
+          period,
           budgeted: amount,
           current: Math.round(amount * 0.35 * 100) / 100,
           forecasted: Math.round(amount * 0.92 * 100) / 100,
-          alert_threshold: opts.threshold,
-          threshold_type: opts.thresholdType || "Forecasted",
-          email: opts.email,
+          alert_threshold: threshold,
+          threshold_type: thresholdType,
+          email,
         },
       ],
       route: { service: "billing", page: "budgets", selectedId: null },
-      flash: okFlash(`Successfully created budget: ${opts.name}`),
+      flash: okFlash(`Successfully created budget: ${name}`),
     }));
-    get().log("create_budget", "billing", opts.name, {
-      amount: opts.amount,
-      threshold: opts.threshold,
-      email: opts.email,
+    get().log("create_budget", "billing", name, {
+      amount,
+      threshold,
+      email,
     });
   },
 
@@ -1783,4 +2017,22 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   addLogInsightQuery: (query) => {
     get().log("run_logs_insights", "cloudwatch", "query", { query });
   },
-}));
+    }),
+    {
+      name: "RebonAwsConsole",
+      enabled: import.meta.env.DEV,
+    }
+  )
+);
+
+/** Post-action integrity: repair dangling refs; never crash the console. */
+let integrityRepairing = false;
+rememberGoodResources(useAccountStore.getState());
+useAccountStore.subscribe((state) => {
+  if (integrityRepairing) return;
+  const patch = repairAccountResources(state);
+  if (!patch) return;
+  integrityRepairing = true;
+  useAccountStore.setState(patch);
+  integrityRepairing = false;
+});
